@@ -1,0 +1,55 @@
+---
+title: "Webhooks & Delivery"
+description: "Real-time HTTP push notifications with Bearer Token and HMAC signatures."
+---
+
+Webhooks deliver real-time HTTP POST notifications to your servers whenever events occur on an agent's mailbox.
+
+---
+
+## Supported Event Types
+
+| Event Type | Channel | Description |
+| :--- | :--- | :--- |
+| `message.received` | Mail | An inbound email was received, parsed, and ingested into an inbox. |
+| `message.sent` | Mail | An outbound email was successfully dispatched. |
+| `message.delivered` | Mail | The remote recipient mail server confirmed receipt of the message. |
+| `message.bounced` | Mail | The remote mail server rejected the message (invalid address, mailbox full). |
+| `message.failed` | Mail | Outbound delivery failed permanently after edge retries. |
+| `test.ping` | System | Diagnostics ping fired manually from the Console or test API. |
+
+---
+
+## Authentication Options
+
+Wirebox supports two flexible layers of authentication for webhook deliveries:
+
+### 1. Custom Auth Token (Bearer Authentication)
+The simplest and most developer-friendly method. When creating or editing a webhook, specify an optional `auth_token`:
+
+```http
+Authorization: Bearer your-custom-secret-token
+```
+
+Your receiving endpoint simply validates the header:
+```ts
+if (req.headers["authorization"] !== "Bearer your-custom-secret-token") {
+  return res.status(401).send("Unauthorized");
+}
+```
+
+### 2. HMAC-SHA256 Signatures
+For zero-trust payload verification, every webhook endpoint receives a unique signing secret (`whsec_...`). Every delivery carries a cryptographic signature header:
+
+```http
+X-Wirebox-Signature-256: t=1726051200,v1=9a8b7c6d5e4f3a2b1c...
+```
+
+See the [Verifying Webhook Signatures Guide](/guides/verifying-webhooks) for sample code.
+
+---
+
+## Retries & Idempotency
+
+* **Idempotency**: Every webhook payload contains a stable `id` and `timestamp`. If your endpoint receives the same `id` twice, treat it as a duplicate.
+* **Retries**: If your endpoint returns a non-2xx status code or times out (10s), Wirebox automatically retries with exponential backoff.

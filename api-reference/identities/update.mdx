@@ -1,0 +1,47 @@
+---
+title: "Update Agent Identity"
+api: "PATCH https://api.wirebox.sh/api/v1/identities/{handle}"
+description: "Update display name or description for an existing agent identity."
+---
+
+### Path Parameters
+
+<ParamField path="handle" type="string" required>
+  The agent handle (e.g. `eva`).
+</ParamField>
+
+### Body Parameters
+
+<ParamField body="display_name" type="string">
+  Updated display name.
+</ParamField>
+
+<ParamField body="description" type="string">
+  Updated description.
+</ParamField>
+
+<RequestExample>
+```bash cURL
+curl -X PATCH https://api.wirebox.sh/api/v1/identities/eva \
+  -H "Authorization: Bearer $WIREBOX_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "display_name": "Eva Senior Support",
+    "description": "Escalated support and billing queries"
+  }'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200 OK
+{
+  "id": "ident_01J8ABC123XYZ",
+  "agent_handle": "eva",
+  "display_name": "Eva Senior Support",
+  "description": "Escalated support and billing queries",
+  "mailbox_address": "eva@wireboxmail.com",
+  "created_at": "2026-09-11T10:00:00Z",
+  "updated_at": "2026-09-11T10:30:00Z"
+}
+```
+</ResponseExample>

@@ -1,0 +1,17 @@
+---
+title: "Delete Webhook"
+api: "DELETE https://api.wirebox.sh/api/v1/webhooks/{id}"
+description: "Permanently remove a webhook endpoint."
+---
+
+### Path Parameters
+
+<ParamField path="id" type="string" required>
+  The unique webhook ID to delete.
+</ParamField>
+
+<ResponseExample>
+```text 204 No Content
+(Empty response body)
+```
+</ResponseExample>

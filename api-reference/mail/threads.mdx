@@ -1,0 +1,49 @@
+---
+title: "List Conversation Threads"
+api: "GET https://api.wirebox.sh/api/v1/mail/threads"
+description: "Retrieve grouped conversation threads scoped to an agent or mailbox."
+---
+
+### Query Parameters
+
+<ParamField query="agent" type="string">
+  Filter threads for a specific agent handle (e.g. `eva`).
+</ParamField>
+
+<ParamField query="mailbox" type="string">
+  Filter threads by mailbox address (e.g. `eva@wireboxmail.com`).
+</ParamField>
+
+<ParamField query="limit" type="integer" default="50">
+  Number of threads to return (1–100).
+</ParamField>
+
+<ParamField query="offset" type="integer" default="0">
+  Pagination offset.
+</ParamField>
+
+<RequestExample>
+```bash cURL
+curl -X GET "https://api.wirebox.sh/api/v1/mail/threads?agent=eva" \
+  -H "Authorization: Bearer $WIREBOX_API_KEY"
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200 OK
+{
+  "threads": [
+    {
+      "id": "thrd_01J8XYZ987ABC",
+      "subject": "Question regarding my API quota",
+      "snippet": "Hi Eva, how can I increase my monthly quota?",
+      "unread": false,
+      "message_count": 2,
+      "last_message_at": "2026-09-11T12:05:00Z",
+      "created_at": "2026-09-11T12:00:00Z"
+    }
+  ],
+  "total": 1
+}
+```
+</ResponseExample>

@@ -1,0 +1,56 @@
+---
+title: "API Overview"
+description: "Base URLs, authentication headers, pagination, and error response standards."
+---
+
+The Wirebox REST API provides programmatic access to manage agent identities, mailboxes, messages, and webhooks.
+
+## Base URL
+
+| Environment | Base URL |
+| :--- | :--- |
+| **Production** | `https://api.wirebox.sh/api/v1` |
+| **Staging** | `https://staging-api.wirebox.sh/api/v1` |
+
+---
+
+## Authentication
+
+Every API call must include an active API key in the `Authorization` header:
+
+```http
+Authorization: Bearer wb_live_xxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+---
+
+## Response Format
+
+All successful responses return HTTP status `200 OK` or `201 Created` with a JSON payload. Deletions return `204 No Content`.
+
+---
+
+## Error Handling
+
+When an error occurs, Wirebox returns standard HTTP 4xx or 5xx status codes along with a structured JSON error object:
+
+```json
+{
+  "error": {
+    "code": "invalid_request",
+    "message": "Detailed human-readable explanation of what went wrong."
+  }
+}
+```
+
+### Common Error Codes
+
+| HTTP Status | Code | Meaning |
+| :--- | :--- | :--- |
+| **400** | `invalid_request` | The request body or query parameter failed validation. |
+| **401** | `unauthorized` | Missing or invalid API key. |
+| **403** | `forbidden` | The API key does not have permission to access the requested resource. |
+| **404** | `not_found` | The requested identity, thread, message, or webhook does not exist. |
+| **409** | `conflict` | The handle is already claimed or resource already exists. |
+| **429** | `rate_limited` | Rate limit exceeded. Back off and retry. |
+| **500** | `internal_error` | Wirebox edge error. Check status or reach out to support. |

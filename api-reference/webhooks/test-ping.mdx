@@ -1,0 +1,25 @@
+---
+title: "Test Webhook Ping"
+api: "POST https://api.wirebox.sh/api/v1/webhooks/{id}/test"
+description: "Send an immediate diagnostic ping event to test connectivity, SSL handshake, and endpoint response."
+---
+
+### Path Parameters
+
+<ParamField path="id" type="string" required>
+  The unique webhook ID.
+</ParamField>
+
+<ResponseExample>
+```json 200 OK
+{
+  "webhook_id": "whk_01J8DEF456GHI789",
+  "url": "https://agent.example.com/api/webhooks",
+  "event_type": "test.ping",
+  "status_code": 200,
+  "latency_ms": 142,
+  "success": true,
+  "error": null
+}
+```
+</ResponseExample>

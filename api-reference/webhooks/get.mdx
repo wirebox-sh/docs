@@ -1,0 +1,30 @@
+---
+title: "Get Webhook"
+api: "GET https://api.wirebox.sh/api/v1/webhooks/{id}"
+description: "Retrieve configuration details for a specific webhook endpoint."
+---
+
+### Path Parameters
+
+<ParamField path="id" type="string" required>
+  The unique webhook ID (e.g. `whk_01J8DEF456GHI789`).
+</ParamField>
+
+<ResponseExample>
+```json 200 OK
+{
+  "id": "whk_01J8DEF456GHI789",
+  "url": "https://agent.example.com/api/webhooks",
+  "events": [
+    "message.received",
+    "message.delivered",
+    "message.bounced"
+  ],
+  "agent_handle": "eva",
+  "auth_token": "bearer_secret_token_123",
+  "has_auth_token": true,
+  "created_at": "2026-09-11T10:00:00Z",
+  "updated_at": "2026-09-11T10:00:00Z"
+}
+```
+</ResponseExample>

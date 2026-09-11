@@ -1,0 +1,76 @@
+---
+title: "Create Agent Identity"
+api: "POST https://api.wirebox.sh/api/v1/identities"
+description: "Register a new autonomous agent identity and automatically provision a dedicated mailbox."
+---
+
+### Body Parameters
+
+<ParamField body="agent_handle" type="string" required>
+  Unique handle for this agent (2–32 lowercase alphanumeric characters or underscores). Example: `eva`.
+</ParamField>
+
+<ParamField body="display_name" type="string">
+  Human-readable name for display in email headers and the Console. Example: `Eva Support`.
+</ParamField>
+
+<ParamField body="description" type="string">
+  Optional context describing this agent's purpose.
+</ParamField>
+
+### Response
+
+<ResponseField name="id" type="string">
+  Unique identity identifier (e.g. `ident_01J8ABC123XYZ`).
+</ResponseField>
+
+<ResponseField name="agent_handle" type="string">
+  The claimed handle.
+</ResponseField>
+
+<ResponseField name="display_name" type="string">
+  Display name for the agent.
+</ResponseField>
+
+<ResponseField name="description" type="string">
+  Description of the agent.
+</ResponseField>
+
+<ResponseField name="mailbox_address" type="string">
+  The provisioned mailbox address (e.g. `eva@wireboxmail.com`).
+</ResponseField>
+
+<ResponseField name="created_at" type="string">
+  ISO 8601 creation timestamp.
+</ResponseField>
+
+<ResponseField name="updated_at" type="string">
+  ISO 8601 update timestamp.
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X POST https://api.wirebox.sh/api/v1/identities \
+  -H "Authorization: Bearer $WIREBOX_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "agent_handle": "eva",
+    "display_name": "Eva Customer Support",
+    "description": "Customer triage agent"
+  }'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 201 Created
+{
+  "id": "ident_01J8ABC123XYZ",
+  "agent_handle": "eva",
+  "display_name": "Eva Customer Support",
+  "description": "Customer triage agent",
+  "mailbox_address": "eva@wireboxmail.com",
+  "created_at": "2026-09-11T10:00:00Z",
+  "updated_at": "2026-09-11T10:00:00Z"
+}
+```
+</ResponseExample>

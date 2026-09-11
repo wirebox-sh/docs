@@ -1,0 +1,114 @@
+---
+title: "Webhook Event Catalog"
+description: "Reference catalog and JSON payload schemas for all Wirebox webhook events."
+---
+
+Wirebox triggers webhooks in real time whenever activity occurs across your communication channels.
+
+---
+
+### `message.received`
+
+Triggered when an incoming email arrives at an agent's inbox.
+
+```json
+{
+  "id": "evt_01J8ABC123",
+  "event": "message.received",
+  "created_at": "2026-09-11T12:00:00Z",
+  "data": {
+    "message_id": "msg_01J8DEF456",
+    "thread_id": "thrd_01J8GHI789",
+    "agent_handle": "eva",
+    "mailbox_address": "eva@wireboxmail.com",
+    "from": "Alex Customer <alex@example.com>",
+    "to": ["eva@wireboxmail.com"],
+    "subject": "Need help with integration",
+    "text": "Hello, how do I connect my agent?",
+    "html": "<p>Hello, how do I connect my agent?</p>",
+    "attachments": []
+  }
+}
+```
+
+---
+
+### `message.sent`
+
+Triggered when an outbound email is accepted by the Wirebox edge engine for delivery.
+
+```json
+{
+  "id": "evt_01J8ABC124",
+  "event": "message.sent",
+  "created_at": "2026-09-11T12:01:00Z",
+  "data": {
+    "message_id": "msg_01J8OUTBOUND789",
+    "thread_id": "thrd_01J8GHI789",
+    "agent_handle": "eva",
+    "to": ["alex@example.com"],
+    "subject": "Re: Need help with integration"
+  }
+}
+```
+
+---
+
+### `message.delivered`
+
+Triggered when the recipient's mail server confirms successful delivery.
+
+```json
+{
+  "id": "evt_01J8ABC125",
+  "event": "message.delivered",
+  "created_at": "2026-09-11T12:02:15Z",
+  "data": {
+    "message_id": "msg_01J8OUTBOUND789",
+    "thread_id": "thrd_01J8GHI789",
+    "agent_handle": "eva",
+    "recipient": "alex@example.com",
+    "response": "250 2.0.0 OK: message queued 1048201"
+  }
+}
+```
+
+---
+
+### `message.bounced`
+
+Triggered when a remote mail server rejects an outbound email (e.g. mailbox not found, domain non-existent).
+
+```json
+{
+  "id": "evt_01J8ABC126",
+  "event": "message.bounced",
+  "created_at": "2026-09-11T12:03:00Z",
+  "data": {
+    "message_id": "msg_01J8OUTBOUND789",
+    "thread_id": "thrd_01J8GHI789",
+    "agent_handle": "eva",
+    "recipient": "invalid-address@example.com",
+    "bounce_type": "permanent",
+    "diagnostic_code": "550 5.1.1 User unknown"
+  }
+}
+```
+
+---
+
+### `test.ping`
+
+Diagnostic event sent when testing a webhook endpoint from the Console or API.
+
+```json
+{
+  "id": "evt_01J8TEST999",
+  "event": "test.ping",
+  "created_at": "2026-09-11T12:00:00Z",
+  "data": {
+    "message": "This is a diagnostic ping event from Wirebox.",
+    "webhook_id": "whk_01J8DEF456GHI789"
+  }
+}
+```

@@ -1,0 +1,28 @@
+---
+title: "Delete Agent Identity"
+api: "DELETE https://api.wirebox.sh/api/v1/identities/{handle}"
+description: "Permanently delete an agent identity and unbind its associated mailbox."
+---
+
+### Path Parameters
+
+<ParamField path="handle" type="string" required>
+  The agent handle to remove (e.g. `eva`).
+</ParamField>
+
+### Response
+
+Returns `204 No Content` on successful deletion.
+
+<RequestExample>
+```bash cURL
+curl -X DELETE https://api.wirebox.sh/api/v1/identities/eva \
+  -H "Authorization: Bearer $WIREBOX_API_KEY"
+```
+</RequestExample>
+
+<ResponseExample>
+```text 204 No Content
+(Empty response body)
+```
+</ResponseExample>

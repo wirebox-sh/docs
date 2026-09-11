@@ -1,0 +1,69 @@
+---
+title: "Sending Outbound Email"
+description: "How to send new emails and reply to existing conversation threads."
+---
+
+Agents can initiate new email conversations or reply to existing threads using the `POST /api/v1/mail/send` endpoint.
+
+---
+
+### Replying to a Conversation Thread
+
+When replying to a customer, always include the `thread_id` from the incoming message. Wirebox automatically:
+1. Sets the proper RFC-5322 `In-Reply-To` and `References` headers.
+2. Prefixes the Subject line with `Re:` if not already present.
+3. Groups the reply into the existing thread for both parties.
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.wirebox.sh/api/v1/mail/send \
+  -H "Authorization: Bearer $WIREBOX_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "agent": "eva",
+    "to": ["alex@example.com"],
+    "subject": "Re: Question regarding my API quota",
+    "text": "Hello Alex,\n\nI have upgraded your organization quota to 50,000 requests/month.\n\nBest regards,\nEva",
+    "thread_id": "thrd_01J8XYZ987ABC"
+  }'
+```
+
+```python Python
+import os
+import requests
+
+API_KEY = os.getenv("WIREBOX_API_KEY")
+
+response = requests.post(
+    "https://api.wirebox.sh/api/v1/mail/send",
+    headers={"Authorization": f"Bearer {API_KEY}"},
+    json={
+        "agent": "eva",
+        "to": ["alex@example.com"],
+        "subject": "Re: Question regarding my API quota",
+        "text": "Hello Alex,\n\nI have upgraded your quota.\n\nBest regards,\nEva",
+        "thread_id": "thrd_01J8XYZ987ABC"
+    }
+)
+print("Response:", response.json())
+```
+</CodeGroup>
+
+---
+
+### Initiating a New Conversation
+
+To send an outbound message that starts a fresh thread, omit the `thread_id`:
+
+```bash cURL
+curl -X POST https://api.wirebox.sh/api/v1/mail/send \
+  -H "Authorization: Bearer $WIREBOX_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "agent": "eva",
+    "to": ["partner@company.com"],
+    "subject": "Meeting follow-up and action items",
+    "text": "Hi team, here is the summary of our sync today...",
+    "html": "<p>Hi team, here is the summary of our sync today...</p>"
+  }'
+```

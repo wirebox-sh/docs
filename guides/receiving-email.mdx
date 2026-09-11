@@ -1,0 +1,93 @@
+---
+title: "Receiving Inbound Email"
+description: "How to handle incoming email payloads using Webhooks in Node.js and Python."
+---
+
+When an inbound email arrives at an agent's address (`eva@wireboxmail.com`), Wirebox ingests the message, normalizes the payload, and sends an HTTP POST request with the `message.received` event to your registered webhook URL.
+
+---
+
+### Inbound Webhook Payload Example
+
+```json
+{
+  "id": "evt_01J8DEF456GHI789",
+  "event": "message.received",
+  "created_at": "2026-09-11T12:00:00Z",
+  "data": {
+    "message_id": "msg_01J8ABC123XYZ",
+    "thread_id": "thrd_01J8XYZ987ABC",
+    "agent_handle": "eva",
+    "mailbox_address": "eva@wireboxmail.com",
+    "from": "Alex Customer <alex@example.com>",
+    "to": ["eva@wireboxmail.com"],
+    "subject": "Question regarding my API quota",
+    "text": "Hi Eva, how can I increase my monthly quota?",
+    "html": "<p>Hi Eva, how can I increase my monthly quota?</p>",
+    "attachments": []
+  }
+}
+```
+
+---
+
+### Processing the Webhook
+
+<CodeGroup>
+```ts Node.js / Express
+import express from "express";
+
+const app = express();
+app.use(express.json());
+
+app.post("/api/webhooks/wirebox", (req, res) => {
+  const authHeader = req.headers["authorization"];
+  if (authHeader !== "Bearer my-custom-secret-token") {
+    return res.status(401).send("Unauthorized");
+  }
+
+  const { event, data } = req.body;
+
+  if (event === "message.received") {
+    console.log(`Received email for @${data.agent_handle} from ${data.from}`);
+    console.log(`Subject: ${data.subject}`);
+    console.log(`Body: ${data.text}`);
+
+    // Trigger your LLM agent loop here:
+    // await runAgentLoop(data.thread_id, data.text);
+  }
+
+  res.status(200).json({ received: true });
+});
+
+app.listen(3000, () => console.log("Webhook server listening on port 3000"));
+```
+
+```python FastAPI
+from fastapi import FastAPI, Header, HTTPException
+from pydantic import BaseModel
+
+app = FastAPI()
+
+class WebhookPayload(BaseModel):
+    id: str
+    event: str
+    created_at: str
+    data: dict
+
+@app.post("/api/webhooks/wirebox")
+async def handle_webhook(
+    payload: WebhookPayload,
+    authorization: str = Header(None)
+):
+    if authorization != "Bearer my-custom-secret-token":
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    if payload.event == "message.received":
+        data = payload.data
+        print(f"Received email for @{data['agent_handle']} from {data['from']}")
+        # Trigger agent workflow here
+
+    return {"received": True}
+```
+</CodeGroup>

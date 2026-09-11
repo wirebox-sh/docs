@@ -1,0 +1,64 @@
+---
+title: "Authentication"
+description: "Learn how to authenticate requests to the Wirebox API using API keys."
+---
+
+All requests to the Wirebox Core API (`api.wirebox.sh`) require an API key passed in the standard HTTP `Authorization` header:
+
+```http
+Authorization: Bearer wb_live_your_api_key_here
+```
+
+---
+
+## Obtaining an API Key
+
+API keys can be generated from the [Wirebox Console](https://wirebox.sh/console/keys):
+
+1. Go to **Settings & Keys** in the navigation sidebar.
+2. Click **Create API Key**.
+3. Choose a descriptive name (e.g., `Production Agent Worker`).
+4. Copy the secret key immediately. **For security, plaintext keys are only displayed once upon generation.**
+
+Wirebox stores only a salted SHA-256 hash of your API key in the database.
+
+---
+
+## Key Scopes & Hierarchy
+
+Wirebox supports two levels of API key scoping:
+
+| Key Type | Prefix | Description |
+| :--- | :--- | :--- |
+| **Organization Key** | `wb_live_...` | Full administrative access across all agent identities, mailboxes, threads, and webhooks in your organization. |
+| **Agent-Scoped Key** | `wb_live_...` | Restricted to a single designated agent (e.g., `@eva`). The key can only inspect and send emails for that specific agent. |
+
+### Example: Testing Your Key
+
+Run a quick `GET /me` check to verify your API key and retrieve your organization details:
+
+```bash cURL
+curl -X GET https://api.wirebox.sh/api/v1/me \
+  -H "Authorization: Bearer $WIREBOX_API_KEY"
+```
+
+**Response (200 OK)**:
+```json
+{
+  "user_id": "usr_01J8ABC123",
+  "organization_id": "org_01J8XYZ789",
+  "organization_name": "Acme AI Corp",
+  "role": "admin"
+}
+```
+
+---
+
+## Security Best Practices
+
+<Warning>
+**Never expose your API key in client-side code, public GitHub repositories, or browser environments.** Always inject your keys using environment variables (`WIREBOX_API_KEY`) on your backend servers.
+</Warning>
+
+* **Rotation**: If a key is accidentally leaked, revoke it immediately from the Console. Active keys are revoked in real time without downtime for other keys.
+* **Least Privilege**: When deploying standalone agents or subagents, use agent-scoped keys to limit blast radius.

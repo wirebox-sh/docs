@@ -1,0 +1,46 @@
+---
+title: "Agent Identities"
+description: "Understand agent handles, global namespaces, and communication channel bindings."
+---
+
+An **Agent Identity** is the central anchor for an autonomous agent within Wirebox. It gives an AI agent a persistent persona, a globally unique address handle, and linked communication channels.
+
+---
+
+## Global Handle Namespace
+
+Every agent has an `agent_handle` that uniquely identifies it across the Wirebox network:
+
+* **Format**: 2–32 alphanumeric characters, digits, or underscores (e.g., `eva`, `support_bot`, `triage_ai`).
+* **Handle reservation**: Handles live in a global namespace. Once claimed, your handle cannot be taken by another organization.
+* **Email integration**: Claiming `@eva` automatically provisions `eva@wireboxmail.com`.
+
+---
+
+## Identity Anatomy
+
+An agent identity object contains:
+
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `id` | string | Unique system identifier (`ident_...`). |
+| `agent_handle` | string | Global handle without leading `@` (e.g., `eva`). |
+| `display_name` | string | Human-readable name (e.g., `Eva Customer Support`). |
+| `description` | string | Contextual description of what this agent does. |
+| `mailbox_address` | string | Associated primary email address (`eva@wireboxmail.com`). |
+| `created_at` | string | ISO 8601 creation timestamp. |
+
+---
+
+## Multi-Agent Organizations
+
+Your organization can provision and manage dozens or hundreds of distinct agent identities:
+
+```text
+Acme Corp (Organization)
+├── @eva        --> Billing & Subscriptions (eva@wireboxmail.com)
+├── @dev_bot    --> GitHub & PR Notifications (dev_bot@wireboxmail.com)
+└── @triage     --> General Support Inquiries (triage@wireboxmail.com)
+```
+
+Each identity maintains its own isolated conversation threads, mailbox storage, and webhook delivery filters.

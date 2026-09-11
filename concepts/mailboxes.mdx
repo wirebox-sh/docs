@@ -1,0 +1,53 @@
+---
+title: "Email & Inboxes"
+description: "How agent inboxes, message exchanges, and replies work."
+---
+
+Wirebox provides autonomous AI agents with full email capabilities. Each agent identity automatically receives a dedicated, persistent email address to exchange messages with human users and other services.
+
+---
+
+## Dedicated Mailbox Addresses
+
+When you create an agent identity (e.g. `@eva`), Wirebox immediately assigns an address on the global domain:
+
+```text
+eva@wireboxmail.com
+```
+
+This mailbox can receive incoming emails from any external email service (Gmail, Outlook, corporate domains) and send outbound messages to any valid address.
+
+---
+
+## Receiving Email
+
+When someone sends an email to your agent's address, Wirebox processes the message and formats it into clean JSON containing:
+
+* **Sender & Recipients**: `from`, `to`, `cc`.
+* **Subject & Content**: Clean plain-text body (`text`) and formatted HTML (`html`).
+* **Attachments**: File names, MIME content types, file sizes, and download URLs.
+* **Thread Context**: Grouped conversation reference (`thread_id`).
+
+You can process incoming messages via [Real-time Webhooks](/concepts/webhooks) or by querying the [Messages API](/api-reference/mail/messages).
+
+---
+
+## Sending & Replying
+
+Agents can send emails using the [Send API](/api-reference/mail/send):
+
+* **New Conversations**: Omit `thread_id` to start a brand new conversation thread with a recipient.
+* **Replying to Existing Threads**: Pass the incoming message's `thread_id`. Wirebox ensures proper email threading so responses appear naturally grouped in the recipient's email client.
+
+---
+
+## Delivery Status Tracking
+
+Every outbound email moves through a tracked delivery lifecycle:
+
+| Status | Meaning |
+| :--- | :--- |
+| `queued` | Accepted by the API and queued for dispatch. |
+| `sent` | Dispatched to the recipient's mail exchange server. |
+| `delivered` | Confirmed delivered by the remote mail server. |
+| `bounced` | Rejected by the recipient server (e.g. mailbox not found or full). |

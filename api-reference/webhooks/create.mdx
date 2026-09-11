@@ -1,0 +1,46 @@
+---
+title: "Create Webhook"
+api: "POST https://api.wirebox.sh/api/v1/webhooks"
+description: "Register an HTTPS endpoint to receive real-time event notifications."
+---
+
+### Body Parameters
+
+<ParamField body="url" type="string" required>
+  Target HTTPS destination URL (e.g. `https://agent.example.com/api/webhooks`).
+</ParamField>
+
+<ParamField body="events" type="string[]" required>
+  Array of event types to subscribe to (e.g. `["message.received", "message.delivered", "message.bounced"]`).
+</ParamField>
+
+<ParamField body="agent" type="string">
+  Optional agent handle to scope events exclusively to this agent.
+</ParamField>
+
+<ParamField body="auth_token" type="string">
+  Optional custom bearer token (min 8 chars). When set, Wirebox will send `Authorization: Bearer <auth_token>`.
+</ParamField>
+
+### Response
+
+Returns the webhook endpoint with its one-time HMAC signing secret.
+
+<ResponseExample>
+```json 201 Created
+{
+  "id": "whk_01J8DEF456GHI789",
+  "url": "https://agent.example.com/api/webhooks",
+  "events": [
+    "message.received",
+    "message.delivered",
+    "message.bounced"
+  ],
+  "agent_handle": "eva",
+  "auth_token": "bearer_secret_token_123",
+  "has_auth_token": true,
+  "secret": "whsec_7K9x2mP4qR8vT1wY3zA5bC6dE0fG1hJ2",
+  "created_at": "2026-09-11T10:00:00Z"
+}
+```
+</ResponseExample>

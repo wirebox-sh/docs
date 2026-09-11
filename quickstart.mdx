@@ -1,0 +1,160 @@
+---
+title: "Quickstart"
+description: "Get your agent up and running with a real email address in under 5 minutes."
+---
+
+In this guide, you will:
+1. Obtain an API Key from the Wirebox Console.
+2. Claim a dedicated agent identity and mailbox (`@eva`).
+3. Send an email to the agent and observe the incoming thread.
+4. Reply to the conversation using the API.
+
+---
+
+### Step 1: Get an API Key
+
+1. Open the [Wirebox Console](https://wirebox.sh/console).
+2. Sign in with GitHub or Google.
+3. Navigate to **API Keys** and click **Create Key**.
+4. Save the generated key (`wb_live_...`).
+
+Export your key in your terminal:
+
+```bash
+export WIREBOX_API_KEY="wb_live_your_secret_key_here"
+```
+
+---
+
+### Step 2: Create an Agent Identity
+
+Claim a handle for your agent. When you create an identity, Wirebox automatically creates its mailbox (`handle@wireboxmail.com`).
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.wirebox.sh/api/v1/identities \
+  -H "Authorization: Bearer $WIREBOX_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "agent_handle": "eva",
+    "display_name": "Eva Support Agent",
+    "description": "Autonomous customer triage agent"
+  }'
+```
+
+```python Python
+import os
+import requests
+
+API_KEY = os.getenv("WIREBOX_API_KEY")
+BASE_URL = "https://api.wirebox.sh/api/v1"
+
+response = requests.post(
+    f"{BASE_URL}/identities",
+    headers={"Authorization": f"Bearer {API_KEY}"},
+    json={
+        "agent_handle": "eva",
+        "display_name": "Eva Support Agent",
+        "description": "Autonomous customer triage agent"
+    }
+)
+print(response.json())
+```
+
+```ts TypeScript
+const API_KEY = process.env.WIREBOX_API_KEY!;
+const BASE_URL = "https://api.wirebox.sh/api/v1";
+
+const res = await fetch(`${BASE_URL}/identities`, {
+  method: "POST",
+  headers: {
+    Authorization: `Bearer ${API_KEY}`,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    agent_handle: "eva",
+    display_name: "Eva Support Agent",
+    description: "Autonomous customer triage agent",
+  }),
+});
+const identity = await res.json();
+console.log("Agent Mailbox:", identity.mailbox_address);
+```
+</CodeGroup>
+
+**Response (201 Created)**:
+```json
+{
+  "id": "ident_01J8ABC123XYZ",
+  "agent_handle": "eva",
+  "display_name": "Eva Support Agent",
+  "description": "Autonomous customer triage agent",
+  "mailbox_address": "eva@wireboxmail.com",
+  "created_at": "2026-09-11T10:00:00Z",
+  "updated_at": "2026-09-11T10:00:00Z"
+}
+```
+
+---
+
+### Step 3: Receive an Email
+
+Send an email from your personal Gmail or Outlook account to `eva@wireboxmail.com`.
+
+Wirebox's edge routing engine immediately:
+1. Ingests the raw MIME message.
+2. Extracts plain text and HTML bodies, headers, and attachments.
+3. Groups the message into an active conversation **Thread**.
+4. Fires a `message.received` webhook if configured.
+
+List incoming threads for your agent:
+
+```bash cURL
+curl -X GET "https://api.wirebox.sh/api/v1/mail/threads?agent=eva" \
+  -H "Authorization: Bearer $WIREBOX_API_KEY"
+```
+
+---
+
+### Step 4: Send a Reply
+
+Reply to the sender using the thread's ID or conversation context:
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.wirebox.sh/api/v1/mail/send \
+  -H "Authorization: Bearer $WIREBOX_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "agent": "eva",
+    "to": ["user@example.com"],
+    "subject": "Re: Help with account setup",
+    "text": "Hello! I am Eva, your AI support assistant. I received your message and have resolved the issue.",
+    "thread_id": "thrd_01J8XYZ987ABC"
+  }'
+```
+
+```python Python
+send_res = requests.post(
+    f"{BASE_URL}/mail/send",
+    headers={"Authorization": f"Bearer {API_KEY}"},
+    json={
+        "agent": "eva",
+        "to": ["user@example.com"],
+        "subject": "Re: Help with account setup",
+        "text": "Hello! I am Eva, your AI assistant. I have resolved your request.",
+        "thread_id": "thrd_01J8XYZ987ABC"
+    }
+)
+print("Sent Message ID:", send_res.json()["id"])
+```
+</CodeGroup>
+
+Congratulations! You have set up a full-duplex email workflow for your AI agent.
+
+---
+
+## Next Steps
+
+* [Set up Webhooks](/concepts/webhooks) to receive real-time notifications on your server whenever a new email arrives.
+* [Explore the API Reference](/api-reference/overview) to inspect all available query filters and endpoints.

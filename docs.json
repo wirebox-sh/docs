@@ -1,0 +1,126 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "Wirebox",
+  "colors": {
+    "primary": "#0284c7",
+    "light": "#38bdf8",
+    "dark": "#0369a1"
+  },
+  "favicon": "/favicon.svg",
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg"
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "index",
+              "quickstart",
+              "authentication"
+            ]
+          },
+          {
+            "group": "Core Concepts",
+            "pages": [
+              "concepts/identities",
+              "concepts/mailboxes",
+              "concepts/webhooks"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/receiving-email",
+              "guides/sending-email",
+              "guides/verifying-webhooks"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "api-reference/overview"
+            ]
+          },
+          {
+            "group": "Agent Identities",
+            "pages": [
+              "api-reference/identities/create",
+              "api-reference/identities/list",
+              "api-reference/identities/get",
+              "api-reference/identities/update",
+              "api-reference/identities/delete"
+            ]
+          },
+          {
+            "group": "Mail & Messages",
+            "pages": [
+              "api-reference/mail/mailboxes",
+              "api-reference/mail/threads",
+              "api-reference/mail/messages",
+              "api-reference/mail/send"
+            ]
+          },
+          {
+            "group": "Webhooks",
+            "pages": [
+              "api-reference/webhooks/create",
+              "api-reference/webhooks/list",
+              "api-reference/webhooks/get",
+              "api-reference/webhooks/update",
+              "api-reference/webhooks/delete",
+              "api-reference/webhooks/rotate-secret",
+              "api-reference/webhooks/test-ping",
+              "api-reference/webhooks/events"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "Website",
+        "href": "https://wirebox.sh"
+      },
+      {
+        "label": "GitHub",
+        "href": "https://github.com/wirebox-sh"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Open Console",
+      "href": "https://wirebox.sh/console"
+    }
+  },
+  "contextual": {
+    "options": [
+      "copy",
+      "view",
+      "chatgpt",
+      "claude",
+      "perplexity",
+      "mcp",
+      "cursor",
+      "vscode"
+    ]
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/wirebox-sh",
+      "x": "https://x.com/wirebox_sh"
+    }
+  }
+}
