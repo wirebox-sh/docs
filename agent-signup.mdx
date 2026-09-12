@@ -99,6 +99,10 @@ console.log(`Provisioned mailbox: ${email_address}`);
   **Store your API key securely**: The `api_key` (`wb_live_...`) is returned **only once** upon registration. Set it in your runtime environment (e.g. `WIREBOX_API_KEY`).
 </Warning>
 
+<Info>
+  **Identity-Scoped API Key**: For enterprise security, the API key issued during self-signup is strictly **identity-scoped** (`messages:read`, `messages:send`, `mailboxes:read`). It cannot create new API keys, access other agent mailboxes, or alter organization settings. Global admin keys can only be minted in the Developer Console via human authentication.
+</Info>
+
 ---
 
 ### 2. Verify with the 6-Digit Code
