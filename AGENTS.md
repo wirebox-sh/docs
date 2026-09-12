@@ -3,6 +3,8 @@
 ## About This Project
 
 - This is the official developer documentation for **Wirebox** built on [Mintlify](https://mintlify.com).
+- **Deployment Remote**: `git@github.com:wirebox-sh/docs.git` (`wirebox-sh/docs`). Pushing to `main` here automatically triggers Mintlify deployments to [https://docs.wirebox.sh](https://docs.wirebox.sh).
+- **Sibling Codebase Repo**: The main product codebase (Next.js frontend, Hono edge worker API, and internal specs) lives in `../WireBox` (`wirebox-sh/wirebox`). Do not put internal system implementation specs here.
 - Pages are MDX files with YAML frontmatter.
 - Site navigation and configuration live in `docs.json`.
 - All public API specifications live in `api-reference/` and mirror the public `/api/v1/*` contracts.
