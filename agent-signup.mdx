@@ -1,0 +1,302 @@
+---
+title: "Agent Self-Signup"
+description: "Let your AI agent register itself with Wirebox — no pre-existing account or manual API key needed."
+---
+
+Agent self-signup allows an autonomous AI agent to provision its own persistent identity, dedicated email address (`{agent}@wireboxmail.com`), and API key in a single HTTP request without requiring a human to manually create an account first.
+
+The agent provides the email of the human developer who oversees it. The human receives a 6-digit verification code. Once verified, full sending capabilities are unlocked, and the human can manage the agent directly from the [Wirebox Console](https://wirebox.sh/console).
+
+## Copy Prompt for your Agent
+
+Copy and paste this prompt directly into your AI agent's chat, terminal, or IDE (Claude Code, Cursor, OpenAI Codex, OpenClaw, Hermes, etc.):
+
+```text
+Sign up for a Wirebox account by following the guide at
+https://docs.wirebox.sh/agent-signup and refer to
+https://wirebox.sh/llms.txt for the documentation index.
+```
+
+---
+
+## Capabilities
+
+To prevent spam and abuse while giving the agent immediate utility, new signups start in a protected sandbox until verified:
+
+| Capability | Before Verification (Unclaimed) | After Verification (Claimed) |
+| :--- | :--- | :--- |
+| **Allowed send recipients** | Human developer's email only | Anyone |
+| **Outbound sends per 24 hours** | 3 messages | Plan-based (Free tier: 100/month) |
+| **Inbound mail receiving** | Fully enabled (`{agent}@wireboxmail.com`) | Fully enabled |
+| **Create extra identities/mailboxes** | Disabled | 1 dedicated mailbox per identity |
+
+<Note>
+  Even before verification, the mailbox is **immediately active**: it can receive emails from anyone, and the agent can send up to 3 outbound messages directly to the human developer.
+</Note>
+
+---
+
+## End-to-End Walkthrough
+
+Follow these sequential steps to register and verify your agent.
+
+### 1. Register with Wirebox
+
+Call the public registration endpoint. No authorization header or existing API key is needed.
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.wirebox.sh/api/v1/agent-signup \
+  -H "Content-Type: application/json" \
+  -d '{
+    "human_email": "developer@example.com",
+    "display_name": "Research Agent",
+    "harness": "claude-code"
+  }'
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    "https://api.wirebox.sh/api/v1/agent-signup",
+    json={
+        "human_email": "developer@example.com",
+        "display_name": "Research Agent",
+        "harness": "claude-code"
+    }
+)
+data = response.json()
+api_key = data["api_key"]
+email_address = data["email_address"]
+print(f"Provisioned mailbox: {email_address}")
+```
+
+```ts TypeScript
+const res = await fetch("https://api.wirebox.sh/api/v1/agent-signup", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    human_email: "developer@example.com",
+    display_name: "Research Agent",
+    harness: "cursor"
+  }),
+});
+const { api_key, email_address } = await res.json();
+console.log(`Provisioned mailbox: ${email_address}`);
+```
+</CodeGroup>
+
+**Response (201 Created)**:
+```json
+{
+  "api_key": "wb_live_9f8a7b6c5d4e3f2a1b0c...",
+  "email_address": "agent-7k9x2m@wireboxmail.com"
+}
+```
+
+<Warning>
+  **Store your API key securely**: The `api_key` (`wb_live_...`) is returned **only once** upon registration. Set it in your runtime environment (e.g. `WIREBOX_API_KEY`).
+</Warning>
+
+---
+
+### 2. Send an Email to the Human (Pre-Verification)
+
+In the unclaimed sandbox state, your agent is permitted to send emails to the registered `human_email`. The agent can immediately email the developer to notify them:
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.wirebox.sh/api/v1/mailboxes/agent-7k9x2m@wireboxmail.com/messages \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "to": "developer@example.com",
+    "subject": "Hello from your AI Agent via Wirebox",
+    "text": "I just signed up for Wirebox. Please check your inbox for the 6-digit verification code and share it with me!"
+  }'
+```
+
+```python Python
+headers = {"Authorization": f"Bearer {api_key}"}
+
+requests.post(
+    f"https://api.wirebox.sh/api/v1/mailboxes/{email_address}/messages",
+    headers=headers,
+    json={
+        "to": "developer@example.com",
+        "subject": "Hello from your AI Agent via Wirebox",
+        "text": "I just signed up for Wirebox. Please check your inbox for the 6-digit verification code and share it with me!"
+    }
+)
+```
+
+```ts TypeScript
+await fetch(`https://api.wirebox.sh/api/v1/mailboxes/${email_address}/messages`, {
+  method: "POST",
+  headers: {
+    Authorization: `Bearer ${api_key}`,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    to: "developer@example.com",
+    subject: "Hello from your AI Agent via Wirebox",
+    text: "I just signed up for Wirebox. Please check your inbox for the 6-digit verification code and share it with me!",
+  }),
+});
+```
+</CodeGroup>
+
+---
+
+### 3. Check Inbox
+
+Receiving emails is fully enabled from moment zero. Your agent can read incoming replies or verification codes:
+
+<CodeGroup>
+```bash cURL
+curl -X GET https://api.wirebox.sh/api/v1/mailboxes/agent-7k9x2m@wireboxmail.com/messages \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+```python Python
+inbox = requests.get(
+    f"https://api.wirebox.sh/api/v1/mailboxes/{email_address}/messages",
+    headers=headers
+).json()
+print("Received messages:", inbox.get("messages", []))
+```
+
+```ts TypeScript
+const inboxRes = await fetch(`https://api.wirebox.sh/api/v1/mailboxes/${email_address}/messages`, {
+  headers: { Authorization: `Bearer ${api_key}` },
+});
+const { messages } = await inboxRes.json();
+console.log("Received messages:", messages);
+```
+</CodeGroup>
+
+---
+
+### 4. Verify with the 6-Digit Code
+
+When the human developer provides the 6-digit code received from `Wirebox <noreply@wirebox.sh>`, submit it to claim the identity:
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.wirebox.sh/api/v1/agent-signup/verify \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "code": "483921"
+  }'
+```
+
+```python Python
+code = input("Enter 6-digit verification code: ")
+verify_res = requests.post(
+    "https://api.wirebox.sh/api/v1/agent-signup/verify",
+    headers=headers,
+    json={"code": code.strip()}
+)
+print(verify_res.json())
+```
+
+```ts TypeScript
+const code = "483921"; // Replace with code provided by human
+const verifyRes = await fetch("https://api.wirebox.sh/api/v1/agent-signup/verify", {
+  method: "POST",
+  headers: {
+    Authorization: `Bearer ${api_key}`,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({ code }),
+});
+const result = await verifyRes.json();
+console.log(result); // { verified: true }
+```
+</CodeGroup>
+
+**Response (200 OK)**:
+```json
+{
+  "verified": true
+}
+```
+
+---
+
+### 5. Send to Anyone (Full Capabilities Unlocked)
+
+With verification complete, sandbox restrictions are removed. The agent can now send emails to any recipient on the internet:
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.wirebox.sh/api/v1/mailboxes/agent-7k9x2m@wireboxmail.com/messages \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "to": "colleague@external-company.com",
+    "subject": "Project Status Update",
+    "text": "Here is the autonomous summary of the latest build..."
+  }'
+```
+
+```python Python
+requests.post(
+    f"https://api.wirebox.sh/api/v1/mailboxes/{email_address}/messages",
+    headers=headers,
+    json={
+        "to": "colleague@external-company.com",
+        "subject": "Project Status Update",
+        "text": "Here is the autonomous summary of the latest build..."
+    }
+)
+```
+
+```ts TypeScript
+await fetch(`https://api.wirebox.sh/api/v1/mailboxes/${email_address}/messages`, {
+  method: "POST",
+  headers: {
+    Authorization: `Bearer ${api_key}`,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    to: "colleague@external-company.com",
+    subject: "Project Status Update",
+    text: "Here is the autonomous summary of the latest build...",
+  }),
+});
+```
+</CodeGroup>
+
+---
+
+## Troubleshooting & Lifecycle
+
+<AccordionGroup>
+  <Accordion title="Didn't receive the verification email?">
+    Wirebox enforces a **60-second cooldown** between verification email dispatches. If you need a new code, wait 60 seconds and call `POST /api/v1/agent-signup` again with the same `human_email`. Wirebox will refresh the OTP code, rotate the API key, and resend the email automatically.
+  </Accordion>
+
+  <Accordion title="Verification code expired?">
+    Codes expire after **15 minutes**. Calling `POST /api/v1/agent-signup` with the same `human_email` will generate a fresh code.
+  </Accordion>
+
+  <Accordion title="Human Console Takeover">
+    When the human developer subsequently logs into the [Wirebox Web Console](https://wirebox.sh/console) using Google or GitHub OAuth with the same email, the agent's organization and mailbox are automatically linked with **Owner** permissions.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Mail & Messages Guide" icon="envelope" href="/guides/sending-email">
+    Learn how to send HTML emails, manage multi-turn threads, and handle attachments.
+  </Card>
+  <Card title="Real-time Webhooks" icon="webhook" href="/guides/verifying-webhooks">
+    Configure webhooks to receive instant HTTP notifications when new emails arrive.
+  </Card>
+</CardGroup>

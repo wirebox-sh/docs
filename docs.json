@@ -22,6 +22,7 @@
             "pages": [
               "index",
               "quickstart",
+              "agent-signup",
               "authentication"
             ]
           },
