@@ -7,7 +7,7 @@
     "light": "#38bdf8",
     "dark": "#0369a1"
   },
-  "favicon": "/favicon.svg",
+  "favicon": "/favicon.png",
   "logo": {
     "light": "/logo/light.svg",
     "dark": "/logo/dark.svg",
@@ -28,19 +28,11 @@
             ]
           },
           {
-            "group": "Core Concepts",
+            "group": "Capabilities",
             "pages": [
-              "concepts/identities",
-              "concepts/mailboxes",
-              "concepts/webhooks"
-            ]
-          },
-          {
-            "group": "Guides",
-            "pages": [
-              "guides/receiving-email",
-              "guides/sending-email",
-              "guides/verifying-webhooks"
+              "capabilities/identities",
+              "capabilities/email",
+              "capabilities/webhooks"
             ]
           }
         ]

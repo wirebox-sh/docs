@@ -1,0 +1,196 @@
+---
+title: "Email & Messaging"
+description: "Send outbound emails, poll inboxes, reply to threads, and handle attachments."
+---
+
+Wirebox provides autonomous AI agents with full email capabilities. Each agent identity automatically receives a dedicated, persistent email address to exchange messages with human users, external services, and other AI systems.
+
+---
+
+## Dedicated Mailbox Addresses
+
+When you provision an agent identity (e.g., `@eva`), Wirebox immediately assigns a production address:
+
+```text
+eva@wireboxmail.com
+```
+
+This mailbox can receive incoming emails from any mail provider (Gmail, Outlook, custom corporate domains) and send outbound messages to any valid address on the internet.
+
+---
+
+## Sending Outbound Email
+
+Agents can initiate email conversations using the TypeScript SDK or CLI. Wirebox supports both plain text and rich HTML bodies.
+
+<CodeGroup>
+```ts TypeScript
+import { Wirebox } from "@wirebox/sdk";
+
+const wb = new Wirebox();
+const eva = await wb.identify("eva");
+
+const message = await eva.sendEmail({
+  to: "user@example.com",
+  subject: "Quarterly Performance Report",
+  text: "Hello! Here is your requested report summary...",
+  html: "<p>Hello! Here is your <strong>requested report summary</strong>...</p>",
+});
+
+console.log("Dispatched message ID:", message.id);
+```
+
+```bash CLI
+wirebox mail send eva \
+  --to user@example.com \
+  --subject "Quarterly Performance Report" \
+  --body "Hello! Here is your requested report summary..." \
+  --html "<p>Hello! Here is your <strong>requested report summary</strong>...</p>"
+```
+</CodeGroup>
+
+---
+
+## Reading Inboxes & Polling
+
+Fetch incoming messages from the agent's dedicated mailbox. Messages arrive fully parsed with headers, plain text, HTML, and attachment metadata.
+
+<CodeGroup>
+```ts TypeScript
+import { Wirebox } from "@wirebox/sdk";
+
+const wb = new Wirebox();
+const eva = await wb.identify("eva");
+
+// 1. Fetch recent messages
+const { messages } = await eva.listMessages({ limit: 10 });
+for (const msg of messages) {
+  console.log(`[${msg.id}] From: ${msg.from} | Subject: ${msg.subject}`);
+}
+
+// 2. Iterate lazily through message history (auto-paginating)
+for await (const msg of eva.iterMessages({ limit: 50 })) {
+  console.log(`Processing: ${msg.subject}`);
+}
+```
+
+```bash CLI
+# Tabular view in terminal
+wirebox mail list eva --limit 10
+
+# Raw JSON output for subagent pipelines or jq scripting
+wirebox mail list eva --limit 10 --json
+
+# Inspect a single message in detail
+wirebox mail get eva msg_01J8ABC123XYZ
+```
+</CodeGroup>
+
+---
+
+## Replying to Existing Threads
+
+When an agent replies to a human user, Wirebox maintains RFC 5322 conversation continuity:
+1. Sets `In-Reply-To` and `References` headers referencing previous message IDs.
+2. Prefixes the Subject line with `Re:` if not already present.
+3. Automatically links the response to the existing conversation `thread_id`.
+
+<CodeGroup>
+```ts TypeScript
+import { Wirebox } from "@wirebox/sdk";
+
+const wb = new Wirebox();
+const eva = await wb.identify("eva");
+
+await eva.replyEmail("msg_01J8ABC123XYZ", {
+  text: "Hello Alex,\n\nI have adjusted your account limits as requested.\n\nBest,\nEva",
+});
+```
+
+```bash CLI
+wirebox mail reply eva msg_01J8ABC123XYZ \
+  --body "Hello Alex, I have adjusted your account limits as requested. Best, Eva"
+```
+</CodeGroup>
+
+---
+
+## Sending Attachments
+
+Send PDF reports, invoices, images, logs, or data exports alongside your messages.
+
+<CodeGroup>
+```ts TypeScript
+import * as fs from "node:fs";
+import { Wirebox } from "@wirebox/sdk";
+
+const wb = new Wirebox();
+const eva = await wb.identify("eva");
+
+const pdfData = fs.readFileSync("./export.pdf").toString("base64");
+
+await eva.sendEmail({
+  to: "client@example.com",
+  subject: "Exported Dataset",
+  text: "Please find your requested dataset attached below.",
+  attachments: [
+    {
+      filename: "export.pdf",
+      content_type: "application/pdf",
+      content: pdfData,
+    },
+  ],
+});
+```
+
+```bash CLI
+# The CLI automatically reads, determines MIME type, and base64 encodes the file
+wirebox mail send eva \
+  --to client@example.com \
+  --subject "Exported Dataset" \
+  --body "Please find your requested dataset attached below." \
+  --attach ./export.pdf
+```
+</CodeGroup>
+
+---
+
+## Deleting Messages
+
+Remove messages from the agent's mailbox when archiving or adhering to data retention policies.
+
+<CodeGroup>
+```ts TypeScript
+await eva.deleteMessage("msg_01J8ABC123XYZ");
+console.log("Message deleted.");
+```
+
+```bash CLI
+wirebox mail delete eva msg_01J8ABC123XYZ
+```
+</CodeGroup>
+
+---
+
+## Delivery Status Lifecycle
+
+Every outbound message proceeds through a tracked delivery lifecycle:
+
+| Status | Meaning |
+| :--- | :--- |
+| `queued` | Message accepted by Wirebox and queued for dispatch. |
+| `sent` | Dispatched to the recipient mail exchange (MX) server. |
+| `delivered` | Confirmed received by the remote server. |
+| `bounced` | Rejected by the recipient server (invalid address, mailbox full). |
+| `failed` | Outbound delivery failed permanently after edge retries. |
+
+---
+
+## Related APIs
+
+If you are writing low-level HTTP clients or webhook receivers, refer to the REST API Reference:
+
+* [Send Message](/api-reference/mail/send)
+* [List Messages](/api-reference/mail/messages)
+* [List Threads](/api-reference/mail/threads)
+* [Get Mailbox](/api-reference/mail/mailboxes)

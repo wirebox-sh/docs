@@ -1,0 +1,171 @@
+---
+title: "Agent Identities"
+description: "Claim persistent handles, manage agent personas, and bind communication channels."
+---
+
+An **Agent Identity** is the central anchor for an autonomous agent within Wirebox. It equips an AI agent with a persistent persona, a globally unique address handle, and linked communication channels.
+
+---
+
+## Global Handle Namespace
+
+Every agent has an `agent_handle` that uniquely identifies it across the Wirebox network:
+
+* **Format**: 2–32 alphanumeric characters, digits, or underscores (e.g., `eva`, `support_bot`, `triage_ai`).
+* **Handle reservation**: Handles live in a global namespace. Once claimed, your handle cannot be taken by another organization.
+* **Email integration**: Claiming `@eva` automatically provisions the dedicated inbox `eva@wireboxmail.com`.
+
+---
+
+## Identity Lifecycle & Management
+
+### Creating an Identity
+
+Claim a new unique handle for your agent. The associated mailbox is provisioned instantly.
+
+<CodeGroup>
+```ts TypeScript
+import { Wirebox } from "@wirebox/sdk";
+
+const wb = new Wirebox();
+
+const identity = await wb.identities.create({
+  agent_handle: "eva",
+  display_name: "Eva Customer Support",
+  description: "Autonomous customer triage and billing agent",
+});
+
+console.log("Claimed Handle:", identity.agent_handle);
+console.log("Dedicated Mailbox:", identity.mailbox_address);
+```
+
+```bash CLI
+wirebox identity create eva \
+  --display-name "Eva Customer Support" \
+  --description "Autonomous customer triage and billing agent"
+```
+</CodeGroup>
+
+---
+
+### Retrieving & Listing Identities
+
+Fetch existing identities across your organization or look up a specific agent.
+
+<CodeGroup>
+```ts TypeScript
+import { Wirebox } from "@wirebox/sdk";
+
+const wb = new Wirebox();
+
+// 1. List all identities in the organization
+const { identities } = await wb.identities.list({ limit: 20 });
+for (const id of identities) {
+  console.log(`@${id.agent_handle} -> ${id.mailbox_address}`);
+}
+
+// 2. Retrieve a specific identity by handle
+const identity = await wb.identities.get("eva");
+console.log(`Display Name: ${identity.display_name}`);
+```
+
+```bash CLI
+# List all identities in terminal
+wirebox identity list
+
+# Output raw JSON (ideal for agent shell tool integration)
+wirebox identity list --json
+
+# Get details for a specific identity
+wirebox identity get eva
+```
+</CodeGroup>
+
+---
+
+### Updating Agent Persona
+
+Modify display names or operational descriptions without changing the underlying handle or mailbox address.
+
+<CodeGroup>
+```ts TypeScript
+const updated = await wb.identities.update("eva", {
+  display_name: "Eva Senior Support Lead",
+  description: "Escalated tier-2 support triage agent",
+});
+
+console.log("Updated Name:", updated.display_name);
+```
+
+```bash CLI
+wirebox identity update eva \
+  --display-name "Eva Senior Support Lead" \
+  --description "Escalated tier-2 support triage agent"
+```
+</CodeGroup>
+
+---
+
+### Deleting an Identity
+
+Permanently release an agent identity and tear down its associated mailbox and stored messages.
+
+<CodeGroup>
+```ts TypeScript
+await wb.identities.delete("eva");
+console.log("Identity released successfully.");
+```
+
+```bash CLI
+wirebox identity delete eva
+```
+</CodeGroup>
+
+---
+
+## The `AgentIdentity` Domain Object
+
+In addition to the collection-level `wb.identities` manager, the Wirebox TypeScript SDK provides a high-level **Domain Object** pattern via `wb.identify(handle)`:
+
+```ts
+// Bind directly to an agent context
+const eva = await wb.identify("eva");
+
+// Access identity properties
+console.log(eva.handle);          // "eva"
+console.log(eva.mailboxAddress);  // "eva@wireboxmail.com"
+
+// Perform communication actions directly on the agent instance
+await eva.sendEmail({
+  to: "customer@example.com",
+  subject: "Resolution Update",
+  text: "Your issue has been resolved.",
+});
+```
+
+---
+
+## Multi-Agent Organizations
+
+Your organization can provision dozens or hundreds of distinct agent identities to support specialized agent teams:
+
+```text
+Acme Corp (Organization)
+├── @eva        --> Billing & Subscriptions (eva@wireboxmail.com)
+├── @dev_bot    --> GitHub & PR Notifications (dev_bot@wireboxmail.com)
+└── @triage     --> General Support Inquiries (triage@wireboxmail.com)
+```
+
+Each identity maintains completely isolated conversation threads, mailbox storage, and webhook delivery filtering.
+
+---
+
+## Related APIs
+
+If you are constructing low-level HTTP clients or inspecting raw payloads, refer to the REST API Reference:
+
+* [Create Identity](/api-reference/identities/create)
+* [List Identities](/api-reference/identities/list)
+* [Get Identity](/api-reference/identities/get)
+* [Update Identity](/api-reference/identities/update)
+* [Delete Identity](/api-reference/identities/delete)

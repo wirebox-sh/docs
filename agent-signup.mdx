@@ -45,6 +45,22 @@ Follow these sequential steps to register and verify your agent.
 Call the public registration endpoint. No authorization header or existing API key is needed.
 
 <CodeGroup>
+```bash CLI
+wirebox signup \
+  --human-email developer@example.com \
+  --display-name "Research Agent"
+```
+
+```ts TypeScript (SDK)
+import { Wirebox } from "@wirebox/sdk";
+
+const { apiKey, emailAddress } = await Wirebox.signup({
+  humanEmail: "developer@example.com",
+  displayName: "Research Agent",
+});
+console.log(`Provisioned mailbox: ${emailAddress}`);
+```
+
 ```bash cURL
 curl -X POST https://api.wirebox.sh/api/v1/agent-signup \
   -H "Content-Type: application/json" \
@@ -70,20 +86,6 @@ data = response.json()
 api_key = data["api_key"]
 email_address = data["email_address"]
 print(f"Provisioned mailbox: {email_address}")
-```
-
-```ts TypeScript
-const res = await fetch("https://api.wirebox.sh/api/v1/agent-signup", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({
-    human_email: "developer@example.com",
-    display_name: "Research Agent",
-    harness: "cursor"
-  }),
-});
-const { api_key, email_address } = await res.json();
-console.log(`Provisioned mailbox: ${email_address}`);
 ```
 </CodeGroup>
 
@@ -115,6 +117,20 @@ The agent prompts the human developer directly in the chat or terminal:
 Once the developer enters the 6-digit code, submit it to claim the identity and unlock full capabilities:
 
 <CodeGroup>
+```bash CLI
+wirebox verify --code 483921
+```
+
+```ts TypeScript (SDK)
+import { Wirebox } from "@wirebox/sdk";
+
+const wb = await Wirebox.verifySignup({
+  apiKey: "wb_live_...",
+  code: "483921",
+});
+console.log("Agent verified!");
+```
+
 ```bash cURL
 curl -X POST https://api.wirebox.sh/api/v1/agent-signup/verify \
   -H "Authorization: Bearer YOUR_API_KEY" \
@@ -132,20 +148,6 @@ verify_res = requests.post(
     json={"code": code.strip()}
 )
 print(verify_res.json())
-```
-
-```ts TypeScript
-const code = "483921"; // Provided by human in chat/terminal
-const verifyRes = await fetch("https://api.wirebox.sh/api/v1/agent-signup/verify", {
-  method: "POST",
-  headers: {
-    Authorization: `Bearer ${api_key}`,
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify({ code }),
-});
-const result = await verifyRes.json();
-console.log(result); // { verified: true }
 ```
 </CodeGroup>
 
@@ -165,6 +167,26 @@ With verification complete, sandbox restrictions are removed. The agent can now 
 #### Sending Outbound Emails
 
 <CodeGroup>
+```bash CLI
+wirebox mail send agent-7k9x2m@wireboxmail.com \
+  --to colleague@external-company.com \
+  --subject "Project Status Update" \
+  --body "Here is the autonomous summary of the latest build..."
+```
+
+```ts TypeScript (SDK)
+import { Wirebox } from "@wirebox/sdk";
+
+const wb = new Wirebox({ apiKey: process.env.WIREBOX_API_KEY });
+const agent = await wb.identify("agent-7k9x2m");
+
+await agent.sendEmail({
+  to: "colleague@external-company.com",
+  subject: "Project Status Update",
+  text: "Here is the autonomous summary of the latest build...",
+});
+```
+
 ```bash cURL
 curl -X POST https://api.wirebox.sh/api/v1/mailboxes/agent-7k9x2m@wireboxmail.com/messages \
   -H "Authorization: Bearer YOUR_API_KEY" \
@@ -187,26 +209,20 @@ requests.post(
     }
 )
 ```
-
-```ts TypeScript
-await fetch(`https://api.wirebox.sh/api/v1/mailboxes/${email_address}/messages`, {
-  method: "POST",
-  headers: {
-    Authorization: `Bearer ${api_key}`,
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify({
-    to: "colleague@external-company.com",
-    subject: "Project Status Update",
-    text: "Here is the autonomous summary of the latest build...",
-  }),
-});
-```
 </CodeGroup>
 
 #### Reading Inbox Messages
 
 <CodeGroup>
+```bash CLI
+wirebox mail list agent-7k9x2m@wireboxmail.com
+```
+
+```ts TypeScript (SDK)
+const { messages } = await agent.listMessages();
+console.log("Received messages:", messages);
+```
+
 ```bash cURL
 curl -X GET https://api.wirebox.sh/api/v1/mailboxes/agent-7k9x2m@wireboxmail.com/messages \
   -H "Authorization: Bearer YOUR_API_KEY"
@@ -218,14 +234,6 @@ inbox = requests.get(
     headers={"Authorization": f"Bearer {api_key}"}
 ).json()
 print("Received messages:", inbox.get("messages", []))
-```
-
-```ts TypeScript
-const inboxRes = await fetch(`https://api.wirebox.sh/api/v1/mailboxes/${email_address}/messages`, {
-  headers: { Authorization: `Bearer ${api_key}` },
-});
-const { messages } = await inboxRes.json();
-console.log("Received messages:", messages);
 ```
 </CodeGroup>
 
@@ -252,10 +260,10 @@ console.log("Received messages:", messages);
 ## Next Steps
 
 <CardGroup cols={2}>
-  <Card title="Mail & Messages Guide" icon="envelope" href="/guides/sending-email">
+  <Card title="Email & Messaging" icon="envelope" href="/capabilities/email">
     Learn how to send HTML emails, manage multi-turn threads, and handle attachments.
   </Card>
-  <Card title="Real-time Webhooks" icon="webhook" href="/guides/verifying-webhooks">
+  <Card title="Real-time Webhooks" icon="webhook" href="/capabilities/webhooks">
     Configure webhooks to receive instant HTTP notifications when new emails arrive.
   </Card>
 </CardGroup>

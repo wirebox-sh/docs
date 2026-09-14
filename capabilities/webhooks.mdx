@@ -1,0 +1,155 @@
+---
+title: "Webhooks & Delivery"
+description: "Real-time HTTP push notifications with Bearer Token and HMAC-SHA256 signature verification."
+---
+
+Webhooks deliver real-time HTTP POST notifications to your backend servers whenever events occur across your agent mailboxes. Instead of continuously polling for new messages, webhooks let your agents respond instantly to inbound emails and delivery status changes.
+
+---
+
+## Supported Event Types
+
+| Event Type | Channel | Description |
+| :--- | :--- | :--- |
+| `message.received` | Mail | An inbound email was received, parsed, and stored in an agent inbox. |
+| `message.sent` | Mail | An outbound email was accepted and dispatched to the recipient's mail exchange server. |
+| `message.delivered` | Mail | The remote mail server confirmed successful delivery of the outbound email. |
+| `message.bounced` | Mail | The remote mail server rejected the email (e.g. invalid recipient or mailbox full). |
+| `message.failed` | Mail | Outbound delivery failed permanently after edge retries. |
+| `test.ping` | System | Diagnostic ping fired from the Console or API to verify endpoint connectivity. |
+
+---
+
+## Inbound Payload Example
+
+When an event triggers, Wirebox dispatches a structured JSON payload to your webhook URL:
+
+```json
+{
+  "id": "evt_01J8DEF456GHI789",
+  "event": "message.received",
+  "created_at": "2026-09-14T10:00:00Z",
+  "data": {
+    "message_id": "msg_01J8ABC123XYZ",
+    "thread_id": "thrd_01J8XYZ987ABC",
+    "agent_handle": "eva",
+    "mailbox_address": "eva@wireboxmail.com",
+    "from": "Alex Customer <alex@example.com>",
+    "to": ["eva@wireboxmail.com"],
+    "subject": "Question regarding my API quota",
+    "text": "Hi Eva, how can I upgrade my team's quota?",
+    "html": "<p>Hi Eva, how can I upgrade my team's quota?</p>",
+    "attachments": []
+  }
+}
+```
+
+---
+
+## Authentication & Verification
+
+Wirebox provides two complementary layers of authentication to ensure incoming webhooks originate legitimately from Wirebox.
+
+### 1. Custom Auth Token (Bearer Authentication)
+
+The simplest method. When registering a webhook endpoint, supply an optional `auth_token`:
+
+```http
+Authorization: Bearer my-custom-secret-token
+```
+
+Your receiving server simply checks this header:
+
+```ts
+if (req.headers["authorization"] !== `Bearer ${process.env.WEBHOOK_SECRET}`) {
+  return res.status(401).send("Unauthorized");
+}
+```
+
+---
+
+### 2. Zero-Trust HMAC-SHA256 Verification
+
+For cryptographic tamper-proofing, every webhook endpoint is issued a signing secret (`whsec_...`). Wirebox signs the payload using HMAC-SHA256 and includes the signature in the header:
+
+```http
+X-Wirebox-Signature-256: t=1726051200,v1=9a8b7c6d5e4f3a2b1c0...
+```
+
+The string to sign is constructed as:
+```text
+string_to_sign = "t=" + timestamp + "." + raw_body
+```
+
+#### Verification Function (Node.js / Web Crypto)
+
+```ts
+import crypto from "node:crypto";
+
+export function verifyWireboxWebhook(
+  rawBody: string,
+  signatureHeader: string,
+  secret: string,
+  toleranceSeconds = 300
+): boolean {
+  // 1. Parse header components
+  const elements = signatureHeader.split(",");
+  let timestamp: string | null = null;
+  const signatures: string[] = [];
+
+  for (const element of elements) {
+    const [key, value] = element.trim().split("=");
+    if (key === "t") timestamp = value;
+    if (key === "v1") signatures.push(value);
+  }
+
+  if (!timestamp || signatures.length === 0) return false;
+
+  // 2. Prevent replay attacks
+  const currentTime = Math.floor(Date.now() / 1000);
+  if (Math.abs(currentTime - parseInt(timestamp, 10)) > toleranceSeconds) {
+    return false;
+  }
+
+  // 3. Compute expected signature
+  const payloadToSign = `t=${timestamp}.${rawBody}`;
+  const expectedSignature = crypto
+    .createHmac("sha256", secret)
+    .update(payloadToSign, "utf8")
+    .digest("hex");
+
+  // 4. Constant-time comparison
+  for (const sig of signatures) {
+    if (
+      crypto.timingSafeEqual(
+        Buffer.from(sig, "hex"),
+        Buffer.from(expectedSignature, "hex")
+      )
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+}
+```
+
+---
+
+## Idempotency & Retries
+
+* **Idempotency**: Every webhook payload contains a unique, stable `id`. If your server receives the same `id` more than once, safely acknowledge and discard the duplicate.
+* **Automatic Retries**: If your server returns a non-2xx status code or does not respond within 10 seconds, Wirebox retries delivery with exponential backoff up to 5 times.
+
+---
+
+## Related APIs
+
+To configure webhooks programmatically, refer to the REST API Reference:
+
+* [Create Webhook](/api-reference/webhooks/create)
+* [List Webhooks](/api-reference/webhooks/list)
+* [Get Webhook](/api-reference/webhooks/get)
+* [Rotate Secret](/api-reference/webhooks/rotate-secret)
+* [Send Test Ping](/api-reference/webhooks/test-ping)
+* [Webhook Events](/api-reference/webhooks/events)

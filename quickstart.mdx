@@ -1,160 +1,133 @@
 ---
 title: "Quickstart"
-description: "Get your agent up and running with a real email address in under 5 minutes."
+description: "Install the Wirebox SDK or CLI and make your first API call in TypeScript or the terminal."
 ---
 
-In this guide, you will:
-1. Obtain an API Key from the Wirebox Console.
-2. Claim a dedicated agent identity and mailbox (`@eva`).
-3. Send an email to the agent and observe the incoming thread.
-4. Reply to the conversation using the API.
+In this guide, you will provision an agent identity with a dedicated email inbox (`@eva`), then send and receive your first messages.
+
+<Card title="No API key yet? Copy and paste this prompt asking your agent to sign itself up:">
+  ```text
+  Sign up for a Wirebox account by following the guide at https://docs.wirebox.sh/agent-signup and refer to https://wirebox.sh/llms.txt for full documentation.
+  ```
+</Card>
+
+Wirebox is available as an official TypeScript SDK and a terminal CLI.
 
 ---
 
-### Step 1: Get an API Key
+## Set up
 
-1. Open the [Wirebox Console](https://wirebox.sh/console).
-2. Sign in with GitHub or Google.
-3. Navigate to **API Keys** and click **Create Key**.
-4. Save the generated key (`wb_live_...`).
+<CodeGroup>
+```bash npm (SDK)
+npm install @wirebox/sdk
+```
 
-Export your key in your terminal:
+```bash CLI
+npm install -g @wirebox/cli
+```
+</CodeGroup>
+
+Requires Node.js ≥ 18 (TypeScript SDK and CLI).
+
+---
+
+## Authentication
+
+You will need a Wirebox API key. Obtain one from the [Wirebox Console](https://wirebox.sh/console) or let your agent self-register via [Agent Self-Signup](/agent-signup).
+
+#### Environment Variable
+
+Export your API key in your terminal or `.env` file:
 
 ```bash
 export WIREBOX_API_KEY="wb_live_your_secret_key_here"
 ```
 
+#### CLI Resolution & Flags
+
+The CLI automatically resolves your key from the `WIREBOX_API_KEY` environment variable. You can also pass it explicitly with `--api-key`.
+
+| Flag | Description |
+| :--- | :--- |
+| `--api-key <key>` | Wirebox API key (or `WIREBOX_API_KEY` environment variable) |
+| `--base-url <url>` | Override API base URL (defaults to `https://api.wirebox.sh`) |
+| `--json` | Output as raw JSON instead of formatted tables (ideal for AI subagents and `jq`) |
+
 ---
 
-### Step 2: Create an Agent Identity
-
-Claim a handle for your agent. When you create an identity, Wirebox automatically creates its mailbox (`handle@wireboxmail.com`).
+## Quick start
 
 <CodeGroup>
-```bash cURL
-curl -X POST https://api.wirebox.sh/api/v1/identities \
-  -H "Authorization: Bearer $WIREBOX_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "agent_handle": "eva",
-    "display_name": "Eva Support Agent",
-    "description": "Autonomous customer triage agent"
-  }'
-```
-
-```python Python
-import os
-import requests
-
-API_KEY = os.getenv("WIREBOX_API_KEY")
-BASE_URL = "https://api.wirebox.sh/api/v1"
-
-response = requests.post(
-    f"{BASE_URL}/identities",
-    headers={"Authorization": f"Bearer {API_KEY}"},
-    json={
-        "agent_handle": "eva",
-        "display_name": "Eva Support Agent",
-        "description": "Autonomous customer triage agent"
-    }
-)
-print(response.json())
-```
-
 ```ts TypeScript
-const API_KEY = process.env.WIREBOX_API_KEY!;
-const BASE_URL = "https://api.wirebox.sh/api/v1";
+import { Wirebox } from "@wirebox/sdk";
 
-const res = await fetch(`${BASE_URL}/identities`, {
-  method: "POST",
-  headers: {
-    Authorization: `Bearer ${API_KEY}`,
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify({
-    agent_handle: "eva",
-    display_name: "Eva Support Agent",
-    description: "Autonomous customer triage agent",
-  }),
+// 1. Initialize client (automatically reads process.env.WIREBOX_API_KEY)
+const wb = new Wirebox();
+
+// 2. Create an agent identity — provisions eva@wireboxmail.com instantly
+const identity = await wb.identities.create({
+  agent_handle: "eva",
+  display_name: "Eva Support",
+  description: "Autonomous customer triage and support agent",
 });
-const identity = await res.json();
-console.log("Agent Mailbox:", identity.mailbox_address);
-```
-</CodeGroup>
+console.log(`Mailbox ready: ${identity.mailbox_address}`);
 
-**Response (201 Created)**:
-```json
-{
-  "id": "ident_01J8ABC123XYZ",
-  "agent_handle": "eva",
-  "display_name": "Eva Support Agent",
-  "description": "Autonomous customer triage agent",
-  "mailbox_address": "eva@wireboxmail.com",
-  "created_at": "2026-09-11T10:00:00Z",
-  "updated_at": "2026-09-11T10:00:00Z"
+// 3. Bind directly to the agent context
+const eva = await wb.identify("eva");
+
+// 4. Send an outbound email
+const sent = await eva.sendEmail({
+  to: "user@example.com",
+  subject: "Welcome from Eva",
+  text: "Hello! I am Eva, your AI assistant. My mailbox is fully configured.",
+});
+console.log(`Message sent: ${sent.id}`);
+
+// 5. Read incoming inbox messages
+const { messages } = await eva.listMessages({ limit: 10 });
+for (const msg of messages) {
+  console.log(`[${msg.id}] From: ${msg.from} | Subject: ${msg.subject}`);
 }
 ```
 
----
+```bash CLI
+# 1. Create an agent identity — provisions eva@wireboxmail.com instantly
+wirebox identity create eva \
+  --display-name "Eva Support" \
+  --description "Autonomous customer triage and support agent"
 
-### Step 3: Receive an Email
+# 2. Send an outbound email
+wirebox mail send eva \
+  --to user@example.com \
+  --subject "Welcome from Eva" \
+  --body "Hello! I am Eva, your AI assistant. My mailbox is fully configured."
 
-Send an email from your personal Gmail or Outlook account to `eva@wireboxmail.com`.
+# 3. Read incoming inbox messages (formatted table)
+wirebox mail list eva --limit 10
 
-Wirebox's edge routing engine immediately:
-1. Ingests the raw MIME message.
-2. Extracts plain text and HTML bodies, headers, and attachments.
-3. Groups the message into an active conversation **Thread**.
-4. Fires a `message.received` webhook if configured.
-
-List incoming threads for your agent:
-
-```bash cURL
-curl -X GET "https://api.wirebox.sh/api/v1/mail/threads?agent=eva" \
-  -H "Authorization: Bearer $WIREBOX_API_KEY"
-```
-
----
-
-### Step 4: Send a Reply
-
-Reply to the sender using the thread's ID or conversation context:
-
-<CodeGroup>
-```bash cURL
-curl -X POST https://api.wirebox.sh/api/v1/mail/send \
-  -H "Authorization: Bearer $WIREBOX_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "agent": "eva",
-    "to": ["user@example.com"],
-    "subject": "Re: Help with account setup",
-    "text": "Hello! I am Eva, your AI support assistant. I received your message and have resolved the issue.",
-    "thread_id": "thrd_01J8XYZ987ABC"
-  }'
-```
-
-```python Python
-send_res = requests.post(
-    f"{BASE_URL}/mail/send",
-    headers={"Authorization": f"Bearer {API_KEY}"},
-    json={
-        "agent": "eva",
-        "to": ["user@example.com"],
-        "subject": "Re: Help with account setup",
-        "text": "Hello! I am Eva, your AI assistant. I have resolved your request.",
-        "thread_id": "thrd_01J8XYZ987ABC"
-    }
-)
-print("Sent Message ID:", send_res.json()["id"])
+# 4. Read incoming messages as raw JSON (for subagents or jq piping)
+wirebox mail list eva --limit 10 --json
 ```
 </CodeGroup>
 
-Congratulations! You have set up a full-duplex email workflow for your AI agent.
+Every agent identity has a stable, production email address derived from its handle:
+
+| Resource | Address | Description |
+| :--- | :--- | :--- |
+| **Mailbox** | `eva@wireboxmail.com` | Receives inbound messages from Gmail, Outlook, or corporate domains |
 
 ---
 
 ## Next Steps
 
-* [Set up Webhooks](/concepts/webhooks) to receive real-time notifications on your server whenever a new email arrives.
-* [Explore the API Reference](/api-reference/overview) to inspect all available query filters and endpoints.
+<CardGroup cols={3}>
+  <Card title="Agent Identities" icon="robot" href="/capabilities/identities">
+    Claim handles, update agent personas, and organize multi-agent teams.
+  </Card>
+  <Card title="Email & Messaging" icon="envelope" href="/capabilities/email">
+    Explore HTML formatting, file attachments, and replying to threaded conversations.
+  </Card>
+  <Card title="Real-time Webhooks" icon="bolt" href="/capabilities/webhooks">
+    Receive instant push notifications and verify HMAC-SHA256 signatures.
+  </Card>
+</CardGroup>

@@ -1,7 +1,13 @@
 <svg width="150" height="28" viewBox="0 0 150 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Wirebox Icon -->
+  <!-- Wirebox Icon (matching wirebox.sh homepage navbar) -->
   <rect width="28" height="28" rx="7" fill="#0284c7" />
-  <path d="M5 8 l 4 13 l 5 -10 l 5 10 l 4 -13" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+  <g transform="translate(14, 14) scale(0.68) translate(-12, -12)"
+     fill="none" stroke="white" stroke-width="2.2"
+     stroke-linecap="round" stroke-linejoin="round">
+    <rect x="5" y="5" width="14" height="14" rx="3.5" />
+    <path d="M1.6 8.5H5M1.6 15.5H5M12 1.6V5M19 12h3.4M12 19v3.4" />
+    <circle cx="12" cy="12" r="2.1" fill="white" stroke="none" />
+  </g>
   
   <!-- Wordmark "Wirebox" -->
   <text x="36" y="19.5" font-family="-apple-system, BlinkMacSystemFont, 'Geist', 'Segoe UI', sans-serif" font-size="16" font-weight="700" fill="#ffffff" letter-spacing="-0.03em">Wirebox</text>
