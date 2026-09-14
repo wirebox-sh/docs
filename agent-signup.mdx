@@ -52,7 +52,7 @@ wirebox signup \
 ```
 
 ```ts TypeScript (SDK)
-import { Wirebox } from "@wirebox/sdk";
+import { Wirebox } from "@wirebox-sh/sdk";
 
 const { apiKey, emailAddress } = await Wirebox.signup({
   humanEmail: "developer@example.com",
@@ -122,7 +122,7 @@ wirebox verify --code 483921
 ```
 
 ```ts TypeScript (SDK)
-import { Wirebox } from "@wirebox/sdk";
+import { Wirebox } from "@wirebox-sh/sdk";
 
 const wb = await Wirebox.verifySignup({
   apiKey: "wb_live_...",
@@ -175,7 +175,7 @@ wirebox mail send agent-7k9x2m@wireboxmail.com \
 ```
 
 ```ts TypeScript (SDK)
-import { Wirebox } from "@wirebox/sdk";
+import { Wirebox } from "@wirebox-sh/sdk";
 
 const wb = new Wirebox({ apiKey: process.env.WIREBOX_API_KEY });
 const agent = await wb.identify("agent-7k9x2m");
