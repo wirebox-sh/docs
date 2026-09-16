@@ -13,7 +13,7 @@ With tunnels, your local development workstation or firewalled private environme
 
 1. **Outbound Edge Session**: The Wirebox CLI or client initiates an outbound TLS connection to Wirebox's edge routing network.
 2. **Public Edge URL**: Wirebox assigns a public HTTPS subdomain (e.g. `https://eva.wirebox.run`).
-3. **Transparent HTTP Proxying**: Incoming HTTP requests to the public URL are forwarded locally to your configured loopback port with full support for request headers, binary payloads, and Server-Sent Events (SSE).
+3. **Transparent HTTP & WebSocket Proxying**: Incoming HTTP requests and WebSocket upgrades (`Upgrade: websocket`) to the public URL are forwarded locally to your configured loopback port or in-memory handlers, with full support for request headers, binary payloads, subprotocol negotiation (`Sec-WebSocket-Protocol`), and bidirectional streaming.
 
 ---
 
@@ -97,6 +97,58 @@ wirebox tunnel list
 
 # Update status
 wirebox tunnel update eva --status disabled
+```
+</CodeGroup>
+
+---
+
+## WebSocket Support
+
+Wirebox tunnels support bidirectional WebSocket proxying out of the box:
+
+- **Local Port / URL Forwarding**: Any WebSocket upgrade request to `https://{handle}.wirebox.run` is transparently upgraded and proxied to your local server (e.g. `ws://127.0.0.1:8000`).
+- **Subprotocol Negotiation**: Automatically preserves and echoes back `Sec-WebSocket-Protocol` headers (e.g. for Vite HMR, chat protocols, or custom agent streaming).
+- **In-Memory WebSocket Handlers**: TypeScript SDK allows handling incoming WebSocket connections in-process without listening on a TCP port.
+
+<CodeGroup>
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wb = new Wirebox({ apiKey: process.env.WIREBOX_API_KEY });
+
+const session = await wb.tunnels.connect("eva", {
+  wsHandler: async (ws) => {
+    console.log(`WebSocket client connected at path: ${ws.path}`);
+
+    ws.on("message", (data, isBinary) => {
+      console.log("Received:", data);
+      ws.send(`Echo: ${data}`);
+    });
+
+    ws.on("close", (code, reason) => {
+      console.log(`Client disconnected: ${code} ${reason}`);
+    });
+  },
+});
+```
+
+```python Python
+import asyncio
+from wirebox import AsyncWirebox
+
+async def main():
+    async with AsyncWirebox() as wb:
+        # Automatically proxies both HTTP requests and WebSocket upgrades to port 8000
+        session = await wb.tunnels.connect("eva", forward_to=8000)
+        print(f"Tunnel live at {session.public_url}")
+        await session.wait_closed()
+
+asyncio.run(main())
+```
+
+```bash CLI
+# Expose local port 8000 (proxies both HTTP and WebSocket traffic)
+wirebox tunnel connect eva --port 8000
 ```
 </CodeGroup>
 
