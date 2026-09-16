@@ -15,6 +15,28 @@ description: "Retrieve details and mailbox bindings for a specific agent identit
 curl -X GET https://api.wirebox.sh/api/v1/identities/eva \
   -H "Authorization: Bearer $WIREBOX_API_KEY"
 ```
+
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wirebox:
+    identity = wirebox.get_identity("eva")
+    print("Handle:", identity.agent_handle)
+    print("Mailbox:", identity.mailbox_address)
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wirebox = new Wirebox();
+const identity = await wirebox.getIdentity("eva");
+console.log("Handle:", identity.agentHandle);
+console.log("Mailbox:", identity.mailboxAddress);
+```
+
+```bash CLI
+wirebox identity get eva
+```
 </RequestExample>
 
 <ResponseExample>

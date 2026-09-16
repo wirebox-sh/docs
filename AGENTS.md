@@ -28,6 +28,21 @@
 
 ---
 
+## 5 Core Documentation Principles
+
+1. **Explicit Permission for Commit & Push**:
+   - Never commit or push documentation changes without explicit consent from the user. Work must remain in the working tree for review.
+2. **Strict Preservation of Existing Organization**:
+   - Do not arbitrarily create new documents. If creating new pages is necessary, they must conform strictly to the existing documentation organization and taxonomy.
+3. **No Gratuitous Restructuring**:
+   - Do not randomly alter or reorganize the established documentation structure.
+4. **User Experience First**:
+   - Prioritize documentation usability and cognitive load. Always consider whether changes would cause confusion or prevent users from finding documents they rely on. Avoid creating redundant catch-all buckets (e.g. generic "Guides"). Always group by functional domain and capability.
+5. **No Unimplemented Features (Strictly Ban Planned / Unimplemented Content)**:
+   - **没有实现的功能不要写**。绝对禁止在对外文档中编写未实现、正在规划（Planned）、即将支持（Coming Soon）或假设性的功能、协议与参数。文档只记录当前代码库已实现、已测试并通过验证的就绪功能。
+
+---
+
 ## Terminology
 
 - **Identity**: A real-world agent identity container (`id: ident_...`). Can have multiple communication channels (email, phone, etc.).

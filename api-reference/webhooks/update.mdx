@@ -24,6 +24,43 @@ description: "Update destination URL, subscribed events, or authentication token
   Updated bearer token (or pass `null` to remove it).
 </ParamField>
 
+<RequestExample>
+```bash cURL
+curl -X PATCH https://api.wirebox.sh/api/v1/webhooks/whk_01J8DEF456GHI789 \
+  -H "Authorization: Bearer $WIREBOX_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "events": ["message.received", "message.sent", "message.delivered", "message.bounced"]
+  }'
+```
+
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wirebox:
+    updated = wirebox.update_webhook(
+        "whk_01J8DEF456GHI789",
+        events=["message.received", "message.sent", "message.delivered", "message.bounced"]
+    )
+    print("Updated events:", updated.events)
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wirebox = new Wirebox();
+const updated = await wirebox.updateWebhook("whk_01J8DEF456GHI789", {
+  events: ["message.received", "message.sent", "message.delivered", "message.bounced"],
+});
+console.log("Updated events:", updated.events);
+```
+
+```bash CLI
+wirebox webhook update whk_01J8DEF456GHI789 \
+  --events message.received,message.sent,message.delivered,message.bounced
+```
+</RequestExample>
+
 <ResponseExample>
 ```json 200 OK
 {

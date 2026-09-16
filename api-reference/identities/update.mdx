@@ -30,6 +30,35 @@ curl -X PATCH https://api.wirebox.sh/api/v1/identities/eva \
     "description": "Escalated support and billing queries"
   }'
 ```
+
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wirebox:
+    updated = wirebox.update_identity(
+        "eva",
+        display_name="Eva Senior Support",
+        description="Escalated support and billing queries"
+    )
+    print("Updated:", updated.display_name)
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wirebox = new Wirebox();
+const updated = await wirebox.updateIdentity("eva", {
+  display_name: "Eva Senior Support",
+  description: "Escalated support and billing queries",
+});
+console.log("Updated:", updated.displayName);
+```
+
+```bash CLI
+wirebox identity update eva \
+  --name "Eva Senior Support" \
+  --description "Escalated support and billing queries"
+```
 </RequestExample>
 
 <ResponseExample>

@@ -19,6 +19,26 @@ Returns `204 No Content` on successful deletion.
 curl -X DELETE https://api.wirebox.sh/api/v1/identities/eva \
   -H "Authorization: Bearer $WIREBOX_API_KEY"
 ```
+
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wirebox:
+    wirebox.delete_identity("eva")
+    print("Agent identity deleted")
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wirebox = new Wirebox();
+await wirebox.deleteIdentity("eva");
+console.log("Agent identity deleted");
+```
+
+```bash CLI
+wirebox identity delete eva
+```
 </RequestExample>
 
 <ResponseExample>

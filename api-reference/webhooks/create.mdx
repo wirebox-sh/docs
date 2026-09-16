@@ -26,6 +26,50 @@ description: "Register an HTTPS endpoint to receive real-time event notification
 
 Returns the webhook endpoint with its one-time HMAC signing secret.
 
+<RequestExample>
+```bash cURL
+curl -X POST https://api.wirebox.sh/api/v1/webhooks \
+  -H "Authorization: Bearer $WIREBOX_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://agent.example.com/api/webhooks",
+    "events": ["message.received", "message.delivered", "message.bounced"],
+    "agent": "eva"
+  }'
+```
+
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wirebox:
+    webhook = wirebox.webhooks.create(
+        url="https://agent.example.com/api/webhooks",
+        events=["message.received", "message.delivered", "message.bounced"],
+        agent="eva"
+    )
+    print(f"Created webhook: {webhook.id}")
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wirebox = new Wirebox();
+const webhook = await wirebox.webhooks.create({
+  url: "https://agent.example.com/api/webhooks",
+  events: ["message.received", "message.delivered", "message.bounced"],
+  agent: "eva",
+});
+console.log(`Created webhook: ${webhook.id}`);
+```
+
+```bash CLI
+wirebox webhook create \
+  --url https://agent.example.com/api/webhooks \
+  --events message.received,message.delivered,message.bounced \
+  --agent eva
+```
+</RequestExample>
+
 <ResponseExample>
 ```json 201 Created
 {

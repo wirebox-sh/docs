@@ -24,6 +24,19 @@ Every agent has an `agent_handle` that uniquely identifies it across the Wirebox
 Claim a new unique handle for your agent. The associated mailbox is provisioned instantly.
 
 <CodeGroup>
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wb:
+    identity = wb.create_identity(
+        "eva",
+        display_name="Eva Customer Support",
+        description="Autonomous customer triage and billing agent"
+    )
+    print("Claimed Handle:", identity.agent_handle)
+    print("Dedicated Mailbox:", identity.mailbox_address)
+```
+
 ```ts TypeScript
 import { Wirebox } from "@wirebox-sh/sdk";
 
@@ -53,6 +66,20 @@ wirebox identity create eva \
 Fetch existing identities across your organization or look up a specific agent.
 
 <CodeGroup>
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wb:
+    # 1. List all identities in the organization
+    identities = wb.list_identities(limit=20)
+    for id in identities:
+        print(f"@{id.agent_handle} -> {id.mailbox_address}")
+
+    # 2. Retrieve a specific identity by handle
+    identity = wb.get_identity("eva")
+    print(f"Display Name: {identity.display_name}")
+```
+
 ```ts TypeScript
 import { Wirebox } from "@wirebox-sh/sdk";
 
@@ -88,6 +115,18 @@ wirebox identity get eva
 Modify display names or operational descriptions without changing the underlying handle or mailbox address.
 
 <CodeGroup>
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wb:
+    updated = wb.update_identity(
+        "eva",
+        display_name="Eva Senior Support Lead",
+        description="Escalated tier-2 support triage agent"
+    )
+    print("Updated Name:", updated.display_name)
+```
+
 ```ts TypeScript
 const updated = await wb.identities.update("eva", {
   display_name: "Eva Senior Support Lead",
@@ -111,6 +150,14 @@ wirebox identity update eva \
 Permanently release an agent identity and tear down its associated mailbox and stored messages.
 
 <CodeGroup>
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wb:
+    wb.delete_identity("eva")
+    print("Identity released successfully.")
+```
+
 ```ts TypeScript
 await wb.identities.delete("eva");
 console.log("Identity released successfully.");
@@ -125,9 +172,29 @@ wirebox identity delete eva
 
 ## The `AgentIdentity` Domain Object
 
-In addition to the collection-level `wb.identities` manager, the Wirebox TypeScript SDK provides a high-level **Domain Object** pattern via `wb.identify(handle)`:
+Both the Python and TypeScript SDKs provide a high-level **Domain Object** pattern via `wb.get_identity(handle)` / `wb.identify(handle)`:
 
-```ts
+<CodeGroup>
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wb:
+    # Bind directly to an agent context
+    eva = wb.get_identity("eva")
+
+    # Access identity properties
+    print(eva.agent_handle)      # "eva"
+    print(eva.mailbox_address)   # "eva@wireboxmail.com"
+
+    # Perform communication actions directly on the agent instance
+    eva.send_email(
+        to=["customer@example.com"],
+        subject="Resolution Update",
+        body_text="Your issue has been resolved."
+    )
+```
+
+```ts TypeScript
 // Bind directly to an agent context
 const eva = await wb.identify("eva");
 
@@ -142,6 +209,7 @@ await eva.sendEmail({
   text: "Your issue has been resolved.",
 });
 ```
+</CodeGroup>
 
 ---
 

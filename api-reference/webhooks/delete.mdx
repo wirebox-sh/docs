@@ -10,6 +10,33 @@ description: "Permanently remove a webhook endpoint."
   The unique webhook ID to delete.
 </ParamField>
 
+<RequestExample>
+```bash cURL
+curl -X DELETE https://api.wirebox.sh/api/v1/webhooks/whk_01J8DEF456GHI789 \
+  -H "Authorization: Bearer $WIREBOX_API_KEY"
+```
+
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wirebox:
+    wirebox.delete_webhook("whk_01J8DEF456GHI789")
+    print("Webhook deleted")
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wirebox = new Wirebox();
+await wirebox.deleteWebhook("whk_01J8DEF456GHI789");
+console.log("Webhook deleted");
+```
+
+```bash CLI
+wirebox webhook delete whk_01J8DEF456GHI789
+```
+</RequestExample>
+
 <ResponseExample>
 ```text 204 No Content
 (Empty response body)

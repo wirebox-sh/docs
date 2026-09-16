@@ -27,7 +27,11 @@ description: "Send an outbound email or reply to an ongoing conversation thread.
 </ParamField>
 
 <ParamField body="thread_id" type="string">
-  Optional thread ID to reply to. Wirebox will set `In-Reply-To` and `References` headers automatically.
+  Optional thread ID to reply to. Wirebox will set RFC `In-Reply-To` and `References` headers automatically.
+</ParamField>
+
+<ParamField body="attachments" type="object[]">
+  Optional array of file attachments. Each object contains `filename` (string), `content_type` (string), and `content` (base64 string).
 </ParamField>
 
 <RequestExample>
@@ -42,6 +46,42 @@ curl -X POST https://api.wirebox.sh/api/v1/mail/send \
     "text": "Hello! Your ticket has been updated.",
     "thread_id": "thrd_01J8XYZ987ABC"
   }'
+```
+
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wirebox:
+    res = wirebox.send_email(
+        agent="eva",
+        to=["user@example.com"],
+        subject="Re: Support Ticket #1042",
+        text="Hello! Your ticket has been updated.",
+        thread_id="thrd_01J8XYZ987ABC"
+    )
+    print("Sent message ID:", res.id)
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wirebox = new Wirebox();
+const res = await wirebox.sendEmail({
+  agent: "eva",
+  to: ["user@example.com"],
+  subject: "Re: Support Ticket #1042",
+  text: "Hello! Your ticket has been updated.",
+  thread_id: "thrd_01J8XYZ987ABC",
+});
+console.log("Sent message ID:", res.id);
+```
+
+```bash CLI
+wirebox mail send \
+  --agent eva \
+  --to user@example.com \
+  --subject "Re: Support Ticket #1042" \
+  --text "Hello! Your ticket has been updated."
 ```
 </RequestExample>
 

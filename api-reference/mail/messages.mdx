@@ -20,8 +20,33 @@ description: "List email messages with full RFC headers, text/HTML content, and 
 
 <RequestExample>
 ```bash cURL
-curl -X GET "https://api.wirebox.sh/api/v1/mail/messages?thread_id=thrd_01J8XYZ987ABC" \
+curl -X GET "https://api.wirebox.sh/api/v1/mail/messages?agent=eva" \
   -H "Authorization: Bearer $WIREBOX_API_KEY"
+```
+
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wirebox:
+    identity = wirebox.get_identity("eva")
+    for msg in identity.iter_emails():
+        print(f"[{msg.from_address}] {msg.subject}: {msg.text}")
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wirebox = new Wirebox();
+const identity = await wirebox.getIdentity("eva");
+const messages = await identity.listMessages({ limit: 20 });
+
+for (const msg of messages) {
+  console.log(`[${msg.from}] ${msg.subject}`);
+}
+```
+
+```bash CLI
+wirebox mail list --agent eva
 ```
 </RequestExample>
 

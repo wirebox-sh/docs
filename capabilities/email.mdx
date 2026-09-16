@@ -21,9 +21,23 @@ This mailbox can receive incoming emails from any mail provider (Gmail, Outlook,
 
 ## Sending Outbound Email
 
-Agents can initiate email conversations using the TypeScript SDK or CLI. Wirebox supports both plain text and rich HTML bodies.
+Agents can initiate email conversations using the Python SDK, TypeScript SDK, or CLI. Wirebox supports both plain text and rich HTML bodies.
 
 <CodeGroup>
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wb:
+    eva = wb.get_identity("eva")
+    message = eva.send_email(
+        to=["user@example.com"],
+        subject="Quarterly Performance Report",
+        body_text="Hello! Here is your requested report summary...",
+        html="<p>Hello! Here is your <strong>requested report summary</strong>...</p>"
+    )
+    print("Dispatched message ID:", message.id)
+```
+
 ```ts TypeScript
 import { Wirebox } from "@wirebox-sh/sdk";
 
@@ -56,6 +70,22 @@ wirebox mail send eva \
 Fetch incoming messages from the agent's dedicated mailbox. Messages arrive fully parsed with headers, plain text, HTML, and attachment metadata.
 
 <CodeGroup>
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wb:
+    eva = wb.get_identity("eva")
+
+    # 1. Fetch recent messages
+    messages = eva.list_messages(limit=10)
+    for msg in messages:
+        print(f"[{msg.id}] From: {msg.from_address} | Subject: {msg.subject}")
+
+    # 2. Iterate lazily through message history (auto-paginating)
+    for msg in eva.iter_emails(limit=50):
+        print(f"Processing: {msg.subject}")
+```
+
 ```ts TypeScript
 import { Wirebox } from "@wirebox-sh/sdk";
 
@@ -96,6 +126,19 @@ When an agent replies to a human user, Wirebox maintains RFC 5322 conversation c
 3. Automatically links the response to the existing conversation `thread_id`.
 
 <CodeGroup>
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wb:
+    eva = wb.get_identity("eva")
+    eva.send_email(
+        to=["user@example.com"],
+        subject="Re: Quarterly Performance Report",
+        body_text="Hello Alex,\n\nI have adjusted your account limits as requested.\n\nBest,\nEva",
+        thread_id="thrd_01J8XYZ987ABC"
+    )
+```
+
 ```ts TypeScript
 import { Wirebox } from "@wirebox-sh/sdk";
 
@@ -120,6 +163,29 @@ wirebox mail reply eva msg_01J8ABC123XYZ \
 Send PDF reports, invoices, images, logs, or data exports alongside your messages.
 
 <CodeGroup>
+```python Python
+import base64
+from wirebox import Wirebox
+
+with Wirebox() as wb:
+    eva = wb.get_identity("eva")
+    with open("./export.pdf", "rb") as f:
+        pdf_b64 = base64.b64encode(f.read()).decode("utf-8")
+
+    eva.send_email(
+        to=["client@example.com"],
+        subject="Exported Dataset",
+        body_text="Please find your requested dataset attached below.",
+        attachments=[
+            {
+                "filename": "export.pdf",
+                "content_type": "application/pdf",
+                "content": pdf_b64
+            }
+        ]
+    )
+```
+
 ```ts TypeScript
 import * as fs from "node:fs";
 import { Wirebox } from "@wirebox-sh/sdk";
@@ -160,6 +226,14 @@ wirebox mail send eva \
 Remove messages from the agent's mailbox when archiving or adhering to data retention policies.
 
 <CodeGroup>
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wb:
+    wb.delete_message("msg_01J8ABC123XYZ")
+    print("Message deleted.")
+```
+
 ```ts TypeScript
 await eva.deleteMessage("msg_01J8ABC123XYZ");
 console.log("Message deleted.");

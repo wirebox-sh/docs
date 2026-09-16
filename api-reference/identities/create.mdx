@@ -59,6 +59,35 @@ curl -X POST https://api.wirebox.sh/api/v1/identities \
     "description": "Customer triage agent"
   }'
 ```
+
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wirebox:
+    identity = wirebox.create_identity(
+        "eva",
+        display_name="Eva Customer Support",
+        description="Customer triage agent"
+    )
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wirebox = new Wirebox();
+const identity = await wirebox.createIdentity({
+  agent_handle: "eva",
+  display_name: "Eva Customer Support",
+  description: "Customer triage agent",
+});
+```
+
+```bash CLI
+wirebox identity create \
+  --handle eva \
+  --name "Eva Customer Support" \
+  --description "Customer triage agent"
+```
 </RequestExample>
 
 <ResponseExample>
