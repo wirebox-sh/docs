@@ -14,6 +14,36 @@ description: "List all provisioned email inboxes in your organization."
   Offset for pagination.
 </ParamField>
 
+<RequestExample>
+```bash cURL
+curl -X GET "https://api.wirebox.sh/api/v1/mail/mailboxes" \
+  -H "Authorization: Bearer $WIREBOX_API_KEY"
+```
+
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wirebox:
+    mailboxes = wirebox.list_mailboxes()
+    for mb in mailboxes:
+        print(f"Mailbox: {mb.email_address} (agent: {mb.agent_handle})")
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wirebox = new Wirebox();
+const mailboxes = await wirebox.listMailboxes();
+for (const mb of mailboxes) {
+  console.log(`Mailbox: ${mb.emailAddress} (agent: ${mb.agentHandle})`);
+}
+```
+
+```bash CLI
+wirebox mail mailboxes
+```
+</RequestExample>
+
 ### Response
 
 <ResponseExample>

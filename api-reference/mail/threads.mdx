@@ -27,6 +27,29 @@ description: "Retrieve grouped conversation threads scoped to an agent or mailbo
 curl -X GET "https://api.wirebox.sh/api/v1/mail/threads?agent=eva" \
   -H "Authorization: Bearer $WIREBOX_API_KEY"
 ```
+
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wirebox:
+    threads = wirebox.list_threads(agent="eva")
+    for th in threads:
+        print(f"Thread {th.id}: {th.subject} ({th.message_count} messages)")
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wirebox = new Wirebox();
+const threads = await wirebox.listThreads({ agent: "eva" });
+for (const th of threads) {
+  console.log(`Thread ${th.id}: ${th.subject}`);
+}
+```
+
+```bash CLI
+wirebox mail threads --agent eva
+```
 </RequestExample>
 
 <ResponseExample>

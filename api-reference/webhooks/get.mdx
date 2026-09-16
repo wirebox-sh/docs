@@ -10,6 +10,33 @@ description: "Retrieve configuration details for a specific webhook endpoint."
   The unique webhook ID (e.g. `whk_01J8DEF456GHI789`).
 </ParamField>
 
+<RequestExample>
+```bash cURL
+curl -X GET https://api.wirebox.sh/api/v1/webhooks/whk_01J8DEF456GHI789 \
+  -H "Authorization: Bearer $WIREBOX_API_KEY"
+```
+
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wirebox:
+    webhook = wirebox.get_webhook("whk_01J8DEF456GHI789")
+    print(f"URL: {webhook.url}, Events: {webhook.events}")
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wirebox = new Wirebox();
+const webhook = await wirebox.getWebhook("whk_01J8DEF456GHI789");
+console.log(`URL: ${webhook.url}`);
+```
+
+```bash CLI
+wirebox webhook get whk_01J8DEF456GHI789
+```
+</RequestExample>
+
 <ResponseExample>
 ```json 200 OK
 {

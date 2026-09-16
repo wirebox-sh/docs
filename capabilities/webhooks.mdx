@@ -1,5 +1,5 @@
 ---
-title: "Webhooks & Delivery"
+title: "Webhooks"
 description: "Real-time HTTP push notifications with Bearer Token and HMAC-SHA256 signature verification."
 ---
 
@@ -17,6 +17,179 @@ Webhooks deliver real-time HTTP POST notifications to your backend servers whene
 | `message.bounced` | Mail | The remote mail server rejected the email (e.g. invalid recipient or mailbox full). |
 | `message.failed` | Mail | Outbound delivery failed permanently after edge retries. |
 | `test.ping` | System | Diagnostic ping fired from the Console or API to verify endpoint connectivity. |
+
+---
+
+## Managing Webhooks
+
+You can configure, inspect, test, and manage webhook subscriptions programmatically via the Python SDK, TypeScript SDK, or the terminal CLI.
+
+### Creating a Webhook
+
+Register a new HTTPS endpoint to receive agent events. You can optionally restrict the webhook to a specific agent handle or configure a custom Bearer auth token:
+
+<CodeGroup>
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wb:
+    webhook = wb.create_webhook(
+        url="https://agent.example.com/api/webhooks",
+        events=["message.received", "message.delivered"],
+        agent="eva",
+        auth_token="optional_bearer_token"
+    )
+    print("Webhook ID:", webhook.id)
+    print("Signing Secret:", webhook.secret)
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wb = new Wirebox();
+
+const webhook = await wb.webhooks.create({
+  url: "https://agent.example.com/api/webhooks",
+  events: ["message.received", "message.delivered"],
+  agent: "eva",
+  auth_token: "optional_bearer_token",
+});
+
+console.log("Webhook ID:", webhook.id);
+console.log("Signing Secret:", webhook.secret);
+```
+
+```bash CLI
+wirebox webhook create \
+  --url https://agent.example.com/api/webhooks \
+  --events message.received,message.delivered \
+  --agent eva \
+  --auth-token optional_bearer_token
+```
+</CodeGroup>
+
+---
+
+### Listing Webhooks
+
+Query all configured webhook subscriptions across your organization, or filter by agent handle:
+
+<CodeGroup>
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wb:
+    webhooks = wb.list_webhooks(agent="eva")
+    for wh in webhooks:
+        print(f"[{wh.status}] {wh.id}: {wh.url} ({wh.events})")
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wb = new Wirebox();
+
+const webhooks = await wb.webhooks.list({ agent: "eva" });
+for (const wh of webhooks) {
+  console.log(`[${wh.status}] ${wh.id}: ${wh.url} (${wh.events.join(", ")})`);
+}
+```
+
+```bash CLI
+# Formatted terminal table
+wirebox webhook list --agent eva
+
+# Raw JSON (ideal for subagent automation or jq)
+wirebox webhook list --agent eva --json
+```
+</CodeGroup>
+
+---
+
+### Testing Webhook Connectivity
+
+Send an instant `test.ping` event to verify network routing, SSL handshakes, and receiver response times:
+
+<CodeGroup>
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wb:
+    result = wb.ping_webhook("whk_01J8DEF456GHI789")
+    print("Ping success:", result.success, "Latency:", result.latency_ms)
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wb = new Wirebox();
+
+const result = await wb.webhooks.test("whk_01J8DEF456GHI789");
+console.log("Ping success:", result.success, "Latency:", result.latencyMs);
+```
+
+```bash CLI
+wirebox webhook test whk_01J8DEF456GHI789
+```
+</CodeGroup>
+
+---
+
+### Rotating Signing Secrets
+
+Immediately invalidate an existing HMAC signing secret and generate a fresh replacement:
+
+<CodeGroup>
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wb:
+    res = wb.rotate_webhook_secret("whk_01J8DEF456GHI789")
+    print("New Secret:", res.secret)
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wb = new Wirebox();
+
+const res = await wb.webhooks.rotateSecret("whk_01J8DEF456GHI789");
+console.log("New Secret:", res.secret);
+```
+
+```bash CLI
+wirebox webhook rotate-secret whk_01J8DEF456GHI789
+```
+</CodeGroup>
+
+---
+
+### Deleting a Webhook
+
+Permanently remove a webhook subscription:
+
+<CodeGroup>
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wb:
+    wb.delete_webhook("whk_01J8DEF456GHI789")
+    print("Webhook deleted successfully.")
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wb = new Wirebox();
+
+await wb.webhooks.delete("whk_01J8DEF456GHI789");
+console.log("Webhook deleted successfully.");
+```
+
+```bash CLI
+wirebox webhook delete whk_01J8DEF456GHI789
+```
+</CodeGroup>
 
 ---
 
@@ -58,13 +231,28 @@ The simplest method. When registering a webhook endpoint, supply an optional `au
 Authorization: Bearer my-custom-secret-token
 ```
 
-Your receiving server simply checks this header:
+Your receiving server simply validates this header:
 
-```ts
+<CodeGroup>
+```python Python (FastAPI)
+from fastapi import FastAPI, Header, HTTPException
+
+app = FastAPI()
+EXPECTED_TOKEN = "Bearer my-custom-secret-token"
+
+@app.post("/api/webhooks")
+async def receive_webhook(authorization: str = Header(None)):
+    if authorization != EXPECTED_TOKEN:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    return {"received": True}
+```
+
+```ts Node.js (Express)
 if (req.headers["authorization"] !== `Bearer ${process.env.WEBHOOK_SECRET}`) {
   return res.status(401).send("Unauthorized");
 }
 ```
+</CodeGroup>
 
 ---
 
@@ -81,9 +269,68 @@ The string to sign is constructed as:
 string_to_sign = "t=" + timestamp + "." + raw_body
 ```
 
-#### Verification Function (Node.js / Web Crypto)
+#### Official SDK Verification (Recommended)
 
-```ts
+Both the Python and TypeScript SDKs provide built-in, timing-safe verification:
+
+<CodeGroup>
+```python Python
+from wirebox import verify_webhook
+
+# In your FastAPI, Flask, or Django handler:
+is_valid = verify_webhook(
+    raw_body=raw_body_bytes,
+    signature_header=request.headers.get("X-Wirebox-Signature-256"),
+    secret="whsec_your_signing_secret",
+    tolerance_seconds=300 # 5-minute replay attack window
+)
+
+if not is_valid:
+    raise HTTPException(status_code=401, detail="Invalid signature")
+```
+
+```ts TypeScript
+import { verifyWebhook } from "@wirebox-sh/sdk";
+
+// In your Express, Next.js, or Hono handler:
+const isValid = verifyWebhook(
+  rawBody,
+  req.headers["x-wirebox-signature-256"],
+  "whsec_your_signing_secret",
+  { toleranceSeconds: 300 }
+);
+
+if (!isValid) {
+  res.status(401).send("Invalid signature");
+}
+```
+</CodeGroup>
+
+#### Manual HMAC Verification
+
+If you are implementing verification manually without the SDK:
+
+<CodeGroup>
+```python Python
+import hmac
+import hashlib
+import time
+
+def verify_wirebox_signature(raw_body: bytes | str, signature_header: str, secret: str, tolerance: int = 300) -> bool:
+    pairs = dict(item.strip().split("=", 1) for item in signature_header.split(",") if "=" in item)
+    timestamp = pairs.get("t")
+    v1_sig = pairs.get("v1")
+    if not timestamp or not v1_sig:
+        return False
+    if abs(time.time() - int(timestamp)) > tolerance:
+        return False
+    body_str = raw_body.decode("utf-8") if isinstance(raw_body, bytes) else raw_body
+    payload = f"t={timestamp}.{body_str}".encode("utf-8")
+    expected = hmac.new(secret.encode("utf-8"), payload, hashlib.sha256).hexdigest()
+    return hmac.compare_digest(v1_sig, expected)
+```
+
+```ts Node.js
 import crypto from "node:crypto";
 
 export function verifyWireboxWebhook(
@@ -133,6 +380,7 @@ export function verifyWireboxWebhook(
   return false;
 }
 ```
+</CodeGroup>
 
 ---
 
@@ -150,6 +398,8 @@ To configure webhooks programmatically, refer to the REST API Reference:
 * [Create Webhook](/api-reference/webhooks/create)
 * [List Webhooks](/api-reference/webhooks/list)
 * [Get Webhook](/api-reference/webhooks/get)
+* [Update Webhook](/api-reference/webhooks/update)
+* [Delete Webhook](/api-reference/webhooks/delete)
 * [Rotate Secret](/api-reference/webhooks/rotate-secret)
 * [Send Test Ping](/api-reference/webhooks/test-ping)
 * [Webhook Events](/api-reference/webhooks/events)

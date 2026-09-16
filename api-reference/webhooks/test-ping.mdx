@@ -10,6 +10,33 @@ description: "Send an immediate diagnostic ping event to test connectivity, SSL 
   The unique webhook ID.
 </ParamField>
 
+<RequestExample>
+```bash cURL
+curl -X POST https://api.wirebox.sh/api/v1/webhooks/whk_01J8DEF456GHI789/test \
+  -H "Authorization: Bearer $WIREBOX_API_KEY"
+```
+
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wirebox:
+    ping_result = wirebox.ping_webhook("whk_01J8DEF456GHI789")
+    print("Status:", ping_result["status_code"], "Latency:", ping_result["latency_ms"])
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wirebox = new Wirebox();
+const pingResult = await wirebox.pingWebhook("whk_01J8DEF456GHI789");
+console.log("Status:", pingResult.statusCode, "Latency:", pingResult.latencyMs);
+```
+
+```bash CLI
+wirebox webhook test whk_01J8DEF456GHI789
+```
+</RequestExample>
+
 <ResponseExample>
 ```json 200 OK
 {

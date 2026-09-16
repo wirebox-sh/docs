@@ -1,0 +1,132 @@
+---
+title: "Network Tunnels"
+description: "Secure reverse edge tunnels exposing local webhooks and HTTP endpoints with zero port forwarding."
+---
+
+Wirebox **Network Tunnels** provide secure reverse proxy connections that expose your agent's local services (FastAPI webhooks, local agent APIs, development servers) to the public internet.
+
+With tunnels, your local development workstation or firewalled private environment can receive external webhook notifications and HTTP traffic without opening firewall ports, configuring static IPs, or setting up complex dynamic DNS.
+
+---
+
+## How It Works
+
+1. **Outbound Edge Session**: The Wirebox CLI or client initiates an outbound TLS connection to Wirebox's edge routing network.
+2. **Public Edge URL**: Wirebox assigns a public HTTPS subdomain (e.g. `https://eva.wirebox.run`).
+3. **Transparent HTTP Proxying**: Incoming HTTP requests to the public URL are forwarded locally to your configured loopback port with full support for request headers, binary payloads, and Server-Sent Events (SSE).
+
+---
+
+## Starting a Tunnel via CLI
+
+The simplest way to start a tunnel is using the Wirebox CLI:
+
+```bash CLI
+# Expose local port 3000 to public edge
+wirebox tunnel connect eva --port 3000
+
+# Expose local port 8000 for agent @sales-bot
+wirebox tunnel connect sales-bot --port 8000
+```
+
+Output:
+```text
+Connecting tunnel for 'eva' to http://localhost:3000...
+[Status] Connected to Wirebox Edge
+
+========================================================
+  Wirebox Tunnel Online
+  Agent Handle:  @eva
+  Public URL:    https://eva.wirebox.run
+  Local Target:  http://localhost:3000
+========================================================
+
+Press Ctrl+C to disconnect.
+```
+
+---
+
+## Programmatic Tunnel Management
+
+Both the Python and TypeScript SDKs allow inspecting active tunnel sessions, health statuses, and routing targets:
+
+<CodeGroup>
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wb:
+    # 1. List active tunnels
+    tunnels = wb.list_tunnels()
+    for tun in tunnels:
+        print(f"[{tun.status}] {tun.public_url} -> {tun.target_url}")
+
+    # 2. Get tunnel details
+    tun = wb.get_tunnel("tun_01J8DEF456GHI789")
+    print("Connected clients:", tun.connected_clients)
+
+    # 3. Update administrative status ('active' | 'disabled')
+    updated = wb.update_tunnel("tun_01J8DEF456GHI789", status="active")
+    print("Updated status:", updated.status)
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wb = new Wirebox();
+
+// 1. List active tunnels
+const { tunnels } = await wb.tunnels.list();
+for (const tun of tunnels) {
+  console.log(`[${tun.status}] ${tun.publicUrl} -> ${tun.targetUrl}`);
+}
+
+// 2. Get tunnel details
+const tun = await wb.tunnels.get("tun_01J8DEF456GHI789");
+console.log("Connected clients:", tun.connected_clients);
+
+// 3. Update administrative status ('active' | 'disabled')
+const updated = await wb.tunnels.update("tun_01J8DEF456GHI789", {
+  status: "active",
+});
+console.log("Updated status:", updated.status);
+```
+
+```bash CLI
+# List active tunnels
+wirebox tunnel list
+
+# Update status
+wirebox tunnel update eva --status disabled
+```
+</CodeGroup>
+
+---
+
+## Local Webhook Testing Workflow
+
+A common workflow for autonomous agents is developing and debugging webhook handlers locally:
+
+1. Start your local webhook receiver on port 3000:
+   ```bash
+   uvicorn agent:app --port 3000
+   ```
+2. Start a Wirebox tunnel for your agent:
+   ```bash
+   wirebox tunnel connect eva --port 3000
+   ```
+3. Register the generated tunnel URL as your agent's webhook:
+   ```bash
+   wirebox webhook create \
+     --url https://eva.wirebox.run/api/webhooks \
+     --events message.received \
+     --agent eva
+   ```
+4. Send an email to `eva@wireboxmail.com`. The webhook event lands directly on your local `localhost:3000` server for interactive step debugging.
+
+---
+
+## Related APIs
+
+* [List Tunnels](/api-reference/tunnels/list)
+* [Get Tunnel](/api-reference/tunnels/get)
+* [Update Tunnel](/api-reference/tunnels/update)

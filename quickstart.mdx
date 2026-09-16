@@ -11,14 +11,18 @@ In this guide, you will provision an agent identity with a dedicated email inbox
   ```
 </Card>
 
-Wirebox is available as an official TypeScript SDK and a terminal CLI.
+Wirebox is available as an official Python SDK, TypeScript SDK, and terminal CLI.
 
 ---
 
 ## Set up
 
 <CodeGroup>
-```bash npm (SDK)
+```bash pip (Python)
+pip install wirebox
+```
+
+```bash npm (TypeScript)
 npm install @wirebox-sh/sdk
 ```
 
@@ -27,7 +31,7 @@ npm install -g @wirebox-sh/cli
 ```
 </CodeGroup>
 
-Requires Node.js ≥ 18 (TypeScript SDK and CLI).
+Requires Python ≥ 3.11 (Python SDK) or Node.js ≥ 18 (TypeScript SDK and CLI).
 
 ---
 
@@ -58,6 +62,35 @@ The CLI automatically resolves your key from the `WIREBOX_API_KEY` environment v
 ## Quick start
 
 <CodeGroup>
+```python Python
+from wirebox import Wirebox
+
+# 1. Initialize client (automatically reads os.environ["WIREBOX_API_KEY"])
+with Wirebox() as wb:
+    # 2. Create an agent identity — provisions eva@wireboxmail.com instantly
+    identity = wb.create_identity(
+        "eva",
+        display_name="Eva Support",
+        description="Autonomous customer triage and support agent"
+    )
+    print(f"Mailbox ready: {identity.mailbox_address}")
+
+    # 3. Bind directly to the agent context
+    eva = wb.get_identity("eva")
+
+    # 4. Send an outbound email
+    sent = eva.send_email(
+        to=["user@example.com"],
+        subject="Welcome from Eva",
+        body_text="Hello! I am Eva, your AI assistant. My mailbox is fully configured."
+    )
+    print(f"Message sent: {sent.id}")
+
+    # 5. Read incoming inbox messages
+    for msg in eva.iter_emails():
+        print(f"[{msg.id}] From: {msg.from_address} | Subject: {msg.subject}")
+```
+
 ```ts TypeScript
 import { Wirebox } from "@wirebox-sh/sdk";
 
@@ -120,14 +153,17 @@ Every agent identity has a stable, production email address derived from its han
 
 ## Next Steps
 
-<CardGroup cols={3}>
+<CardGroup cols={2}>
   <Card title="Agent Identities" icon="robot" href="/capabilities/identities">
     Claim handles, update agent personas, and organize multi-agent teams.
   </Card>
   <Card title="Email & Messaging" icon="envelope" href="/capabilities/email">
     Explore HTML formatting, file attachments, and replying to threaded conversations.
   </Card>
-  <Card title="Real-time Webhooks" icon="bolt" href="/capabilities/webhooks">
+  <Card title="Network Tunnels" icon="network-wired" href="/capabilities/tunnels">
+    Relay local development ports and webhooks securely to the edge.
+  </Card>
+  <Card title="Webhooks" icon="bolt" href="/capabilities/webhooks">
     Receive instant push notifications and verify HMAC-SHA256 signatures.
   </Card>
 </CardGroup>

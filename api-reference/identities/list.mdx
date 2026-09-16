@@ -23,6 +23,26 @@ Returns an array of identity objects.
 curl -X GET "https://api.wirebox.sh/api/v1/identities?limit=20" \
   -H "Authorization: Bearer $WIREBOX_API_KEY"
 ```
+
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wirebox:
+    identities = wirebox.list_identities(limit=20)
+    for ident in identities:
+        print(f"@{ident.agent_handle} ({ident.mailbox_address})")
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wirebox = new Wirebox();
+const identities = await wirebox.listIdentities({ limit: 20 });
+```
+
+```bash CLI
+wirebox identity list
+```
 </RequestExample>
 
 <ResponseExample>

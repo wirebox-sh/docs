@@ -1,0 +1,65 @@
+---
+title: "List Network Tunnels"
+api: "GET https://api.wirebox.sh/api/v1/tunnels"
+description: "Retrieve a paginated list of network tunnels across all agent identities."
+---
+
+### Query Parameters
+
+<ParamField query="limit" type="integer">
+  Number of results to return (default `20`, maximum `100`).
+</ParamField>
+
+<ParamField query="starting_after" type="string">
+  Cursor for pagination: the ID of the last item in the previous page.
+</ParamField>
+
+<ParamField query="status" type="string">
+  Filter tunnels by status (`active`, `suspended`, `disabled`).
+</ParamField>
+
+<RequestExample>
+```bash cURL
+curl -X GET "https://api.wirebox.sh/api/v1/tunnels?limit=20" \
+  -H "Authorization: Bearer $WIREBOX_API_KEY"
+```
+
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wirebox:
+    tunnels = wirebox.tunnels.list(limit=20)
+    for t in tunnels:
+        print(f"@{t.agent_handle} -> {t.public_url} (connected: {t.is_connected})")
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wirebox = new Wirebox();
+const tunnels = await wirebox.tunnels.list({ limit: 20 });
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200 OK
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "tun_01J8DEF456GHI",
+      "agent_id": "ident_01J8ABC123XYZ",
+      "agent_handle": "support-bot",
+      "public_url": "https://support-bot.wirebox.proxy",
+      "status": "active",
+      "is_connected": true,
+      "connected_clients": 1,
+      "last_request_at": "2026-09-16T10:30:00Z",
+      "created_at": "2026-09-11T10:00:00Z",
+      "updated_at": "2026-09-16T10:30:00Z"
+    }
+  ],
+  "has_more": false
+}
+```
+</ResponseExample>
