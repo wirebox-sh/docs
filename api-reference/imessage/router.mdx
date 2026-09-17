@@ -1,0 +1,83 @@
+---
+title: "Get iMessage Router"
+api: "GET https://api.wirebox.sh/api/v1/imessage/router"
+description: "Retrieve the active iMessage router phone number, agent connect command prompt, and scan-to-connect QR code."
+---
+
+Wirebox routes Apple iMessage conversations through high-availability router phone lines. This endpoint retrieves the router phone number, pre-formatted `imessage://` URL, and a Base64-encoded QR code for user onboarding.
+
+### Query Parameters
+
+<ParamField query="agent" type="string">
+  Agent handle to pre-fill in the connect prompt (e.g., `eva` or `@eva`).
+</ParamField>
+
+<ParamField query="user_phone" type="string">
+  Optional recipient phone number in E.164 format.
+</ParamField>
+
+### Response
+
+Returns router routing information, connect prompt, deep-link URL, and QR code image data.
+
+<ResponseField name="phone_number" type="string">
+  The active gateway router phone number in E.164 format (e.g. `+16282649335`).
+</ResponseField>
+
+<ResponseField name="display_name" type="string">
+  Friendly display name of the router line (e.g. `Wirebox Router`).
+</ResponseField>
+
+<ResponseField name="connect_prompt" type="string">
+  Text command sent by the user to pair with the agent (e.g. `connect @eva`).
+</ResponseField>
+
+<ResponseField name="url" type="string">
+  Pre-encoded `imessage://` URI designed for deep linking on iOS and macOS devices.
+</ResponseField>
+
+<ResponseField name="qr_code" type="string">
+  Base64-encoded PNG image data URI of the QR code for display or rendering in terminals and web interfaces.
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X GET "https://api.wirebox.sh/api/v1/imessage/router?agent=eva" \
+  -H "Authorization: Bearer $WIREBOX_API_KEY"
+```
+
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wb:
+    router = wb.imessage.get_router(agent="eva")
+    print(f"Router Number: {router.phone_number}")
+    print(f"Connect URI: {router.url}")
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wb = new Wirebox();
+const router = await wb.imessage.getRouter({ agent: "eva" });
+
+console.log(`Router Number: ${router.phone_number}`);
+console.log(`Connect URI: ${router.url}`);
+```
+
+```bash CLI
+wirebox imessage router eva
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200 OK
+{
+  "phone_number": "+16282649335",
+  "display_name": "Wirebox Router",
+  "connect_prompt": "connect @eva",
+  "url": "imessage://+16282649335?body=connect%20%40eva",
+  "qr_code": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAADIAQMAAAC..."
+}
+```
+</ResponseExample>

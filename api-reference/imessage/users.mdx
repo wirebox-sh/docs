@@ -1,0 +1,111 @@
+---
+title: "Gateway Users"
+api: "GET https://api.wirebox.sh/api/v1/imessage/users"
+description: "List, add, and remove authorized phone numbers for the iMessage gateway allowlist."
+---
+
+Manage authorized participant phone numbers on the iMessage gateway. When user allowlisting is enabled, only registered numbers can interact with agents via the gateway.
+
+### Endpoints
+
+* **`GET https://api.wirebox.sh/api/v1/imessage/users`**: List all registered phone numbers.
+* **`POST https://api.wirebox.sh/api/v1/imessage/users`**: Register a new authorized phone number.
+* **`DELETE https://api.wirebox.sh/api/v1/imessage/users/{phone}`**: Remove an authorized phone number.
+
+### Body Parameters (POST)
+
+<ParamField body="phone_number" type="string" required>
+  The participant phone number in E.164 format (e.g. `+15551234567`).
+</ParamField>
+
+<RequestExample>
+```bash cURL
+# 1. List registered users
+curl -X GET "https://api.wirebox.sh/api/v1/imessage/users" \
+  -H "Authorization: Bearer $WIREBOX_API_KEY"
+
+# 2. Add authorized phone number
+curl -X POST "https://api.wirebox.sh/api/v1/imessage/users" \
+  -H "Authorization: Bearer $WIREBOX_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"phone_number": "+15551234567"}'
+
+# 3. Remove authorized phone number
+curl -X DELETE "https://api.wirebox.sh/api/v1/imessage/users/+15551234567" \
+  -H "Authorization: Bearer $WIREBOX_API_KEY"
+```
+
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wb:
+    # 1. Add authorized user
+    user = wb.imessage.users.add("+15551234567")
+    print(f"Added user: {user.phone_number}")
+
+    # 2. List registered users
+    res = wb.imessage.users.list()
+    for u in res.users:
+        print(f"User: {u.phone_number}")
+
+    # 3. Remove user
+    wb.imessage.users.remove("+15551234567")
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wb = new Wirebox();
+
+// 1. Add authorized user
+const user = await wb.imessage.users.add("+15551234567");
+console.log(`Added user: ${user.phone_number}`);
+
+// 2. List registered users
+const { users } = await wb.imessage.users.list();
+for (const u of users) {
+  console.log(`User: ${u.phone_number}`);
+}
+
+// 3. Remove user
+await wb.imessage.users.remove("+15551234567");
+```
+
+```bash CLI
+# List registered users
+wirebox imessage users list
+
+# Add authorized user
+wirebox imessage users add +15551234567
+
+# Remove authorized user
+wirebox imessage users remove +15551234567
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200 OK (List Users)
+{
+  "users": [
+    {
+      "phone_number": "+15551234567",
+      "created_at": "2026-09-17T08:00:00Z"
+    }
+  ]
+}
+```
+
+```json 200 OK (Add User)
+{
+  "phone_number": "+15551234567",
+  "created_at": "2026-09-17T08:00:00Z"
+}
+```
+
+```json 200 OK (Delete User)
+{
+  "success": true,
+  "message": "User removed"
+}
+```
+</ResponseExample>
