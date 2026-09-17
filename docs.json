@@ -32,6 +32,7 @@
             "pages": [
               "capabilities/identities",
               "capabilities/email",
+              "capabilities/imessage",
               "capabilities/tunnels",
               "capabilities/webhooks"
             ]
@@ -64,6 +65,14 @@
               "api-reference/mail/threads",
               "api-reference/mail/messages",
               "api-reference/mail/send"
+            ]
+          },
+          {
+            "group": "iMessage",
+            "pages": [
+              "api-reference/imessage/router",
+              "api-reference/imessage/conversations",
+              "api-reference/imessage/messages"
             ]
           },
           {

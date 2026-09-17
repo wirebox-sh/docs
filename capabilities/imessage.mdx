@@ -1,0 +1,214 @@
+---
+title: "iMessage"
+description: "Connect AI agents directly with human users via blue bubbles, stateful conversation routing, and QR scan-to-connect."
+---
+
+Wirebox brings autonomous AI agents to **iMessage**. By connecting your agents to the native messaging ecosystem, agents can interact with users through real-time blue bubbles on iPhone, iPad, and Mac — complete with rich media attachments and push notifications.
+
+---
+
+## The Wirebox Router Line
+
+To eliminate phone number provisioning overhead, Wirebox provides a shared, high-availability iMessage router line:
+
+```text
++1 (628) 264-9335
+```
+
+Users connect directly to your specific agent by sending a standard pairing command:
+
+```text
+connect @<agent_handle>
+```
+
+For example, sending `connect @eva` instantly routes subsequent iMessage bubbles to Eva's agent context.
+
+---
+
+## Scan to Connect (Zero-Setup QR Code)
+
+Wirebox provides an instant QR code and `imessage://` deep link so users can scan and immediately start chatting with your agent in their native Messages app:
+
+<CodeGroup>
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wb:
+    # Fetch router line info with pre-configured connect prompt for @eva
+    router = wb.imessage.get_router(agent="eva")
+    print("Router Phone:", router.phone_number)
+    print("Deep Link:", router.url)
+    print("Connect Prompt:", router.connect_prompt)
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wb = new Wirebox();
+const router = await wb.imessage.getRouter({ agent: "eva" });
+
+console.log("Router Phone:", router.phone_number);
+console.log("Deep Link:", router.url);
+console.log("Connect Prompt:", router.connect_prompt);
+```
+
+```bash CLI
+# Display ANSI QR code in terminal and launchable deep link
+wirebox imessage router eva
+```
+</CodeGroup>
+
+When scanned from an iPhone camera or terminal, Messages opens automatically with `+1 (628) 264-9335` pre-filled and `connect @eva` ready to send.
+
+---
+
+## Stateful Conversation Sessions
+
+Once a user pairs with an agent, Wirebox maintains a persistent conversation session:
+
+* **Session Isolation**: Messages from different phone numbers are mapped to isolated conversation IDs (`conv_...`).
+* **Session Lifecycle**: Conversations remain active until explicitly disconnected or expired.
+* **Context Preservation**: Agents can query conversation history to maintain contextual memory.
+
+<CodeGroup>
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wb:
+    # List active iMessage conversations
+    res = wb.imessage.conversations.list(status="active", limit=10)
+    for conv in res.conversations:
+        print(f"Conversation {conv.id} with {conv.participant_id} (Agent: @{conv.agent_handle})")
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wb = new Wirebox();
+const res = await wb.imessage.conversations.list({ status: "active", limit: 10 });
+
+for (const conv of res.conversations) {
+  console.log(`Conversation ${conv.id} with ${conv.participant_id} (Agent: @{conv.agent_handle})`);
+}
+```
+
+```bash CLI
+wirebox imessage conversations --status active
+```
+</CodeGroup>
+
+---
+
+## Sending Outbound iMessages
+
+Agents can send text messages and media attachments directly to an active conversation session or directly to an authorized phone number:
+
+<CodeGroup>
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wb:
+    # 1. Send via active conversation ID
+    result = wb.imessage.messages.send(
+        conversation_id="conv_01J8ABC123XYZ",
+        text="Hello! Your server backup completed successfully."
+    )
+
+    # 2. Or send directly to recipient phone number
+    result = wb.imessage.messages.send(
+        to="+15551234567",
+        text="Security Alert: Unusual login detected.",
+        media_url="https://assets.wirebox.sh/alerts/chart.png"
+    )
+    print("Sent message ID:", result.id)
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wb = new Wirebox();
+
+// 1. Send via active conversation ID
+const result = await wb.imessage.messages.send({
+  conversation_id: "conv_01J8ABC123XYZ",
+  text: "Hello! Your server backup completed successfully.",
+});
+
+// 2. Or send directly to recipient phone number with media attachment
+const directResult = await wb.imessage.messages.send({
+  to: "+15551234567",
+  text: "Security Alert: Unusual login detected.",
+  media_url: "https://assets.wirebox.sh/alerts/chart.png",
+});
+
+console.log("Sent message ID:", directResult.id);
+```
+
+```bash CLI
+wirebox imessage send --to +15551234567 --text "Security Alert: Unusual login detected."
+```
+</CodeGroup>
+
+---
+
+## Agent Identity Integration
+
+If you use the `AgentIdentity` domain model, iMessage methods are directly accessible on the identity instance:
+
+<CodeGroup>
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wb:
+    eva = wb.get_identity("eva")
+
+    # Send outbound iMessage from @eva
+    eva.send_imessage(
+        to="+15551234567",
+        text="Hi, this is Eva from Wirebox!"
+    )
+
+    # List conversations assigned to @eva
+    convs = eva.list_imessage_conversations()
+
+    # Iterate message history
+    for msg in eva.iter_imessage_messages("conv_01J8ABC123XYZ"):
+        print(f"[{msg.direction}] {msg.sender}: {msg.text}")
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wb = new Wirebox();
+const eva = await wb.getIdentity("eva");
+
+// Send outbound iMessage from @eva
+await eva.sendImessage({
+  to: "+15551234567",
+  text: "Hi, this is Eva from Wirebox!",
+});
+
+// List conversations assigned to @eva
+const convs = await eva.listImessageConversations();
+
+// Iterate messages asynchronously
+for await (const msg of eva.iterImessageMessages("conv_01J8ABC123XYZ")) {
+  console.log(`[${msg.direction}] ${msg.sender}: ${msg.text}`);
+}
+```
+</CodeGroup>
+
+---
+
+## Real-Time Webhooks
+
+To build responsive agents without polling, subscribe to real-time iMessage events:
+
+* **`imessage.connected`**: Dispatched when a human user connects to an agent via the router line.
+* **`imessage.disconnected`**: Dispatched when an active conversation session is terminated.
+* **`imessage.received`**: Dispatched instantly when a user sends a blue bubble to an agent.
+* **`imessage.sent`**: Dispatched when an outbound message is processed and dispatched by the gateway.
+* **`imessage.delivered`**: Dispatched when Apple confirms the blue bubble has reached the recipient's device.
+* **`imessage.failed`**: Dispatched if outbound delivery fails (e.g. non-iMessage number).
+
+See the [Webhook Event Catalog](/api-reference/webhooks/events) for payload schemas and HMAC signature verification guides.

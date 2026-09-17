@@ -1,0 +1,131 @@
+---
+title: "Conversations"
+api: "GET https://api.wirebox.sh/api/v1/imessage/conversations"
+description: "List stateful iMessage conversation sessions, inspect active participants, and disconnect sessions."
+---
+
+An iMessage conversation represents a stateful session between an external phone number / Apple ID and an agent identity.
+
+### Query Parameters
+
+<ParamField query="identity_id" type="string">
+  Filter conversations by specific agent identity ID or handle.
+</ParamField>
+
+<ParamField query="status" type="string">
+  Filter conversations by status: `active`, `disconnected`, or `expired`.
+</ParamField>
+
+<ParamField query="limit" type="integer" default="50">
+  Maximum number of conversations to return (1–100).
+</ParamField>
+
+<ParamField query="cursor" type="string">
+  Opaque cursor for pagination.
+</ParamField>
+
+### Response Fields
+
+<ResponseField name="conversations" type="array">
+  List of iMessage conversation objects.
+  <Expandable title="Conversation Properties">
+    <ResponseField name="id" type="string">
+      Unique identifier of the conversation (e.g. `conv_01J8ABC123XYZ`).
+    </ResponseField>
+    <ResponseField name="agent_handle" type="string">
+      Handle of the paired agent identity (e.g. `eva`).
+    </ResponseField>
+    <ResponseField name="participant_id" type="string">
+      E.164 phone number or Apple ID of the user (e.g. `+15551234567`).
+    </ResponseField>
+    <ResponseField name="status" type="string">
+      Current status: `active`, `disconnected`, or `expired`.
+    </ResponseField>
+    <ResponseField name="last_message_at" type="string">
+      ISO 8601 timestamp of the latest message in this conversation.
+    </ResponseField>
+    <ResponseField name="created_at" type="string">
+      ISO 8601 creation timestamp.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="next_cursor" type="string">
+  Cursor for retrieving the next page of results, or `null` if at the end.
+</ResponseField>
+
+---
+
+## Disconnecting a Conversation
+
+To explicitly terminate an active conversation session and end routing to the agent:
+
+```http
+POST https://api.wirebox.sh/api/v1/imessage/conversations/{id}/disconnect
+```
+
+<RequestExample>
+```bash cURL
+# 1. List conversations
+curl -X GET "https://api.wirebox.sh/api/v1/imessage/conversations?status=active" \
+  -H "Authorization: Bearer $WIREBOX_API_KEY"
+
+# 2. Disconnect a conversation
+curl -X POST "https://api.wirebox.sh/api/v1/imessage/conversations/conv_01J8ABC123XYZ/disconnect" \
+  -H "Authorization: Bearer $WIREBOX_API_KEY"
+```
+
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wb:
+    # List active conversations
+    res = wb.imessage.conversations.list(status="active", limit=10)
+    for c in res.conversations:
+        print(f"[{c.id}] @{c.agent_handle} <-> {c.participant_id}")
+
+    # Disconnect session
+    wb.imessage.conversations.disconnect("conv_01J8ABC123XYZ")
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wb = new Wirebox();
+
+// List active conversations
+const res = await wb.imessage.conversations.list({ status: "active", limit: 10 });
+for (const c of res.conversations) {
+  console.log(`[${c.id}] @${c.agent_handle} <-> ${c.participant_id}`);
+}
+
+// Disconnect session
+await wb.imessage.conversations.disconnect("conv_01J8ABC123XYZ");
+```
+
+```bash CLI
+# List conversations
+wirebox imessage conversations --status active
+
+# Disconnect conversation
+wirebox imessage disconnect conv_01J8ABC123XYZ
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200 OK
+{
+  "conversations": [
+    {
+      "id": "conv_01J8ABC123XYZ",
+      "agent_handle": "eva",
+      "participant_id": "+15551234567",
+      "status": "active",
+      "last_message_at": "2026-09-17T10:15:30Z",
+      "created_at": "2026-09-17T09:00:00Z"
+    }
+  ],
+  "next_cursor": null
+}
+```
+</ResponseExample>
