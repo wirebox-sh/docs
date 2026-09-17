@@ -3,9 +3,11 @@ title: "Webhook Event Catalog"
 description: "Reference catalog and JSON payload schemas for all Wirebox webhook events."
 ---
 
-Wirebox triggers webhooks in real time whenever activity occurs across your communication channels.
+Wirebox triggers webhooks in real time whenever activity occurs across your communication channels. Events are signed with HMAC-SHA256 and structured by channel lifecycle.
 
 ---
+
+## Email Events
 
 ### `message.received`
 
@@ -97,6 +99,8 @@ Triggered when a remote mail server rejects an outbound email (e.g. mailbox not 
 
 ---
 
+## iMessage Events
+
 ### `imessage.received`
 
 Triggered when an incoming iMessage bubble arrives from a user directed to an agent identity.
@@ -142,6 +146,52 @@ Triggered when an outbound iMessage has been successfully dispatched through the
 ```
 
 ---
+
+### `imessage.delivered`
+
+Triggered when Apple confirms the blue bubble has been delivered to the recipient's device.
+
+```json
+{
+  "id": "evt_01J8ABC129",
+  "event": "imessage.delivered",
+  "created_at": "2026-09-17T10:30:08Z",
+  "data": {
+    "message_id": "imsg_01J8DEF456GHJ",
+    "conversation_id": "conv_01J8ABC123XYZ",
+    "agent_handle": "eva",
+    "recipient": "+15551234567",
+    "delivered_at": "2026-09-17T10:30:08Z"
+  }
+}
+```
+
+---
+
+### `imessage.failed`
+
+Triggered when an outbound iMessage delivery attempt fails (e.g. recipient phone number is not registered with Apple iMessage).
+
+```json
+{
+  "id": "evt_01J8ABC130",
+  "event": "imessage.failed",
+  "created_at": "2026-09-17T10:30:10Z",
+  "data": {
+    "message_id": "imsg_01J8DEF456GHJ",
+    "conversation_id": "conv_01J8ABC123XYZ",
+    "agent_handle": "eva",
+    "recipient": "+15551234567",
+    "error_code": "not_registered",
+    "error_message": "Recipient is not registered with Apple iMessage",
+    "failed_at": "2026-09-17T10:30:10Z"
+  }
+}
+```
+
+---
+
+## System Events
 
 ### `test.ping`
 

@@ -72,8 +72,7 @@
             "pages": [
               "api-reference/imessage/router",
               "api-reference/imessage/conversations",
-              "api-reference/imessage/messages",
-              "api-reference/imessage/users"
+              "api-reference/imessage/messages"
             ]
           },
           {

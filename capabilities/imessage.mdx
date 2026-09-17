@@ -200,61 +200,13 @@ for await (const msg of eva.iterImessageMessages("conv_01J8ABC123XYZ")) {
 
 ---
 
-## Gateway User Access Control
-
-Manage allowed user phone numbers on the iMessage gateway to restrict which phone numbers can communicate with agents:
-
-<CodeGroup>
-```python Python
-from wirebox import Wirebox
-
-with Wirebox() as wb:
-    # Add allowed phone number
-    wb.imessage.users.add("+15551234567")
-
-    # List registered users
-    users = wb.imessage.users.list()
-    for u in users.users:
-        print(f"User: {u.phone_number} (Added: {u.created_at})")
-
-    # Remove user
-    wb.imessage.users.remove("+15551234567")
-```
-
-```ts TypeScript
-import { Wirebox } from "@wirebox-sh/sdk";
-
-const wb = new Wirebox();
-
-// Add allowed phone number
-await wb.imessage.users.add("+15551234567");
-
-// List registered users
-const { users } = await wb.imessage.users.list();
-
-// Remove user
-await wb.imessage.users.remove("+15551234567");
-```
-
-```bash CLI
-# List allowed users
-wirebox imessage users list
-
-# Add allowed phone number
-wirebox imessage users add +15551234567
-
-# Remove allowed phone number
-wirebox imessage users remove +15551234567
-```
-</CodeGroup>
-
----
-
 ## Real-Time Webhooks
 
 To build responsive agents without polling, subscribe to real-time iMessage events:
 
 * **`imessage.received`**: Dispatched instantly when a user sends a blue bubble to an agent.
 * **`imessage.sent`**: Dispatched when an outbound message is processed and dispatched by the gateway.
+* **`imessage.delivered`**: Dispatched when Apple confirms the blue bubble has reached the recipient's device.
+* **`imessage.failed`**: Dispatched if outbound delivery fails (e.g. non-iMessage number).
 
 See the [Webhook Event Catalog](/api-reference/webhooks/events) for payload schemas and HMAC signature verification guides.
