@@ -68,7 +68,7 @@
             ]
           },
           {
-            "group": "Apple iMessage",
+            "group": "iMessage",
             "pages": [
               "api-reference/imessage/router",
               "api-reference/imessage/conversations",
