@@ -101,6 +101,46 @@ Triggered when a remote mail server rejects an outbound email (e.g. mailbox not 
 
 ## iMessage Events
 
+### `imessage.connected`
+
+Triggered when a human user connects to an agent identity via the router line (e.g. by texting `connect @agent` or scanning the QR code).
+
+```json
+{
+  "id": "evt_01J8ABC131",
+  "event": "imessage.connected",
+  "created_at": "2026-09-17T10:28:00Z",
+  "data": {
+    "conversation_id": "conv_01J8ABC123XYZ",
+    "agent_handle": "eva",
+    "participant_id": "+15551234567",
+    "connected_at": "2026-09-17T10:28:00Z"
+  }
+}
+```
+
+---
+
+### `imessage.disconnected`
+
+Triggered when an active iMessage conversation session is explicitly disconnected (via API or session release).
+
+```json
+{
+  "id": "evt_01J8ABC132",
+  "event": "imessage.disconnected",
+  "created_at": "2026-09-17T11:00:00Z",
+  "data": {
+    "conversation_id": "conv_01J8ABC123XYZ",
+    "agent_handle": "eva",
+    "participant_id": "+15551234567",
+    "disconnected_at": "2026-09-17T11:00:00Z"
+  }
+}
+```
+
+---
+
 ### `imessage.received`
 
 Triggered when an incoming iMessage bubble arrives from a user directed to an agent identity.

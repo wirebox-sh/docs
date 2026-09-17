@@ -204,6 +204,8 @@ for await (const msg of eva.iterImessageMessages("conv_01J8ABC123XYZ")) {
 
 To build responsive agents without polling, subscribe to real-time iMessage events:
 
+* **`imessage.connected`**: Dispatched when a human user connects to an agent via the router line.
+* **`imessage.disconnected`**: Dispatched when an active conversation session is terminated.
 * **`imessage.received`**: Dispatched instantly when a user sends a blue bubble to an agent.
 * **`imessage.sent`**: Dispatched when an outbound message is processed and dispatched by the gateway.
 * **`imessage.delivered`**: Dispatched when Apple confirms the blue bubble has reached the recipient's device.
