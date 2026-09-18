@@ -32,7 +32,9 @@
             "pages": [
               "capabilities/identities",
               "capabilities/email",
+              "capabilities/phone",
               "capabilities/imessage",
+              "capabilities/connect",
               "capabilities/tunnels",
               "capabilities/webhooks"
             ]
@@ -59,12 +61,24 @@
             ]
           },
           {
-            "group": "Mail & Messages",
+            "group": "Mail",
             "pages": [
               "api-reference/mail/mailboxes",
               "api-reference/mail/threads",
               "api-reference/mail/messages",
               "api-reference/mail/send"
+            ]
+          },
+          {
+            "group": "Phone",
+            "pages": [
+              "api-reference/phone/provision",
+              "api-reference/phone/list",
+              "api-reference/phone/get",
+              "api-reference/phone/release",
+              "api-reference/phone/messages",
+              "api-reference/phone/message",
+              "api-reference/phone/update-message"
             ]
           },
           {

@@ -1,0 +1,59 @@
+---
+title: "Provision a Phone Number"
+api: "POST https://api.wirebox.sh/api/v1/phone/numbers"
+description: "Provision a phone number and attach it to an agent identity."
+---
+
+Phone numbers support inbound SMS and MMS. Outbound SMS is not currently available.
+
+### Request body
+
+<ParamField body="agent_handle" type="string" required>
+  Handle of the agent identity that will own the number. A leading `@` is optional.
+</ParamField>
+
+<ParamField body="country_code" type="string" default="US">
+  Country code. Supported values are `US` and `CA`.
+</ParamField>
+
+<ParamField body="type" type="string" default="local">
+  Number type: `local` or `toll_free`.
+</ParamField>
+
+<ParamField body="region" type="string">
+  Two-letter US state or Canadian province code, such as `CA` or `ON`.
+</ParamField>
+
+<ParamField body="area_code" type="string">
+  Three-digit area code. Do not provide this together with `region`.
+</ParamField>
+
+<RequestExample>
+```bash cURL
+curl -X POST "https://api.wirebox.sh/api/v1/phone/numbers" \
+  -H "Authorization: Bearer $WIREBOX_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"agent_handle":"eva","country_code":"US","region":"CA"}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 201 Created
+{
+  "id": "pn_01J8ABC123DEF456",
+  "phone_number": "+14155550123",
+  "country_code": "US",
+  "type": "local",
+  "region": "CA",
+  "agent_handle": "eva",
+  "agent_identity_id": "agt_01J8ABC123DEF456",
+  "status": "active",
+  "sms_status": "pending",
+  "capabilities": { "sms": true, "mms": true, "voice": false },
+  "created_at": "2026-09-14T10:00:00Z",
+  "updated_at": "2026-09-14T10:00:00Z"
+}
+```
+</ResponseExample>
+
+The number becomes SMS-ready asynchronously. Check `sms_status` or subscribe to the `number.sms_ready` webhook before relying on inbound delivery.

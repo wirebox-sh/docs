@@ -11,11 +11,25 @@ Webhooks deliver real-time HTTP POST notifications to your backend servers whene
 
 | Event Type | Channel | Description |
 | :--- | :--- | :--- |
-| `message.received` | Mail | An inbound email was received, parsed, and stored in an agent inbox. |
-| `message.sent` | Mail | An outbound email was accepted and dispatched to the recipient's mail exchange server. |
-| `message.delivered` | Mail | The remote mail server confirmed successful delivery of the outbound email. |
-| `message.bounced` | Mail | The remote mail server rejected the email (e.g. invalid recipient or mailbox full). |
-| `message.failed` | Mail | Outbound delivery failed permanently after edge retries. |
+| **Email Events** | | |
+| `email.received` | Email | An inbound email was received, parsed, and stored in an agent inbox. |
+| `email.sent` | Email | An outbound email was accepted and dispatched to the recipient's mail exchange server. |
+| `email.delivered` | Email | The remote mail server confirmed successful delivery of the outbound email. |
+| `email.bounced` | Email | The remote mail server rejected the email (e.g. invalid recipient or mailbox full). |
+| `email.failed` | Email | Outbound delivery failed permanently after edge retries. |
+| **SMS Events** | | |
+| `sms.received` | SMS/MMS | An inbound SMS or MMS was received on an agent's phone number. |
+| `sms.sent` | SMS | An outbound SMS was accepted by the carrier. |
+| `sms.delivered` | SMS | Carrier confirmed delivery to the recipient handset. |
+| `sms.failed` | SMS | Delivery failed permanently. |
+| **iMessage Events** | | |
+| `imessage.received` | iMessage | A user sent an inbound iMessage to an agent. |
+| `imessage.sent` | iMessage | An outbound iMessage was dispatched through the gateway. |
+| `imessage.delivered` | iMessage | Apple confirmed the message was delivered to the device. |
+| `imessage.failed` | iMessage | Delivery failed. |
+| `imessage.connected` | iMessage | Human paired and connected with the agent. |
+| `imessage.disconnected`| iMessage | Conversation session disconnected. |
+| **System Events** | | |
 | `test.ping` | System | Diagnostic ping fired from the Console or API to verify endpoint connectivity. |
 
 ---
@@ -35,7 +49,7 @@ from wirebox import Wirebox
 with Wirebox() as wb:
     webhook = wb.create_webhook(
         url="https://agent.example.com/api/webhooks",
-        events=["message.received", "message.delivered"],
+        events=["email.received", "sms.received"],
         agent="eva",
         auth_token="optional_bearer_token"
     )
@@ -50,7 +64,7 @@ const wb = new Wirebox();
 
 const webhook = await wb.webhooks.create({
   url: "https://agent.example.com/api/webhooks",
-  events: ["message.received", "message.delivered"],
+  events: ["email.received", "sms.received"],
   agent: "eva",
   auth_token: "optional_bearer_token",
 });
@@ -62,7 +76,7 @@ console.log("Signing Secret:", webhook.secret);
 ```bash CLI
 wirebox webhook create \
   --url https://agent.example.com/api/webhooks \
-  --events message.received,message.delivered \
+  --events email.received,sms.received \
   --agent eva \
   --auth-token optional_bearer_token
 ```
@@ -200,7 +214,7 @@ When an event triggers, Wirebox dispatches a structured JSON payload to your web
 ```json
 {
   "id": "evt_01J8DEF456GHI789",
-  "event": "message.received",
+  "event": "email.received",
   "created_at": "2026-09-14T10:00:00Z",
   "data": {
     "message_id": "msg_01J8ABC123XYZ",

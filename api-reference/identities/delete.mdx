@@ -1,7 +1,7 @@
 ---
 title: "Delete Agent Identity"
 api: "DELETE https://api.wirebox.sh/api/v1/identities/{handle}"
-description: "Permanently delete an agent identity and unbind its associated mailbox."
+description: "Permanently delete an agent identity and release all associated communication resources."
 ---
 
 ### Path Parameters
@@ -13,6 +13,20 @@ description: "Permanently delete an agent identity and unbind its associated mai
 ### Response
 
 Returns `204 No Content` on successful deletion.
+
+Deleting an identity removes its mailbox, tunnel, messages, and phone-message
+history. If the identity owns a phone number, Wirebox releases the number with
+its carrier before completing the deletion. If carrier release or tunnel
+termination fails, the identity remains active and the request returns `502` so
+you can retry safely.
+
+### Errors
+
+| Status | Code | Meaning |
+| --- | --- | --- |
+| 502 | `carrier_release_failed` | The linked phone number could not be released. Retry the request safely. |
+| 502 | `tunnel_termination_failed` | The linked tunnel could not be terminated. Retry the request safely. |
+| 500 | `deletion_rollback_failed` | Phone release failed and the tunnel could not be restored. Retry the request safely. |
 
 <RequestExample>
 ```bash cURL

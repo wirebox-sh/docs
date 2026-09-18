@@ -1,0 +1,185 @@
+---
+title: "Phone numbers and SMS"
+description: "Provision phone numbers for AI agents and receive inbound SMS and MMS messages."
+---
+
+Wirebox gives autonomous AI agents dedicated phone numbers for receiving messages from the real world. Provision a US or Canadian number, attach it to an agent identity, and process inbound SMS or MMS messages through the SDK, REST API, or webhooks.
+
+Phone messaging is currently inbound-only. Outbound SMS is not available.
+
+---
+
+## Provision a Phone Number
+
+Provision a phone number and attach it to an agent identity. Each identity can own one phone number at a time.
+
+Numbers are available in the United States and Canada. You can request a local or toll-free number and optionally provide a region or area code.
+
+<CodeGroup>
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wb:
+    number = wb.phone.numbers.provision(
+        agent_handle="eva",
+        country_code="US",
+        region="CA",
+    )
+    print("Phone number:", number.phone_number)
+    print("SMS status:", number.sms_status)
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wb = new Wirebox();
+
+const number = await wb.phone.numbers.provision({
+  agent_handle: "eva",
+  country_code: "US",
+  region: "CA",
+});
+
+console.log("Phone number:", number.phone_number);
+console.log("SMS status:", number.sms_status);
+```
+
+```bash cURL
+curl -X POST "https://api.wirebox.sh/api/v1/phone/numbers" \
+  -H "Authorization: Bearer $WIREBOX_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"agent_handle":"eva","country_code":"US","region":"CA"}'
+```
+</CodeGroup>
+
+Number provisioning and SMS readiness are separate events. A newly provisioned number may have `sms_status: "pending"` before it can receive messages. Wait until the status is `ready`.
+
+---
+
+## Receive SMS and MMS
+
+Inbound messages include the sender, recipients, message type, text, read state, and any MMS media attachments.
+
+<CodeGroup>
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wb:
+    eva = wb.get_identity("eva")
+    result = eva.phone.list_messages(limit=20, is_read=False)
+
+    for message in result.messages:
+        print(f"[{message.from_number}] {message.text}")
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wb = new Wirebox();
+const eva = await wb.identify("eva");
+const { messages } = await eva.phone.listMessages({
+  limit: 20,
+  is_read: false,
+});
+
+for (const message of messages) {
+  console.log(`[${message.from_number}] ${message.text}`);
+}
+```
+
+```bash cURL
+curl -X GET "https://api.wirebox.sh/api/v1/phone/numbers/eva/messages?is_read=false" \
+  -H "Authorization: Bearer $WIREBOX_API_KEY"
+```
+</CodeGroup>
+
+Messages can be `sms` or `mms`. MMS media is returned with a signed URL that expires one hour after the response is generated.
+
+---
+
+## Handle Messages with Webhooks
+
+Subscribe to the `sms.received` event to process incoming messages as soon as they arrive instead of polling the inbox. Webhook payloads include the receiving phone number, sender, recipients, message type, and text.
+
+You can still use the SDK or REST API to retrieve the complete message and its media attachments after receiving the event.
+
+---
+
+## Mark Messages as Read
+
+Use the message ID to update its read state. This does not change the message body or delivery metadata.
+
+<CodeGroup>
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wb:
+    eva = wb.get_identity("eva")
+    message = eva.phone.mark_message_read("msg_01J8DEF789KLM012")
+    print("Read:", message.is_read)
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wb = new Wirebox();
+const eva = await wb.identify("eva");
+const message = await eva.phone.markMessageRead("msg_01J8DEF789KLM012");
+
+console.log("Read:", message.is_read);
+```
+
+```bash cURL
+curl -X PATCH "https://api.wirebox.sh/api/v1/phone/numbers/eva/messages/msg_01J8DEF789KLM012" \
+  -H "Authorization: Bearer $WIREBOX_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"is_read":true}'
+```
+</CodeGroup>
+
+---
+
+## Manage Phone Numbers
+
+You can list, inspect, and release numbers through the SDK or REST API. Releasing a number is irreversible: the carrier may later assign it to another customer, while the agent identity remains active.
+
+<CodeGroup>
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wb:
+    number = wb.phone.numbers.get("eva")
+    print(number.phone_number, number.sms_status)
+
+    numbers = wb.phone.numbers.list(status="active")
+    for item in numbers.numbers:
+        print(item.agent_handle, item.phone_number)
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wb = new Wirebox();
+const number = await wb.phone.numbers.get("eva");
+console.log(number.phone_number, number.sms_status);
+
+const result = await wb.phone.numbers.list({ status: "active" });
+for (const item of result.numbers) {
+  console.log(item.agent_handle, item.phone_number);
+}
+```
+</CodeGroup>
+
+---
+
+## Current Availability
+
+| Capability | Availability |
+| --- | --- |
+| US phone numbers | Available |
+| Canadian phone numbers | Available |
+| Inbound SMS | Available |
+| Inbound MMS | Available |
+| MMS media attachments | Available |
+| Outbound SMS | Not available |
+| Voice calls | Not available |

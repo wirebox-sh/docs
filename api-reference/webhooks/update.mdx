@@ -30,7 +30,7 @@ curl -X PATCH https://api.wirebox.sh/api/v1/webhooks/whk_01J8DEF456GHI789 \
   -H "Authorization: Bearer $WIREBOX_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "events": ["message.received", "message.sent", "message.delivered", "message.bounced"]
+    "events": ["email.received", "email.sent", "email.delivered", "email.bounced"]
   }'
 ```
 
@@ -40,7 +40,7 @@ from wirebox import Wirebox
 with Wirebox() as wirebox:
     updated = wirebox.update_webhook(
         "whk_01J8DEF456GHI789",
-        events=["message.received", "message.sent", "message.delivered", "message.bounced"]
+        events=["email.received", "email.sent", "email.delivered", "email.bounced"]
     )
     print("Updated events:", updated.events)
 ```
@@ -50,14 +50,14 @@ import { Wirebox } from "@wirebox-sh/sdk";
 
 const wirebox = new Wirebox();
 const updated = await wirebox.updateWebhook("whk_01J8DEF456GHI789", {
-  events: ["message.received", "message.sent", "message.delivered", "message.bounced"],
+  events: ["email.received", "email.sent", "email.delivered", "email.bounced"],
 });
 console.log("Updated events:", updated.events);
 ```
 
 ```bash CLI
 wirebox webhook update whk_01J8DEF456GHI789 \
-  --events message.received,message.sent,message.delivered,message.bounced
+  --events email.received,email.sent,email.delivered,email.bounced
 ```
 </RequestExample>
 
@@ -67,10 +67,10 @@ wirebox webhook update whk_01J8DEF456GHI789 \
   "id": "whk_01J8DEF456GHI789",
   "url": "https://agent.example.com/api/webhooks",
   "events": [
-    "message.received",
-    "message.sent",
-    "message.delivered",
-    "message.bounced"
+    "email.received",
+    "email.sent",
+    "email.delivered",
+    "email.bounced"
   ],
   "agent_handle": "eva",
   "auth_token": "updated_secret_token_456",

@@ -1,0 +1,61 @@
+---
+title: "List Phone Messages"
+api: "GET https://api.wirebox.sh/api/v1/phone/numbers/{number}/messages"
+description: "List inbound SMS and MMS messages received by a phone number."
+---
+
+Phone messages are currently inbound-only. Outbound SMS is not available.
+
+<ParamField path="number" type="string" required>
+  Number ID (`pn_...`), E.164 phone number, or owning agent handle.
+</ParamField>
+
+<ParamField query="limit" type="integer" default="50">
+  Number of messages to return (1–100).
+</ParamField>
+
+<ParamField query="cursor" type="string">
+  Cursor from a previous response's `next_cursor`.
+</ParamField>
+
+<ParamField query="is_read" type="boolean">
+  Filter by read state.
+</ParamField>
+
+<ParamField query="from_number" type="string">
+  Filter by a sender's E.164 phone number.
+</ParamField>
+
+<RequestExample>
+```bash cURL
+curl -X GET "https://api.wirebox.sh/api/v1/phone/numbers/eva/messages?is_read=false" \
+  -H "Authorization: Bearer $WIREBOX_API_KEY"
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200 OK
+{
+  "messages": [
+    {
+      "id": "msg_01J8DEF789KLM012",
+      "phone_number": "+14155550123",
+      "agent_handle": "eva",
+      "direction": "inbound",
+      "type": "sms",
+      "from_number": "+12125550199",
+      "to_numbers": ["+14155550123"],
+      "text": "Hey, when is my order arriving?",
+      "media": null,
+      "is_read": false,
+      "segments": 1,
+      "created_at": "2026-09-14T14:30:00Z"
+    }
+  ],
+  "next_cursor": null,
+  "has_more": false
+}
+```
+</ResponseExample>
+
+Each media item contains `content_type`, `size_bytes`, and a signed `url`. Signed media URLs expire one hour after the response is generated.

@@ -147,7 +147,10 @@ wirebox identity update eva \
 
 ### Deleting an Identity
 
-Permanently release an agent identity and tear down its associated mailbox and stored messages.
+Permanently release an agent identity and tear down its associated mailbox,
+tunnel, and stored messages. If the identity owns a phone number, Wirebox
+releases it before deleting the identity. If the carrier cannot release the
+number, deletion stops and you can retry safely.
 
 <CodeGroup>
 ```python Python

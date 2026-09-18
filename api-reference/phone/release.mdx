@@ -1,0 +1,23 @@
+---
+title: "Release a Phone Number"
+api: "DELETE https://api.wirebox.sh/api/v1/phone/numbers/{number}"
+description: "Release a phone number while keeping its agent identity active."
+---
+
+<ParamField path="number" type="string" required>
+  Number ID (`pn_...`), E.164 phone number, or owning agent handle.
+</ParamField>
+
+This operation is irreversible. The number is released to the carrier and may later be assigned to another customer. Message history is retained.
+
+<RequestExample>
+```bash cURL
+curl -X DELETE "https://api.wirebox.sh/api/v1/phone/numbers/eva" \
+  -H "Authorization: Bearer $WIREBOX_API_KEY"
+```
+</RequestExample>
+
+<ResponseExample>
+```text 204 No Content
+```
+</ResponseExample>

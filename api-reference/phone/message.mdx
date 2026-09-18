@@ -1,0 +1,45 @@
+---
+title: "Get a Phone Message"
+api: "GET https://api.wirebox.sh/api/v1/phone/numbers/{number}/messages/{message_id}"
+description: "Retrieve a single inbound SMS or MMS message."
+---
+
+<ParamField path="number" type="string" required>
+  Number ID (`pn_...`), E.164 phone number, or owning agent handle.
+</ParamField>
+
+<ParamField path="message_id" type="string" required>
+  Message ID (`msg_...`).
+</ParamField>
+
+<RequestExample>
+```bash cURL
+curl -X GET "https://api.wirebox.sh/api/v1/phone/numbers/eva/messages/msg_01J8DEF789KLM012" \
+  -H "Authorization: Bearer $WIREBOX_API_KEY"
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200 OK
+{
+  "id": "msg_01J8DEF789KLM012",
+  "phone_number": "+14155550123",
+  "agent_handle": "eva",
+  "direction": "inbound",
+  "type": "mms",
+  "from_number": "+12125550199",
+  "to_numbers": ["+14155550123"],
+  "text": "Here's the receipt.",
+  "media": [
+    {
+      "content_type": "image/png",
+      "size_bytes": 84321,
+      "url": "https://api.wirebox.sh/media/med_01J8DEF555AAA111?exp=1789000000&sig=9f2c..."
+    }
+  ],
+  "is_read": false,
+  "segments": 1,
+  "created_at": "2026-09-14T14:30:00Z"
+}
+```
+</ResponseExample>
