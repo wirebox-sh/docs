@@ -9,14 +9,14 @@ Wirebox triggers webhooks in real time whenever activity occurs across your comm
 
 ## Email Events
 
-### `message.received`
+### `email.received`
 
 Triggered when an incoming email arrives at an agent's inbox.
 
 ```json
 {
   "id": "evt_01J8ABC123",
-  "event": "message.received",
+  "event": "email.received",
   "created_at": "2026-09-11T12:00:00Z",
   "data": {
     "message_id": "msg_01J8DEF456",
@@ -35,14 +35,14 @@ Triggered when an incoming email arrives at an agent's inbox.
 
 ---
 
-### `message.sent`
+### `email.sent`
 
 Triggered when an outbound email is accepted by the Wirebox edge engine for delivery.
 
 ```json
 {
   "id": "evt_01J8ABC124",
-  "event": "message.sent",
+  "event": "email.sent",
   "created_at": "2026-09-11T12:01:00Z",
   "data": {
     "message_id": "msg_01J8OUTBOUND789",
@@ -56,14 +56,14 @@ Triggered when an outbound email is accepted by the Wirebox edge engine for deli
 
 ---
 
-### `message.delivered`
+### `email.delivered`
 
 Triggered when the recipient's mail server confirms successful delivery.
 
 ```json
 {
   "id": "evt_01J8ABC125",
-  "event": "message.delivered",
+  "event": "email.delivered",
   "created_at": "2026-09-11T12:02:15Z",
   "data": {
     "message_id": "msg_01J8OUTBOUND789",
@@ -77,14 +77,14 @@ Triggered when the recipient's mail server confirms successful delivery.
 
 ---
 
-### `message.bounced`
+### `email.bounced`
 
 Triggered when a remote mail server rejects an outbound email (e.g. mailbox not found, domain non-existent).
 
 ```json
 {
   "id": "evt_01J8ABC126",
-  "event": "message.bounced",
+  "event": "email.bounced",
   "created_at": "2026-09-11T12:03:00Z",
   "data": {
     "message_id": "msg_01J8OUTBOUND789",
@@ -93,6 +93,122 @@ Triggered when a remote mail server rejects an outbound email (e.g. mailbox not 
     "recipient": "invalid-address@example.com",
     "bounce_type": "permanent",
     "diagnostic_code": "550 5.1.1 User unknown"
+  }
+}
+```
+
+---
+
+### `email.failed`
+
+Triggered when an outbound email fails permanently after exhausting all retry attempts.
+
+```json
+{
+  "id": "evt_01J8ABC135",
+  "event": "email.failed",
+  "created_at": "2026-09-11T12:05:00Z",
+  "data": {
+    "message_id": "msg_01J8OUTBOUND789",
+    "thread_id": "thrd_01J8GHI789",
+    "agent_handle": "eva",
+    "error_code": "system_error",
+    "error_message": "Outbound delivery permanently failed after retry limit."
+  }
+}
+```
+
+---
+
+## SMS Events
+
+### `sms.received`
+
+Triggered immediately when an incoming SMS or MMS arrives on an agent's phone number.
+
+```json
+{
+  "id": "evt_01J8ABC140",
+  "event": "sms.received",
+  "created_at": "2026-09-18T02:15:00Z",
+  "data": {
+    "message": {
+      "id": "msg_01J8DEF111",
+      "channel": "sms",
+      "phone_number": "+14232190980",
+      "agent_handle": "sale-mark",
+      "direction": "inbound",
+      "type": "sms",
+      "from_number": "+15551234567",
+      "to_numbers": ["+14232190980"],
+      "text": "Your verification code is 482910",
+      "media": null,
+      "has_media": false,
+      "segments": 1,
+      "created_at": "2026-09-18T02:15:00Z"
+    }
+  }
+}
+```
+
+---
+
+### `sms.sent`
+
+Triggered when an outbound SMS/MMS has been dispatched to the telephony carrier.
+
+```json
+{
+  "id": "evt_01J8ABC141",
+  "event": "sms.sent",
+  "created_at": "2026-09-18T02:16:00Z",
+  "data": {
+    "message_id": "msg_01J8DEF222",
+    "phone_number": "+14232190980",
+    "to": "+15551234567",
+    "sent_at": "2026-09-18T02:16:00Z"
+  }
+}
+```
+
+---
+
+### `sms.delivered`
+
+Triggered when the cellular carrier confirms delivery of the SMS to the recipient's handset.
+
+```json
+{
+  "id": "evt_01J8ABC142",
+  "event": "sms.delivered",
+  "created_at": "2026-09-18T02:16:05Z",
+  "data": {
+    "message_id": "msg_01J8DEF222",
+    "phone_number": "+14232190980",
+    "recipient": "+15551234567",
+    "delivered_at": "2026-09-18T02:16:05Z"
+  }
+}
+```
+
+---
+
+### `sms.failed`
+
+Triggered when SMS delivery fails permanently (e.g. carrier block, unreachable handset, or opt-out).
+
+```json
+{
+  "id": "evt_01J8ABC143",
+  "event": "sms.failed",
+  "created_at": "2026-09-18T02:16:10Z",
+  "data": {
+    "message_id": "msg_01J8DEF222",
+    "phone_number": "+14232190980",
+    "recipient": "+15551234567",
+    "error_code": "unreachable",
+    "error_message": "Destination handset unreachable",
+    "failed_at": "2026-09-18T02:16:10Z"
   }
 }
 ```

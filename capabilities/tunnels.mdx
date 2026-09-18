@@ -44,6 +44,12 @@ Connecting tunnel for 'eva' to http://localhost:3000...
 Press Ctrl+C to disconnect.
 ```
 
+<Tip>
+  **Looking to bridge local coding agents (Claude Code, Hermes, OpenAI Codex, OpenCode) to iMessage or SMS?**
+
+  You do not need to run an HTTP server or proxy ports with `wirebox tunnel connect`. Use **[Agent Connect (`wirebox connect`)](/capabilities/connect)** instead — a turnkey execution harness that establishes an outbound agent session, runs local agent CLI processes on demand, supports remote HITL approval escalations, and can be installed as an OS daemon.
+</Tip>
+
 ---
 
 ## Programmatic Tunnel Management
@@ -170,7 +176,7 @@ A common workflow for autonomous agents is developing and debugging webhook hand
    ```bash
    wirebox webhook create \
      --url https://eva.wirebox.run/api/webhooks \
-     --events message.received \
+     --events email.received \
      --agent eva
    ```
 4. Send an email to `eva@wireboxmail.com`. The webhook event lands directly on your local `localhost:3000` server for interactive step debugging.

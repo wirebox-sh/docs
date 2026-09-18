@@ -1,0 +1,47 @@
+---
+title: "Update a Phone Message"
+api: "PATCH https://api.wirebox.sh/api/v1/phone/numbers/{number}/messages/{message_id}"
+description: "Mark an inbound SMS or MMS message as read or unread."
+---
+
+This endpoint updates message metadata only. The message body, sender, recipients, and timestamp cannot be changed.
+
+<ParamField path="number" type="string" required>
+  Number ID (`pn_...`), E.164 phone number, or owning agent handle.
+</ParamField>
+
+<ParamField path="message_id" type="string" required>
+  Message ID (`msg_...`).
+</ParamField>
+
+<ParamField body="is_read" type="boolean" required>
+  Set to `true` to mark the message read or `false` to mark it unread.
+</ParamField>
+
+<RequestExample>
+```bash cURL
+curl -X PATCH "https://api.wirebox.sh/api/v1/phone/numbers/eva/messages/msg_01J8DEF789KLM012" \
+  -H "Authorization: Bearer $WIREBOX_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"is_read":true}'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200 OK
+{
+  "id": "msg_01J8DEF789KLM012",
+  "phone_number": "+14155550123",
+  "agent_handle": "eva",
+  "direction": "inbound",
+  "type": "sms",
+  "from_number": "+12125550199",
+  "to_numbers": ["+14155550123"],
+  "text": "Hey, when is my order arriving?",
+  "media": null,
+  "is_read": true,
+  "segments": 1,
+  "created_at": "2026-09-14T14:30:00Z"
+}
+```
+</ResponseExample>

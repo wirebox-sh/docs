@@ -1,0 +1,38 @@
+---
+title: "Get a Phone Number"
+api: "GET https://api.wirebox.sh/api/v1/phone/numbers/{number}"
+description: "Retrieve a provisioned phone number."
+---
+
+<ParamField path="number" type="string" required>
+  Number ID (`pn_...`), E.164 phone number, or owning agent handle.
+</ParamField>
+
+<RequestExample>
+```bash cURL
+curl -X GET "https://api.wirebox.sh/api/v1/phone/numbers/eva" \
+  -H "Authorization: Bearer $WIREBOX_API_KEY"
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200 OK
+{
+  "id": "pn_01J8ABC123DEF456",
+  "phone_number": "+14155550123",
+  "country_code": "US",
+  "type": "local",
+  "region": "CA",
+  "agent_handle": "eva",
+  "agent_identity_id": "agt_01J8ABC123DEF456",
+  "status": "active",
+  "sms_status": "ready",
+  "sms_error_code": null,
+  "sms_error_detail": null,
+  "sms_ready_at": "2026-09-14T10:12:30Z",
+  "capabilities": { "sms": true, "mms": true, "voice": false },
+  "created_at": "2026-09-14T10:00:00Z",
+  "updated_at": "2026-09-14T10:12:30Z"
+}
+```
+</ResponseExample>
