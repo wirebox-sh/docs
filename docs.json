@@ -34,7 +34,6 @@
               "capabilities/email",
               "capabilities/phone",
               "capabilities/imessage",
-              "capabilities/connect",
               "capabilities/tunnels",
               "capabilities/webhooks"
             ]
@@ -108,6 +107,17 @@
               "api-reference/webhooks/rotate-secret",
               "api-reference/webhooks/test-ping",
               "api-reference/webhooks/events"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Changelog",
+        "groups": [
+          {
+            "group": "Updates",
+            "pages": [
+              "changelog"
             ]
           }
         ]

@@ -1,0 +1,42 @@
+---
+title: "Changelog"
+description: "Stay up to date with new features, communication channels, and developer tools across Wirebox."
+---
+
+Follow weekly updates to the Wirebox API, client SDKs, and runtime tools as we expand real-world communication capabilities for AI agents.
+
+Looking for our SDKs and developer tools? Check out our [TypeScript SDK](https://github.com/wirebox-sh/wirebox-typescript), [Python SDK](https://github.com/wirebox-sh/wirebox-python), and [Wirebox CLI](https://github.com/wirebox-sh/wirebox-cli).
+
+<Update label="October 3, 2026">
+  * **Live webhook inspection and forwarding in the CLI.** Intercept and inspect real-time webhook events delivered to your agent directly in your terminal with `wirebox webhook listen`. Supports local payload forwarding (`--forward-to http://localhost:8000/webhook`), event filtering, and automatic cleanup of ephemeral test subscriptions on exit. *(CLI 0.7.0)*
+
+  * **Unified credentials resolution across all SDKs and CLI.** All client libraries and the terminal CLI now resolve authentication seamlessly from `~/.wirebox/credentials`, `~/.wirebox/config.json`, or the `WIREBOX_CREDENTIALS_PATH` environment variable. *(CLI 0.7.0, TS SDK 0.6.0, Python SDK 0.4.0)*
+
+  * **In-memory tunnel handlers for Python SDK.** Python developers can now attach custom asynchronous request handlers directly to live reverse-proxy tunnel sessions in-memory without configuring local web servers. *(Python SDK 0.4.0)*
+
+  * **Card stream views for mail & aligned API schemas.** `wirebox mail list` and `wirebox imessage conversations` now display messages as readable terminal cards with participant, snippet, and status metadata. API response and message schemas are fully aligned across TypeScript and Python SDKs. *(CLI 0.7.0, TS SDK 0.6.0, Python SDK 0.4.0)*
+</Update>
+
+<Update label="September 25, 2026">
+  * **WebSocket reverse proxying over public tunnels.** Tunnels now natively stream persistent WebSocket connections (`ws://` and `wss://`) directly to your local agent process with full duplex support, enabling real-time streaming interfaces and voice agents. See [Network tunnels](/capabilities/tunnels#websocket-reverse-proxying).
+
+  * **Dedicated iMessage router and conversation management.** Agent identities can claim dedicated iMessage channels, initiate individual threads, inspect conversation history, and exchange rich text and media. See [iMessage channel](/capabilities/imessage). *(TS SDK 0.4.0, Python SDK 0.2.0)*
+
+  * **Real-time iMessage connection webhook events.** Receive instant notifications via `imessage.connected`, `imessage.disconnected`, and delivery lifecycle events when communicating with recipients. See [Webhook events](/capabilities/webhooks#event-types).
+</Update>
+
+<Update label="September 18, 2026">
+  * **Webhook signature verification and secret rotation.** Webhook payloads include cryptographic HMAC SHA-256 signatures (`wirebox-signature` and `wirebox-timestamp`). Endpoints can rotate signing secrets on demand with zero delivery downtime. See [Webhook signatures](/capabilities/webhooks#signature-verification).
+
+  * **Test webhook endpoints with synthetic pings.** Trigger on-demand test ping deliveries directly from the API to verify endpoint handlers before routing live production traffic. See [Test ping](/api-reference/webhooks/test-ping).
+
+  * **RFC-5322 thread grouping for agent mailboxes.** Related incoming and outgoing emails are automatically organized into conversations with participant tracking and unread counts. See [Email capabilities](/capabilities/email).
+</Update>
+
+<Update label="September 11, 2026">
+  * **Autonomous agent self-registration.** AI agents can register themselves programmatically with just a sponsor email, receiving their own agent identity (`ident_...`), email address, and API key instantly. See [Agent self-signup](/agent-signup).
+
+  * **Public REST API & Official SDKs.** The initial release of the Wirebox developer platform, including complete REST endpoints (`/api/v1/*`), the TypeScript SDK (`@wirebox-sh/sdk`), Python SDK (`wirebox`), and the Wirebox CLI (`@wirebox-sh/cli`).
+
+  * **Zero-setup secure tunnels.** Give any local agent process a permanent public HTTPS address (`<handle>.wireboxwire.com`) with automated TLS termination and outbound-only connectivity. See [Tunnels](/capabilities/tunnels).
+</Update>
