@@ -29,11 +29,30 @@ Phone numbers support inbound SMS and MMS. Outbound SMS is not currently availab
 </ParamField>
 
 <RequestExample>
-```bash cURL
-curl -X POST "https://api.wirebox.sh/api/v1/phone/numbers" \
-  -H "Authorization: Bearer $WIREBOX_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"agent_handle":"eva","country_code":"US","region":"CA"}'
+```bash CLI
+wirebox phone provision --agent eva --country US --region CA
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wb = new Wirebox();
+const number = await wb.phone.numbers.provision({
+  agent_handle: "eva",
+  country_code: "US",
+  region: "CA",
+});
+```
+
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wb:
+    number = wb.phone.numbers.provision(
+        agent_handle="eva",
+        country_code="US",
+        region="CA",
+    )
 ```
 </RequestExample>
 

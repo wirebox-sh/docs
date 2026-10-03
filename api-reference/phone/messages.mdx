@@ -27,9 +27,33 @@ Phone messages are currently inbound-only. Outbound SMS is not available.
 </ParamField>
 
 <RequestExample>
-```bash cURL
-curl -X GET "https://api.wirebox.sh/api/v1/phone/numbers/eva/messages?is_read=false" \
-  -H "Authorization: Bearer $WIREBOX_API_KEY"
+```bash CLI
+wirebox phone messages eva --unread-only --limit 20
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wb = new Wirebox();
+const eva = await wb.identify("eva");
+const { messages } = await eva.phone.listMessages({
+  is_read: false,
+  limit: 20,
+});
+
+for (const msg of messages) {
+  console.log(`[${msg.from_number}] ${msg.text}`);
+}
+```
+
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wb:
+    eva = wb.get_identity("eva")
+    result = eva.phone.list_messages(is_read=False, limit=20)
+    for msg in result.messages:
+        print(f"[{msg.from_number}] {msg.text}")
 ```
 </RequestExample>
 

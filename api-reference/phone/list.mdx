@@ -23,9 +23,31 @@ description: "List the phone numbers in your organization."
 </ParamField>
 
 <RequestExample>
-```bash cURL
-curl -X GET "https://api.wirebox.sh/api/v1/phone/numbers?limit=50" \
-  -H "Authorization: Bearer $WIREBOX_API_KEY"
+```bash CLI
+wirebox phone list --status active --limit 50
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wb = new Wirebox();
+const result = await wb.phone.numbers.list({
+  status: "active",
+  limit: 50,
+});
+
+for (const item of result.numbers) {
+  console.log(`${item.agent_handle}: ${item.phone_number} (${item.sms_status})`);
+}
+```
+
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wb:
+    result = wb.phone.numbers.list(status="active", limit=50)
+    for item in result.numbers:
+        print(f"{item.agent_handle}: {item.phone_number} ({item.sms_status})")
 ```
 </RequestExample>
 
