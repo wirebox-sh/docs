@@ -9,9 +9,25 @@ description: "Retrieve a provisioned phone number."
 </ParamField>
 
 <RequestExample>
-```bash cURL
-curl -X GET "https://api.wirebox.sh/api/v1/phone/numbers/eva" \
-  -H "Authorization: Bearer $WIREBOX_API_KEY"
+```bash CLI
+wirebox phone get eva
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wb = new Wirebox();
+const number = await wb.phone.numbers.get("eva");
+
+console.log(`Number: ${number.phone_number}, Status: ${number.status}`);
+```
+
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wb:
+    number = wb.phone.numbers.get("eva")
+    print(f"Number: {number.phone_number}, Status: {number.status}")
 ```
 </RequestExample>
 

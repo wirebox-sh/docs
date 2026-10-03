@@ -11,9 +11,22 @@ description: "Release a phone number while keeping its agent identity active."
 This operation is irreversible. The number is released to the carrier and may later be assigned to another customer. Message history is retained.
 
 <RequestExample>
-```bash cURL
-curl -X DELETE "https://api.wirebox.sh/api/v1/phone/numbers/eva" \
-  -H "Authorization: Bearer $WIREBOX_API_KEY"
+```bash CLI
+wirebox phone release eva --yes
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wb = new Wirebox();
+await wb.phone.numbers.release("eva");
+```
+
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wb:
+    wb.phone.numbers.release("eva")
 ```
 </RequestExample>
 

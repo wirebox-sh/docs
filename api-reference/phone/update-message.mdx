@@ -19,11 +19,27 @@ This endpoint updates message metadata only. The message body, sender, recipient
 </ParamField>
 
 <RequestExample>
-```bash cURL
-curl -X PATCH "https://api.wirebox.sh/api/v1/phone/numbers/eva/messages/msg_01J8DEF789KLM012" \
-  -H "Authorization: Bearer $WIREBOX_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"is_read":true}'
+```bash CLI
+wirebox phone mark-read eva msg_01J8DEF789KLM012
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wb = new Wirebox();
+const eva = await wb.identify("eva");
+const msg = await eva.phone.markMessageRead("msg_01J8DEF789KLM012");
+
+console.log(`Message ${msg.id} read status: ${msg.is_read}`);
+```
+
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wb:
+    eva = wb.get_identity("eva")
+    msg = eva.phone.mark_message_read("msg_01J8DEF789KLM012")
+    print(f"Message {msg.id} read status: {msg.is_read}")
 ```
 </RequestExample>
 
