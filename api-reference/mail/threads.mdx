@@ -1,54 +1,67 @@
 ---
 title: "List Conversation Threads"
-api: "GET https://api.wirebox.sh/api/v1/mail/threads"
-description: "Retrieve grouped conversation threads scoped to an agent or mailbox."
+api: "GET https://api.wirebox.sh/api/v1/mailboxes/{email_address}/threads"
+description: "List and retrieve RFC-grouped conversation threads for an agent mailbox."
 ---
 
+### Path Parameters
+
+<ParamField path="email_address" type="string" required>
+  Full mailbox address (`eva@wireboxmail.com`) or local agent handle (`eva`).
+</ParamField>
+
 ### Query Parameters
-
-<ParamField query="agent" type="string">
-  Filter threads for a specific agent handle (e.g. `eva`).
-</ParamField>
-
-<ParamField query="mailbox" type="string">
-  Filter threads by mailbox address (e.g. `eva@wireboxmail.com`).
-</ParamField>
 
 <ParamField query="limit" type="integer" default="50">
   Number of threads to return (1–100).
 </ParamField>
 
-<ParamField query="offset" type="integer" default="0">
-  Pagination offset.
-</ParamField>
+### Response
+
+<ResponseField name="threads[].id" type="string">
+  Unique thread identifier (`thrd_` prefix).
+</ResponseField>
+
+<ResponseField name="threads[].mailbox_id" type="string">
+  Mailbox this thread belongs to.
+</ResponseField>
+
+<ResponseField name="threads[].subject" type="string">
+  Thread subject.
+</ResponseField>
+
+<ResponseField name="threads[].snippet" type="string">
+  Short preview of the latest message.
+</ResponseField>
+
+<ResponseField name="threads[].folder" type="string">
+  Folder the thread currently lives in (e.g. `inbox`).
+</ResponseField>
+
+<ResponseField name="threads[].message_count" type="integer">
+  Number of messages in the thread.
+</ResponseField>
+
+<ResponseField name="threads[].has_attachments" type="boolean">
+  Whether any message in the thread has attachments.
+</ResponseField>
+
+<ResponseField name="threads[].is_unread" type="boolean">
+  Whether the thread has unread messages.
+</ResponseField>
+
+<ResponseField name="threads[].last_message_at" type="string">
+  ISO 8601 timestamp of the most recent message.
+</ResponseField>
+
+<ResponseField name="threads[].created_at" type="string">
+  ISO 8601 creation timestamp.
+</ResponseField>
 
 <RequestExample>
 ```bash cURL
-curl -X GET "https://api.wirebox.sh/api/v1/mail/threads?agent=eva" \
+curl -X GET "https://api.wirebox.sh/api/v1/mailboxes/eva/threads" \
   -H "Authorization: Bearer $WIREBOX_API_KEY"
-```
-
-```python Python
-from wirebox import Wirebox
-
-with Wirebox() as wirebox:
-    threads = wirebox.list_threads(agent="eva")
-    for th in threads:
-        print(f"Thread {th.id}: {th.subject} ({th.message_count} messages)")
-```
-
-```ts TypeScript
-import { Wirebox } from "@wirebox-sh/sdk";
-
-const wirebox = new Wirebox();
-const threads = await wirebox.listThreads({ agent: "eva" });
-for (const th of threads) {
-  console.log(`Thread ${th.id}: ${th.subject}`);
-}
-```
-
-```bash CLI
-wirebox mail threads --agent eva
 ```
 </RequestExample>
 
@@ -58,15 +71,121 @@ wirebox mail threads --agent eva
   "threads": [
     {
       "id": "thrd_01J8XYZ987ABC",
+      "mailbox_id": "mbx_01J8ABC123XYZ",
       "subject": "Question regarding my API quota",
       "snippet": "Hi Eva, how can I increase my monthly quota?",
-      "unread": false,
+      "folder": "inbox",
       "message_count": 2,
+      "has_attachments": false,
+      "is_unread": false,
       "last_message_at": "2026-09-11T12:05:00Z",
       "created_at": "2026-09-11T12:00:00Z"
     }
   ],
-  "total": 1
+  "next_cursor": null,
+  "has_more": false
+}
+```
+</ResponseExample>
+
+---
+
+## Retrieve a Thread
+
+Returns a single thread with all of its messages inlined in chronological order.
+
+### Path Parameters
+
+<ParamField path="thread_id" type="string" required>
+  Unique thread identifier (`thrd_` prefix).
+</ParamField>
+
+<RequestExample>
+```bash cURL
+curl -X GET "https://api.wirebox.sh/api/v1/mailboxes/eva/threads/thrd_01J8XYZ987ABC" \
+  -H "Authorization: Bearer $WIREBOX_API_KEY"
+```
+</RequestExample>
+
+### Response
+
+<ResponseField name="messages[].id" type="string">
+  Unique message identifier.
+</ResponseField>
+
+<ResponseField name="messages[].direction" type="string">
+  `inbound` or `outbound`.
+</ResponseField>
+
+<ResponseField name="messages[].status" type="string">
+  Delivery status (`queued`, `sent`, `delivered`, `bounced`, or `failed`).
+</ResponseField>
+
+<ResponseField name="messages[].from" type="string">
+  Sender email address.
+</ResponseField>
+
+<ResponseField name="messages[].to" type="string[]">
+  Recipient email addresses.
+</ResponseField>
+
+<ResponseField name="messages[].cc" type="string[]">
+  CC recipient email addresses.
+</ResponseField>
+
+<ResponseField name="messages[].subject" type="string">
+  Message subject.
+</ResponseField>
+
+<ResponseField name="messages[].text" type="string">
+  Plain-text body.
+</ResponseField>
+
+<ResponseField name="messages[].html" type="string">
+  HTML body.
+</ResponseField>
+
+<ResponseField name="messages[].is_read" type="boolean">
+  Whether the message has been read.
+</ResponseField>
+
+<ResponseField name="messages[].has_attachments" type="boolean">
+  Whether the message has attachments.
+</ResponseField>
+
+<ResponseField name="messages[].created_at" type="string">
+  ISO 8601 creation timestamp.
+</ResponseField>
+
+<ResponseExample>
+```json 200 OK
+{
+  "id": "thrd_01J8XYZ987ABC",
+  "mailbox_id": "mbx_01J8ABC123XYZ",
+  "subject": "Question regarding my API quota",
+  "snippet": "Thanks, that answers it!",
+  "folder": "inbox",
+  "message_count": 2,
+  "has_attachments": false,
+  "is_unread": false,
+  "last_message_at": "2026-09-11T12:05:00Z",
+  "created_at": "2026-09-11T12:00:00Z",
+  "messages": [
+    {
+      "id": "msg_01J8ABC123XYZ",
+      "direction": "inbound",
+      "status": "delivered",
+      "from": "alex@example.com",
+      "to": ["eva@wireboxmail.com"],
+      "cc": [],
+      "subject": "Question regarding my API quota",
+      "text": "Hi Eva, how can I increase my monthly quota?",
+      "html": "<p>Hi Eva, how can I increase my monthly quota?</p>",
+      "is_read": true,
+      "has_attachments": false,
+      "created_at": "2026-09-11T12:00:00Z"
+    }
+  ]
 }
 ```
 </ResponseExample>
