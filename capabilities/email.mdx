@@ -158,6 +158,51 @@ wirebox mail reply eva msg_01J8ABC123XYZ \
 
 ---
 
+## Forwarding Messages
+
+Forward existing emails to external teammates or services. Wirebox automatically formats the quoted RFC body (`---------- Forwarded message ---------`), creates an independent conversation thread, and clones original R2 attachments unless disabled (`forward_attachments=false` or `--no-attachments`).
+
+<CodeGroup>
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wb:
+    eva = wb.get_identity("eva")
+    forwarded = eva.forward_email(
+        "msg_01J8ABC123XYZ",
+        to=["accounting@example.com"],
+        body_text="FYI, forwarding the vendor contract for your review.",
+        forward_attachments=True,
+    )
+    print("Forwarded message ID:", forwarded.id)
+    print("New thread ID:", forwarded.thread_id)
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wb = new Wirebox();
+const eva = await wb.getIdentity("eva");
+
+const forwarded = await eva.forwardEmail("msg_01J8ABC123XYZ", {
+  to: ["accounting@example.com"],
+  body_text: "FYI, forwarding the vendor contract for your review.",
+  forward_attachments: true,
+});
+
+console.log("Forwarded message ID:", forwarded.id);
+console.log("New thread ID:", forwarded.thread_id);
+```
+
+```bash CLI
+wirebox mail forward msg_01J8ABC123XYZ \
+  --to accounting@example.com \
+  --comment "FYI, forwarding the vendor contract for your review."
+```
+</CodeGroup>
+
+---
+
 ## Sending Attachments
 
 Send PDF reports, invoices, images, logs, or data exports alongside your messages.
@@ -265,6 +310,7 @@ Every outbound message proceeds through a tracked delivery lifecycle:
 If you are writing low-level HTTP clients or webhook receivers, refer to the REST API Reference:
 
 * [Send Message](/api-reference/mail/send)
+* [Forward Message](/api-reference/mail/forward)
 * [List Messages](/api-reference/mail/messages)
 * [List Threads](/api-reference/mail/threads)
 * [Get Mailbox](/api-reference/mail/mailboxes)
