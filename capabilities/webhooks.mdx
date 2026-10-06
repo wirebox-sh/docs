@@ -47,7 +47,7 @@ Register a new HTTPS endpoint to receive agent events. You can optionally restri
 from wirebox import Wirebox
 
 with Wirebox() as wb:
-    webhook = wb.create_webhook(
+    webhook = wb.webhooks.create(
         url="https://agent.example.com/api/webhooks",
         events=["email.received", "sms.received"],
         agent="eva",
@@ -93,7 +93,7 @@ Query all configured webhook subscriptions across your organization, or filter b
 from wirebox import Wirebox
 
 with Wirebox() as wb:
-    webhooks = wb.list_webhooks(agent="eva")
+    webhooks = wb.webhooks.list(agent="eva")
     for wh in webhooks:
         print(f"[{wh.status}] {wh.id}: {wh.url} ({wh.events})")
 ```
@@ -129,7 +129,7 @@ Send an instant `test.ping` event to verify network routing, SSL handshakes, and
 from wirebox import Wirebox
 
 with Wirebox() as wb:
-    result = wb.ping_webhook("whk_01J8DEF456GHI789")
+    result = wb.webhooks.ping("whk_01J8DEF456GHI789")
     print("Ping success:", result.success, "Latency:", result.latency_ms)
 ```
 
@@ -158,7 +158,7 @@ Immediately invalidate an existing HMAC signing secret and generate a fresh repl
 from wirebox import Wirebox
 
 with Wirebox() as wb:
-    res = wb.rotate_webhook_secret("whk_01J8DEF456GHI789")
+    res = wb.webhooks.rotate_secret("whk_01J8DEF456GHI789")
     print("New Secret:", res.secret)
 ```
 
@@ -187,7 +187,7 @@ Permanently remove a webhook subscription:
 from wirebox import Wirebox
 
 with Wirebox() as wb:
-    wb.delete_webhook("whk_01J8DEF456GHI789")
+    wb.webhooks.delete("whk_01J8DEF456GHI789")
     print("Webhook deleted successfully.")
 ```
 

@@ -28,7 +28,7 @@ with Wirebox() as wirebox:
 import { Wirebox } from "@wirebox-sh/sdk";
 
 const wirebox = new Wirebox();
-await wirebox.deleteWebhook("whk_01J8DEF456GHI789");
+await wirebox.webhooks.delete("whk_01J8DEF456GHI789");
 console.log("Webhook deleted");
 ```
 

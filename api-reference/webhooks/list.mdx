@@ -33,7 +33,7 @@ with Wirebox() as wirebox:
 import { Wirebox } from "@wirebox-sh/sdk";
 
 const wirebox = new Wirebox();
-const webhooks = await wirebox.listWebhooks({ agent: "eva" });
+const webhooks = await wirebox.webhooks.list({ agent: "eva" });
 for (const wh of webhooks) {
   console.log(`Webhook ${wh.id}: ${wh.url}`);
 }

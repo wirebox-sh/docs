@@ -54,11 +54,11 @@ wirebox signup \
 ```ts TypeScript (SDK)
 import { Wirebox } from "@wirebox-sh/sdk";
 
-const { apiKey, emailAddress } = await Wirebox.signup({
-  humanEmail: "developer@example.com",
-  displayName: "Research Agent",
+const { api_key, email_address } = await Wirebox.signup({
+  human_email: "developer@example.com",
+  display_name: "Research Agent",
 });
-console.log(`Provisioned mailbox: ${emailAddress}`);
+console.log(`Provisioned mailbox: ${email_address}`);
 ```
 
 ```bash cURL
@@ -178,7 +178,7 @@ wirebox mail send agent-7k9x2m@wireboxmail.com \
 import { Wirebox } from "@wirebox-sh/sdk";
 
 const wb = new Wirebox({ apiKey: process.env.WIREBOX_API_KEY });
-const agent = await wb.identify("agent-7k9x2m");
+const agent = await wb.getIdentity("agent-7k9x2m");
 
 await agent.sendEmail({
   to: "colleague@external-company.com",

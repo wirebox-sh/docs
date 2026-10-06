@@ -62,16 +62,16 @@ from wirebox import Wirebox
 
 with Wirebox() as wb:
     # 1. List active tunnels
-    tunnels = wb.list_tunnels()
+    tunnels = wb.tunnels.list()
     for tun in tunnels:
         print(f"[{tun.status}] {tun.public_url} -> {tun.target_url}")
 
     # 2. Get tunnel details
-    tun = wb.get_tunnel("tun_01J8DEF456GHI789")
+    tun = wb.tunnels.get("tun_01J8DEF456GHI789")
     print("Connected clients:", tun.connected_clients)
 
     # 3. Update administrative status ('active' | 'disabled')
-    updated = wb.update_tunnel("tun_01J8DEF456GHI789", status="active")
+    updated = wb.tunnels.update("tun_01J8DEF456GHI789", status="active")
     print("Updated status:", updated.status)
 ```
 

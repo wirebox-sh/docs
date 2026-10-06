@@ -49,7 +49,7 @@ with Wirebox() as wirebox:
 import { Wirebox } from "@wirebox-sh/sdk";
 
 const wirebox = new Wirebox();
-const updated = await wirebox.updateWebhook("whk_01J8DEF456GHI789", {
+const updated = await wirebox.webhooks.update("whk_01J8DEF456GHI789", {
   events: ["email.received", "email.sent", "email.delivered", "email.bounced"],
 });
 console.log("Updated events:", updated.events);

@@ -66,7 +66,7 @@ wirebox phone messages eva --unread-only --limit 20
 import { Wirebox } from "@wirebox-sh/sdk";
 
 const wb = new Wirebox();
-const eva = await wb.identify("eva");
+const eva = await wb.getIdentity("eva");
 const { messages } = await eva.phone.listMessages({
   limit: 20,
   is_read: false,
@@ -104,7 +104,7 @@ wirebox phone message eva msg_01J8DEF789KLM012
 import { Wirebox } from "@wirebox-sh/sdk";
 
 const wb = new Wirebox();
-const eva = await wb.identify("eva");
+const eva = await wb.getIdentity("eva");
 const message = await eva.phone.getMessage("msg_01J8DEF789KLM012");
 
 console.log(`[${message.from_number}] ${message.text}`);
@@ -151,7 +151,7 @@ wirebox phone mark-read eva msg_01J8DEF789KLM012
 import { Wirebox } from "@wirebox-sh/sdk";
 
 const wb = new Wirebox();
-const eva = await wb.identify("eva");
+const eva = await wb.getIdentity("eva");
 const message = await eva.phone.markMessageRead("msg_01J8DEF789KLM012");
 
 console.log("Read:", message.is_read);

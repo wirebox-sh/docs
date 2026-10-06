@@ -34,7 +34,7 @@ with Wirebox() as wb:
         description="Autonomous customer triage and billing agent"
     )
     print("Claimed Handle:", identity.agent_handle)
-    print("Dedicated Mailbox:", identity.mailbox_address)
+    print("Dedicated Mailbox:", identity.mailbox.email_address)
 ```
 
 ```ts TypeScript
@@ -42,14 +42,14 @@ import { Wirebox } from "@wirebox-sh/sdk";
 
 const wb = new Wirebox();
 
-const identity = await wb.identities.create({
+const identity = await wb.createIdentity({
   agent_handle: "eva",
   display_name: "Eva Customer Support",
   description: "Autonomous customer triage and billing agent",
 });
 
 console.log("Claimed Handle:", identity.agent_handle);
-console.log("Dedicated Mailbox:", identity.mailbox_address);
+console.log("Dedicated Mailbox:", identity.mailbox.email_address);
 ```
 
 ```bash CLI
@@ -73,7 +73,7 @@ with Wirebox() as wb:
     # 1. List all identities in the organization
     identities = wb.list_identities(limit=20)
     for id in identities:
-        print(f"@{id.agent_handle} -> {id.mailbox_address}")
+        print(f"@{id.agent_handle} -> {id.mailbox.email_address}")
 
     # 2. Retrieve a specific identity by handle
     identity = wb.get_identity("eva")
@@ -86,13 +86,13 @@ import { Wirebox } from "@wirebox-sh/sdk";
 const wb = new Wirebox();
 
 // 1. List all identities in the organization
-const { identities } = await wb.identities.list({ limit: 20 });
+const { identities } = await wb.listIdentities({ limit: 20 });
 for (const id of identities) {
-  console.log(`@${id.agent_handle} -> ${id.mailbox_address}`);
+  console.log(`@${id.agent_handle} -> ${id.mailbox.email_address}`);
 }
 
 // 2. Retrieve a specific identity by handle
-const identity = await wb.identities.get("eva");
+const identity = await wb.getIdentity("eva");
 console.log(`Display Name: ${identity.display_name}`);
 ```
 
@@ -119,8 +119,8 @@ Modify display names or operational descriptions without changing the underlying
 from wirebox import Wirebox
 
 with Wirebox() as wb:
-    updated = wb.update_identity(
-        "eva",
+    eva = wb.get_identity("eva")
+    updated = eva.update(
         display_name="Eva Senior Support Lead",
         description="Escalated tier-2 support triage agent"
     )
@@ -128,7 +128,8 @@ with Wirebox() as wb:
 ```
 
 ```ts TypeScript
-const updated = await wb.identities.update("eva", {
+const eva = await wb.getIdentity("eva");
+const updated = await eva.update({
   display_name: "Eva Senior Support Lead",
   description: "Escalated tier-2 support triage agent",
 });
@@ -157,12 +158,12 @@ number, deletion stops and you can retry safely.
 from wirebox import Wirebox
 
 with Wirebox() as wb:
-    wb.delete_identity("eva")
+    wb.get_identity("eva").delete()
     print("Identity released successfully.")
 ```
 
 ```ts TypeScript
-await wb.identities.delete("eva");
+await (await wb.getIdentity("eva")).delete();
 console.log("Identity released successfully.");
 ```
 
@@ -175,7 +176,7 @@ wirebox identity delete eva
 
 ## The `AgentIdentity` Domain Object
 
-Both the Python and TypeScript SDKs provide a high-level **Domain Object** pattern via `wb.get_identity(handle)` / `wb.identify(handle)`:
+Both the Python and TypeScript SDKs provide a high-level **Domain Object** pattern via `wb.get_identity(handle)` / `wb.getIdentity(handle)`:
 
 <CodeGroup>
 ```python Python
@@ -187,7 +188,7 @@ with Wirebox() as wb:
 
     # Access identity properties
     print(eva.agent_handle)      # "eva"
-    print(eva.mailbox_address)   # "eva@wireboxmail.com"
+    print(eva.mailbox.email_address)   # "eva@wireboxmail.com"
 
     # Perform communication actions directly on the agent instance
     eva.send_email(
@@ -199,11 +200,11 @@ with Wirebox() as wb:
 
 ```ts TypeScript
 // Bind directly to an agent context
-const eva = await wb.identify("eva");
+const eva = await wb.getIdentity("eva");
 
 // Access identity properties
-console.log(eva.handle);          // "eva"
-console.log(eva.mailboxAddress);  // "eva@wireboxmail.com"
+console.log(eva.agent_handle);          // "eva"
+console.log(eva.mailbox.email_address);  // "eva@wireboxmail.com"
 
 // Perform communication actions directly on the agent instance
 await eva.sendEmail({

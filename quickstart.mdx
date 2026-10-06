@@ -73,7 +73,7 @@ with Wirebox() as wb:
         display_name="Eva Support",
         description="Autonomous customer triage and support agent"
     )
-    print(f"Mailbox ready: {identity.mailbox_address}")
+    print(f"Mailbox ready: {identity.mailbox.email_address}")
 
     # 3. Bind directly to the agent context
     eva = wb.get_identity("eva")
@@ -98,15 +98,15 @@ import { Wirebox } from "@wirebox-sh/sdk";
 const wb = new Wirebox();
 
 // 2. Create an agent identity — provisions eva@wireboxmail.com instantly
-const identity = await wb.identities.create({
+const identity = await wb.createIdentity({
   agent_handle: "eva",
   display_name: "Eva Support",
   description: "Autonomous customer triage and support agent",
 });
-console.log(`Mailbox ready: ${identity.mailbox_address}`);
+console.log(`Mailbox ready: ${identity.mailbox.email_address}`);
 
 // 3. Bind directly to the agent context
-const eva = await wb.identify("eva");
+const eva = await wb.getIdentity("eva");
 
 // 4. Send an outbound email
 const sent = await eva.sendEmail({

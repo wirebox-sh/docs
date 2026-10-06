@@ -27,7 +27,7 @@ wirebox phone mark-read eva msg_01J8DEF789KLM012
 import { Wirebox } from "@wirebox-sh/sdk";
 
 const wb = new Wirebox();
-const eva = await wb.identify("eva");
+const eva = await wb.getIdentity("eva");
 const msg = await eva.phone.markMessageRead("msg_01J8DEF789KLM012");
 
 console.log(`Message ${msg.id} read status: ${msg.is_read}`);

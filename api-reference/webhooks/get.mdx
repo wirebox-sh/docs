@@ -28,7 +28,7 @@ with Wirebox() as wirebox:
 import { Wirebox } from "@wirebox-sh/sdk";
 
 const wirebox = new Wirebox();
-const webhook = await wirebox.getWebhook("whk_01J8DEF456GHI789");
+const webhook = await wirebox.webhooks.get("whk_01J8DEF456GHI789");
 console.log(`URL: ${webhook.url}`);
 ```
 
