@@ -20,7 +20,7 @@ curl -X DELETE https://api.wirebox.sh/api/v1/webhooks/whk_01J8DEF456GHI789 \
 from wirebox import Wirebox
 
 with Wirebox() as wirebox:
-    wirebox.delete_webhook("whk_01J8DEF456GHI789")
+    wirebox.webhooks.delete("whk_01J8DEF456GHI789")
     print("Webhook deleted")
 ```
 

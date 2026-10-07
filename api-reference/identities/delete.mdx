@@ -38,7 +38,7 @@ curl -X DELETE https://api.wirebox.sh/api/v1/identities/eva \
 from wirebox import Wirebox
 
 with Wirebox() as wirebox:
-    wirebox.delete_identity("eva")
+    wirebox.get_identity("eva").delete()
     print("Agent identity deleted")
 ```
 

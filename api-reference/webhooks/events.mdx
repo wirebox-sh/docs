@@ -1,9 +1,29 @@
 ---
 title: "Webhook Event Catalog"
-description: "Reference catalog and JSON payload schemas for all Wirebox webhook events."
+description: "Reference catalog and JSON payload schemas for Wirebox webhook events."
 ---
 
-Wirebox triggers webhooks in real time whenever activity occurs across your communication channels. Events are signed with HMAC-SHA256 and structured by channel lifecycle.
+Wirebox triggers webhooks in real time whenever activity occurs across your communication channels. Every delivery is signed with HMAC-SHA256 — see [Signature Verification](/capabilities/webhooks#2-zero-trust-hmac-sha256-verification).
+
+## Envelope
+
+All events share the same envelope. The event-specific object lives under `data`:
+
+```json
+{
+  "id": "evt_01J8ABC123",
+  "event_type": "email.received",
+  "timestamp": "2026-09-11T12:00:00Z",
+  "data": { }
+}
+```
+
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `id` | string | Unique, stable event ID (`evt_` prefix). Reuse it to deduplicate deliveries. |
+| `event_type` | string | Event name (see below). |
+| `timestamp` | string | ISO 8601 time the event was dispatched. |
+| `data` | object | Event-specific payload. |
 
 ---
 
@@ -11,109 +31,56 @@ Wirebox triggers webhooks in real time whenever activity occurs across your comm
 
 ### `email.received`
 
-Triggered when an incoming email arrives at an agent's inbox.
+Triggered when an incoming email arrives at an agent's inbox. Emails rejected by the agent's inbound guardrails are quarantined and never dispatched.
 
 ```json
 {
   "id": "evt_01J8ABC123",
-  "event": "email.received",
-  "created_at": "2026-09-11T12:00:00Z",
+  "event_type": "email.received",
+  "timestamp": "2026-09-11T12:00:00Z",
   "data": {
-    "message_id": "msg_01J8DEF456",
-    "thread_id": "thrd_01J8GHI789",
-    "agent_handle": "eva",
-    "mailbox_address": "eva@wireboxmail.com",
-    "from": "Alex Customer <alex@example.com>",
-    "to": ["eva@wireboxmail.com"],
-    "subject": "Need help with integration",
-    "text": "Hello, how do I connect my agent?",
-    "html": "<p>Hello, how do I connect my agent?</p>",
-    "attachments": []
+    "message": {
+      "id": "msg_01J8DEF456",
+      "mailbox_address": "eva@wireboxmail.com",
+      "agent_handle": "eva",
+      "thread_id": "thrd_01J8GHI789",
+      "from": "Alex Customer <alex@example.com>",
+      "to": ["eva@wireboxmail.com"],
+      "cc": [],
+      "subject": "Need help with integration",
+      "snippet": "Hello, how do I connect my agent?",
+      "sender_access": "default_allowed",
+      "created_at": "2026-09-11T12:00:00Z"
+    }
   }
 }
 ```
+
+`sender_access` reflects how the inbound guardrails classified the sender: `direct` (exact rule), `reply_thread` (continuing an outbound thread), or `default_allowed` (baseline posture).
 
 ---
 
 ### `email.sent`
 
-Triggered when an outbound email is accepted by the Wirebox edge engine for delivery.
+Triggered when an outbound email (send, reply, or forward) is accepted by Wirebox for delivery.
 
 ```json
 {
   "id": "evt_01J8ABC124",
-  "event": "email.sent",
-  "created_at": "2026-09-11T12:01:00Z",
+  "event_type": "email.sent",
+  "timestamp": "2026-09-11T12:01:00Z",
   "data": {
-    "message_id": "msg_01J8OUTBOUND789",
-    "thread_id": "thrd_01J8GHI789",
-    "agent_handle": "eva",
-    "to": ["alex@example.com"],
-    "subject": "Re: Need help with integration"
-  }
-}
-```
-
----
-
-### `email.delivered`
-
-Triggered when the recipient's mail server confirms successful delivery.
-
-```json
-{
-  "id": "evt_01J8ABC125",
-  "event": "email.delivered",
-  "created_at": "2026-09-11T12:02:15Z",
-  "data": {
-    "message_id": "msg_01J8OUTBOUND789",
-    "thread_id": "thrd_01J8GHI789",
-    "agent_handle": "eva",
-    "recipient": "alex@example.com",
-    "response": "250 2.0.0 OK: message queued 1048201"
-  }
-}
-```
-
----
-
-### `email.bounced`
-
-Triggered when a remote mail server rejects an outbound email (e.g. mailbox not found, domain non-existent).
-
-```json
-{
-  "id": "evt_01J8ABC126",
-  "event": "email.bounced",
-  "created_at": "2026-09-11T12:03:00Z",
-  "data": {
-    "message_id": "msg_01J8OUTBOUND789",
-    "thread_id": "thrd_01J8GHI789",
-    "agent_handle": "eva",
-    "recipient": "invalid-address@example.com",
-    "bounce_type": "permanent",
-    "diagnostic_code": "550 5.1.1 User unknown"
-  }
-}
-```
-
----
-
-### `email.failed`
-
-Triggered when an outbound email fails permanently after exhausting all retry attempts.
-
-```json
-{
-  "id": "evt_01J8ABC135",
-  "event": "email.failed",
-  "created_at": "2026-09-11T12:05:00Z",
-  "data": {
-    "message_id": "msg_01J8OUTBOUND789",
-    "thread_id": "thrd_01J8GHI789",
-    "agent_handle": "eva",
-    "error_code": "system_error",
-    "error_message": "Outbound delivery permanently failed after retry limit."
+    "message": {
+      "id": "msg_01J8OUTBOUND789",
+      "mailbox_address": "eva@wireboxmail.com",
+      "thread_id": "thrd_01J8GHI789",
+      "from": "Eva Customer Support <eva@wireboxmail.com>",
+      "to": ["alex@example.com"],
+      "cc": [],
+      "subject": "Re: Need help with integration",
+      "snippet": "Happy to help — here is how to connect your agent.",
+      "created_at": "2026-09-11T12:01:00Z"
+    }
   }
 }
 ```
@@ -129,8 +96,8 @@ Triggered immediately when an incoming SMS or MMS arrives on an agent's phone nu
 ```json
 {
   "id": "evt_01J8ABC140",
-  "event": "sms.received",
-  "created_at": "2026-09-18T02:15:00Z",
+  "event_type": "sms.received",
+  "timestamp": "2026-09-18T02:15:00Z",
   "data": {
     "message": {
       "id": "msg_01J8DEF111",
@@ -153,83 +120,22 @@ Triggered immediately when an incoming SMS or MMS arrives on an agent's phone nu
 
 ---
 
-### `sms.sent`
-
-Triggered when an outbound SMS/MMS has been dispatched to the telephony carrier.
-
-```json
-{
-  "id": "evt_01J8ABC141",
-  "event": "sms.sent",
-  "created_at": "2026-09-18T02:16:00Z",
-  "data": {
-    "message_id": "msg_01J8DEF222",
-    "phone_number": "+14232190980",
-    "to": "+15551234567",
-    "sent_at": "2026-09-18T02:16:00Z"
-  }
-}
-```
-
----
-
-### `sms.delivered`
-
-Triggered when the cellular carrier confirms delivery of the SMS to the recipient's handset.
-
-```json
-{
-  "id": "evt_01J8ABC142",
-  "event": "sms.delivered",
-  "created_at": "2026-09-18T02:16:05Z",
-  "data": {
-    "message_id": "msg_01J8DEF222",
-    "phone_number": "+14232190980",
-    "recipient": "+15551234567",
-    "delivered_at": "2026-09-18T02:16:05Z"
-  }
-}
-```
-
----
-
-### `sms.failed`
-
-Triggered when SMS delivery fails permanently (e.g. carrier block, unreachable handset, or opt-out).
-
-```json
-{
-  "id": "evt_01J8ABC143",
-  "event": "sms.failed",
-  "created_at": "2026-09-18T02:16:10Z",
-  "data": {
-    "message_id": "msg_01J8DEF222",
-    "phone_number": "+14232190980",
-    "recipient": "+15551234567",
-    "error_code": "unreachable",
-    "error_message": "Destination handset unreachable",
-    "failed_at": "2026-09-18T02:16:10Z"
-  }
-}
-```
-
----
-
 ## iMessage Events
 
 ### `imessage.connected`
 
-Triggered when a human user connects to an agent identity via the router line (e.g. by texting `connect @agent` or scanning the QR code).
+Triggered when a human user connects to an agent via the router line (texting `connect @agent` or scanning the QR code).
 
 ```json
 {
   "id": "evt_01J8ABC131",
-  "event": "imessage.connected",
-  "created_at": "2026-09-17T10:28:00Z",
+  "event_type": "imessage.connected",
+  "timestamp": "2026-09-17T10:28:00Z",
   "data": {
     "conversation_id": "conv_01J8ABC123XYZ",
+    "identity_id": "ident_01J8ABC123XYZ",
     "agent_handle": "eva",
-    "participant_id": "+15551234567",
+    "user_phone": "+15551234567",
     "connected_at": "2026-09-17T10:28:00Z"
   }
 }
@@ -239,17 +145,18 @@ Triggered when a human user connects to an agent identity via the router line (e
 
 ### `imessage.disconnected`
 
-Triggered when an active iMessage conversation session is explicitly disconnected (via API or session release).
+Triggered when an active iMessage conversation session is disconnected.
 
 ```json
 {
   "id": "evt_01J8ABC132",
-  "event": "imessage.disconnected",
-  "created_at": "2026-09-17T11:00:00Z",
+  "event_type": "imessage.disconnected",
+  "timestamp": "2026-09-17T11:00:00Z",
   "data": {
     "conversation_id": "conv_01J8ABC123XYZ",
-    "agent_handle": "eva",
-    "participant_id": "+15551234567",
+    "identity_id": "ident_01J8ABC123XYZ",
+    "user_phone": "+15551234567",
+    "status": "disconnected",
     "disconnected_at": "2026-09-17T11:00:00Z"
   }
 }
@@ -259,21 +166,22 @@ Triggered when an active iMessage conversation session is explicitly disconnecte
 
 ### `imessage.received`
 
-Triggered when an incoming iMessage bubble arrives from a user directed to an agent identity.
+Triggered when an inbound blue bubble arrives from a user. The connection handshake itself is also delivered with `is_handshake: true`.
 
 ```json
 {
   "id": "evt_01J8ABC127",
-  "event": "imessage.received",
-  "created_at": "2026-09-17T10:30:00Z",
+  "event_type": "imessage.received",
+  "timestamp": "2026-09-17T10:30:00Z",
   "data": {
-    "message_id": "imsg_01J8DEF456GHI",
+    "id": "msg_01J8DEF456GHI",
     "conversation_id": "conv_01J8ABC123XYZ",
-    "agent_handle": "eva",
+    "identity_id": "ident_01J8ABC123XYZ",
+    "direction": "inbound",
     "sender": "+15551234567",
     "text": "Hello Eva, can you summarize my tasks today?",
     "media_url": null,
-    "received_at": "2026-09-17T10:30:00Z"
+    "created_at": "2026-09-17T10:30:00Z"
   }
 }
 ```
@@ -282,42 +190,24 @@ Triggered when an incoming iMessage bubble arrives from a user directed to an ag
 
 ### `imessage.sent`
 
-Triggered when an outbound iMessage has been successfully dispatched through the gateway.
+Triggered when an outbound iMessage is accepted by the gateway.
 
 ```json
 {
   "id": "evt_01J8ABC128",
-  "event": "imessage.sent",
-  "created_at": "2026-09-17T10:30:05Z",
+  "event_type": "imessage.sent",
+  "timestamp": "2026-09-17T10:30:05Z",
   "data": {
-    "message_id": "imsg_01J8DEF456GHJ",
+    "id": "msg_01J8DEF456GHJ",
     "conversation_id": "conv_01J8ABC123XYZ",
-    "agent_handle": "eva",
-    "recipient": "+15551234567",
+    "identity_id": "ident_01J8ABC123XYZ",
+    "direction": "outbound",
+    "to": "+15551234567",
     "text": "You have 3 tasks scheduled for today.",
     "media_url": null,
-    "sent_at": "2026-09-17T10:30:05Z"
-  }
-}
-```
-
----
-
-### `imessage.delivered`
-
-Triggered when Apple confirms the blue bubble has been delivered to the recipient's device.
-
-```json
-{
-  "id": "evt_01J8ABC129",
-  "event": "imessage.delivered",
-  "created_at": "2026-09-17T10:30:08Z",
-  "data": {
-    "message_id": "imsg_01J8DEF456GHJ",
-    "conversation_id": "conv_01J8ABC123XYZ",
-    "agent_handle": "eva",
-    "recipient": "+15551234567",
-    "delivered_at": "2026-09-17T10:30:08Z"
+    "status": "sent",
+    "error": null,
+    "created_at": "2026-09-17T10:30:05Z"
   }
 }
 ```
@@ -326,21 +216,24 @@ Triggered when Apple confirms the blue bubble has been delivered to the recipien
 
 ### `imessage.failed`
 
-Triggered when an outbound iMessage delivery attempt fails (e.g. recipient phone number is not registered with Apple iMessage).
+Triggered when an outbound iMessage send fails. The payload matches `imessage.sent` with `status` set to the failure state and `error` populated.
 
 ```json
 {
   "id": "evt_01J8ABC130",
-  "event": "imessage.failed",
-  "created_at": "2026-09-17T10:30:10Z",
+  "event_type": "imessage.failed",
+  "timestamp": "2026-09-17T10:30:10Z",
   "data": {
-    "message_id": "imsg_01J8DEF456GHJ",
+    "id": "msg_01J8DEF456GHJ",
     "conversation_id": "conv_01J8ABC123XYZ",
-    "agent_handle": "eva",
-    "recipient": "+15551234567",
-    "error_code": "not_registered",
-    "error_message": "Recipient is not registered with Apple iMessage",
-    "failed_at": "2026-09-17T10:30:10Z"
+    "identity_id": "ident_01J8ABC123XYZ",
+    "direction": "outbound",
+    "to": "+15551234567",
+    "text": "You have 3 tasks scheduled for today.",
+    "media_url": null,
+    "status": "failed",
+    "error": "Recipient is not registered with Apple iMessage",
+    "created_at": "2026-09-17T10:30:10Z"
   }
 }
 ```
@@ -351,16 +244,17 @@ Triggered when an outbound iMessage delivery attempt fails (e.g. recipient phone
 
 ### `test.ping`
 
-Diagnostic event sent when testing a webhook endpoint from the Console or API.
+Diagnostic event sent only to the webhook being tested, via [Send Test Ping](/api-reference/webhooks/test-ping) or the Console.
 
 ```json
 {
   "id": "evt_01J8TEST999",
-  "event": "test.ping",
-  "created_at": "2026-09-11T12:00:00Z",
+  "event_type": "test.ping",
+  "timestamp": "2026-09-11T12:00:00Z",
   "data": {
-    "message": "This is a diagnostic ping event from Wirebox.",
-    "webhook_id": "whk_01J8DEF456GHI789"
+    "ping": "pong",
+    "message": "This is a live test webhook notification from Wirebox.",
+    "triggered_at": "2026-09-11T12:00:00Z"
   }
 }
 ```
