@@ -366,6 +366,58 @@ wirebox mail delete eva msg_01J8ABC123XYZ
 
 ---
 
+## Mail Guardrails
+
+Every identity can restrict who reaches it and who it can reach. Two mechanisms work together:
+
+* **Rules** — exact allow or block entries for an email address or a domain, scoped to `inbound`, `outbound`, `reply`, or `both`.
+* **Filter modes (policy)** — the baseline posture: `blacklist` (open, the default) or `whitelist` (only approved senders or recipients).
+
+Rules are evaluated first: exact email match, then domain match, then reply threading, then the baseline posture. Inbound mail rejected by the guardrails is quarantined and never enters the inbox or triggers an `email.received` webhook.
+
+<CodeGroup>
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wb:
+    eva = wb.get_identity("eva")
+
+    # Allow a partner domain, block a known spam domain
+    eva.mail_rules().allow("partner.example", direction="inbound")
+    eva.mail_rules().block("spam.example", direction="inbound")
+
+    # Require approved senders from now on (baseline posture)
+    eva.set_mail_policy(inbound="protected")
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wb = new Wirebox();
+const eva = await wb.getIdentity("eva");
+
+// Allow a partner domain, block a known spam domain
+await eva.mailRules.allow("partner.example", { direction: "inbound" });
+await eva.mailRules.block("spam.example", { direction: "inbound" });
+
+// Require approved senders from now on (baseline posture)
+await eva.setMailPolicy({ inbound: "protected" });
+```
+
+```bash CLI
+# Allow a partner domain, block a known spam domain
+wirebox mail rules allow partner.example --identity eva --inbound
+wirebox mail rules block spam.example --identity eva --inbound
+
+# Require approved senders from now on (baseline posture)
+wirebox mail policy set --identity eva --inbound protected
+```
+</CodeGroup>
+
+See the [Mail Rules & Policy API reference](/api-reference/mail/rules) for the evaluation order, rule fields, and error codes.
+
+---
+
 ## Delivery Status Lifecycle
 
 Every outbound message proceeds through a tracked delivery lifecycle:
