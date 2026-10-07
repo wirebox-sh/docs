@@ -1,5 +1,5 @@
 ---
-title: "Email & Messaging"
+title: "Email"
 description: "Send outbound emails, poll inboxes, reply to threads, and handle attachments."
 ---
 
@@ -128,7 +128,7 @@ curl -X GET "https://api.wirebox.sh/api/v1/mailboxes/eva/search?q=invoice%20over
 ```
 
 <Note>
-  MCP clients can run the same search through the `wirebox_mail_search` tool — see [Wirebox MCP Server](/mcp). The SDKs and CLI do not expose a search helper; call the endpoint directly.
+  MCP clients can run the same search through the `wirebox_mail_search` tool — see [MCP](/mcp). The SDKs and CLI do not expose a search helper; call the endpoint directly.
 </Note>
 
 See [List & Search Messages](/api-reference/mail/messages#search-messages) for the full parameter and response reference.
@@ -459,4 +459,4 @@ If you are writing low-level HTTP clients or webhook receivers, refer to the RES
 * [List Threads](/api-reference/mail/threads)
 * [Get Mailbox](/api-reference/mail/mailboxes)
 
-Driving email from an AI client? See the [Wirebox MCP Server](/mcp).
+Driving email from an AI client? See the [MCP](/mcp).

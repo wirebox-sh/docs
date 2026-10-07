@@ -31,8 +31,13 @@
             "group": "Capabilities",
             "pages": [
               "capabilities/identities",
-              "capabilities/email",
-              "capabilities/domains",
+              {
+                "group": "Email",
+                "root": "capabilities/email",
+                "pages": [
+                  "capabilities/domains"
+                ]
+              },
               "capabilities/phone",
               "capabilities/imessage",
               "capabilities/tunnels",
@@ -42,11 +47,10 @@
           {
             "group": "Integrations",
             "pages": [
-              "mcp",
               "integrations/overview",
+              "mcp",
               "integrations/cursor",
-              "integrations/claude-code",
-              "integrations/claude-desktop"
+              "integrations/claude-code"
             ]
           }
         ]
@@ -112,7 +116,7 @@
             ]
           },
           {
-            "group": "Network Tunnels",
+            "group": "Tunnel",
             "pages": [
               "api-reference/tunnels/list",
               "api-reference/tunnels/get",
