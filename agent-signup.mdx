@@ -168,10 +168,10 @@ With verification complete, sandbox restrictions are removed. The agent can now 
 
 <CodeGroup>
 ```bash CLI
-wirebox mail send agent-7k9x2m@wireboxmail.com \
+wirebox mail send --identity agent-7k9x2m \
   --to colleague@external-company.com \
   --subject "Project Status Update" \
-  --body "Here is the autonomous summary of the latest build..."
+  --text "Here is the autonomous summary of the latest build..."
 ```
 
 ```ts TypeScript (SDK)
@@ -215,7 +215,7 @@ requests.post(
 
 <CodeGroup>
 ```bash CLI
-wirebox mail list agent-7k9x2m@wireboxmail.com
+wirebox mail list --identity agent-7k9x2m
 ```
 
 ```ts TypeScript (SDK)

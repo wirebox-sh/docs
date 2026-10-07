@@ -55,10 +55,10 @@ console.log("Dispatched message ID:", message.id);
 ```
 
 ```bash CLI
-wirebox mail send eva \
+wirebox mail send --identity eva \
   --to user@example.com \
   --subject "Quarterly Performance Report" \
-  --body "Hello! Here is your requested report summary..." \
+  --text "Hello! Here is your requested report summary..." \
   --html "<p>Hello! Here is your <strong>requested report summary</strong>...</p>"
 ```
 </CodeGroup>
@@ -106,15 +106,30 @@ for await (const msg of eva.iterMessages({ limit: 50 })) {
 
 ```bash CLI
 # Tabular view in terminal
-wirebox mail list eva --limit 10
+wirebox mail list --identity eva --limit 10
 
 # Raw JSON output for subagent pipelines or jq scripting
-wirebox mail list eva --limit 10 --json
+wirebox mail list --identity eva --limit 10 --json
 
 # Inspect a single message in detail
-wirebox mail get eva msg_01J8ABC123XYZ
+wirebox mail get msg_01J8ABC123XYZ --identity eva
 ```
 </CodeGroup>
+
+## Searching Email
+
+Full-text search across a mailbox returns messages ranked by relevance, with a highlight around the best match. Search covers the subject, body, sender, and snippet — useful when an agent needs to find a specific invoice, customer, or thread without fetching the whole inbox.
+
+```bash cURL
+curl -X GET "https://api.wirebox.sh/api/v1/mailboxes/eva/search?q=invoice%20overdue&limit=10" \
+  -H "Authorization: Bearer $WIREBOX_API_KEY"
+```
+
+<Note>
+  MCP clients can run the same search through the `wirebox_mail_search` tool — see [Wirebox MCP Server](/mcp). The SDKs and CLI do not expose a search helper; call the endpoint directly.
+</Note>
+
+See [List & Search Messages](/api-reference/mail/messages#search-messages) for the full parameter and response reference.
 
 ---
 
@@ -151,8 +166,8 @@ await eva.replyEmail("msg_01J8ABC123XYZ", {
 ```
 
 ```bash CLI
-wirebox mail reply eva msg_01J8ABC123XYZ \
-  --body "Hello Alex, I have adjusted your account limits as requested. Best, Eva"
+wirebox mail reply msg_01J8ABC123XYZ --identity eva \
+  --text "Hello Alex, I have adjusted your account limits as requested. Best, Eva"
 ```
 </CodeGroup>
 
@@ -330,10 +345,10 @@ await eva.sendEmail({
 
 ```bash CLI
 # The CLI automatically reads, determines MIME type, and base64 encodes the file
-wirebox mail send eva \
+wirebox mail send --identity eva \
   --to client@example.com \
   --subject "Exported Dataset" \
-  --body "Please find your requested dataset attached below." \
+  --text "Please find your requested dataset attached below." \
   --attach ./export.pdf
 ```
 </CodeGroup>
@@ -360,7 +375,7 @@ console.log("Message deleted.");
 ```
 
 ```bash CLI
-wirebox mail delete eva msg_01J8ABC123XYZ
+wirebox mail delete msg_01J8ABC123XYZ --identity eva
 ```
 </CodeGroup>
 
@@ -438,7 +453,7 @@ If you are writing low-level HTTP clients or webhook receivers, refer to the RES
 
 * [Send Message](/api-reference/mail/send)
 * [Forward Message](/api-reference/mail/forward)
-* [List Messages](/api-reference/mail/messages)
+* [List & Search Messages](/api-reference/mail/messages)
 * [List Threads](/api-reference/mail/threads)
 * [Get Mailbox](/api-reference/mail/mailboxes)
 

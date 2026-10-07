@@ -130,16 +130,16 @@ wirebox identity create eva \
   --description "Autonomous customer triage and support agent"
 
 # 2. Send an outbound email
-wirebox mail send eva \
+wirebox mail send --identity eva \
   --to user@example.com \
   --subject "Welcome from Eva" \
-  --body "Hello! I am Eva, your AI assistant. My mailbox is fully configured."
+  --text "Hello! I am Eva, your AI assistant. My mailbox is fully configured."
 
 # 3. Read incoming inbox messages (formatted table)
-wirebox mail list eva --limit 10
+wirebox mail list --identity eva --limit 10
 
 # 4. Read incoming messages as raw JSON (for subagents or jq piping)
-wirebox mail list eva --limit 10 --json
+wirebox mail list --identity eva --limit 10 --json
 ```
 </CodeGroup>
 

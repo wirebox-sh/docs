@@ -1,7 +1,7 @@
 ---
-title: "List Messages"
+title: "List & Search Messages"
 api: "GET https://api.wirebox.sh/api/v1/mailboxes/{email_address}/messages"
-description: "List email message summaries in a mailbox, newest first."
+description: "List email message summaries in a mailbox, or search them by relevance."
 ---
 
 ### Path Parameters
@@ -128,6 +128,103 @@ wirebox mail list --identity eva
       "created_at": "2026-09-11T12:00:00Z"
     }
   ],
+  "next_cursor": null,
+  "has_more": false
+}
+```
+</ResponseExample>
+
+---
+
+## Search Messages
+
+Runs a full-text search across the mailbox — subject, body, sender, and snippet — and returns matches ranked by relevance. Each result uses the same message shape as the list endpoint, plus a `highlight` fragment around the best match when available.
+
+### Path Parameters
+
+<ParamField path="email_address" type="string" required>
+  Full mailbox address (`eva@wireboxmail.com`) or local agent handle (`eva`).
+</ParamField>
+
+### Query Parameters
+
+<ParamField query="q" type="string" required>
+  Search terms. Required — an empty query returns `400 invalid_request`.
+</ParamField>
+
+<ParamField query="limit" type="integer" default="50">
+  Maximum number of matches to return (1–100).
+</ParamField>
+
+### Response
+
+<ResponseField name="items" type="object[]">
+  Matching messages, ranked by relevance.
+</ResponseField>
+
+<ResponseField name="messages" type="object[]">
+  The same array as `items`, kept for compatibility with the list endpoint.
+</ResponseField>
+
+<ResponseField name="count" type="integer">
+  Number of matches returned.
+</ResponseField>
+
+Notes:
+
+* Each result includes `highlight` and `highlights.text` when the search engine can produce a highlighted fragment; substring fallback matches omit them.
+* MCP clients can run the same search with the `wirebox_mail_search` tool — see the [Wirebox MCP Server](/mcp).
+* The SDKs and CLI do not expose a search helper; call the endpoint directly or use the MCP tool.
+
+<RequestExample>
+```bash cURL
+curl -X GET "https://api.wirebox.sh/api/v1/mailboxes/eva/search?q=invoice%20overdue&limit=10" \
+  -H "Authorization: Bearer $WIREBOX_API_KEY"
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200 OK
+{
+  "items": [
+    {
+      "id": "msg_01J8ABC123XYZ",
+      "thread_id": "thrd_01J8XYZ987ABC",
+      "direction": "inbound",
+      "from": "alex@example.com",
+      "from_address": "alex@example.com",
+      "to": ["eva@wireboxmail.com"],
+      "to_addresses": ["eva@wireboxmail.com"],
+      "subject": "Question regarding my API quota",
+      "snippet": "Hi Eva, invoice #1042 is now overdue.",
+      "highlight": "Hi Eva, <b>invoice</b> #1042 is now <b>overdue</b>.",
+      "highlights": {
+        "text": ["Hi Eva, <b>invoice</b> #1042 is now <b>overdue</b>."]
+      },
+      "is_read": false,
+      "is_starred": false,
+      "has_attachments": false,
+      "created_at": "2026-09-11T12:00:00Z"
+    }
+  ],
+  "messages": [
+    {
+      "id": "msg_01J8ABC123XYZ",
+      "thread_id": "thrd_01J8XYZ987ABC",
+      "direction": "inbound",
+      "from": "alex@example.com",
+      "from_address": "alex@example.com",
+      "to": ["eva@wireboxmail.com"],
+      "to_addresses": ["eva@wireboxmail.com"],
+      "subject": "Question regarding my API quota",
+      "snippet": "Hi Eva, invoice #1042 is now overdue.",
+      "is_read": false,
+      "is_starred": false,
+      "has_attachments": false,
+      "created_at": "2026-09-11T12:00:00Z"
+    }
+  ],
+  "count": 1,
   "next_cursor": null,
   "has_more": false
 }
