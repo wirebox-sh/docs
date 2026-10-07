@@ -114,7 +114,7 @@ from wirebox import Wirebox
 
 with Wirebox() as wirebox:
     eva = wirebox.get_identity("eva")
-    result = eva.mail_rules().list(direction="inbound")
+    result = eva.mail_rules.list(direction="inbound")
     for rule in result.rules:
         print(f"[{rule.action}] {rule.entry} ({rule.direction})")
 ```
@@ -178,7 +178,7 @@ from wirebox import Wirebox
 
 with Wirebox() as wirebox:
     eva = wirebox.get_identity("eva")
-    rule = eva.mail_rules().allow("partner.example", direction="inbound")
+    rule = eva.mail_rules.allow("partner.example", direction="inbound")
     print("Rule ID:", rule.id)
 ```
 
@@ -245,7 +245,7 @@ from wirebox import Wirebox
 with Wirebox() as wirebox:
     eva = wirebox.get_identity("eva")
 
-    print(eva.mail_policy())  # MailPolicy(inbound='open', outbound='open')
+    print(eva.mail_policy)  # MailPolicy(inbound='open', outbound='open')
 
     eva.set_mail_policy(inbound="protected", outbound="restricted")
 ```

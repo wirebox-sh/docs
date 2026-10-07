@@ -400,8 +400,8 @@ with Wirebox() as wb:
     eva = wb.get_identity("eva")
 
     # Allow a partner domain, block a known spam domain
-    eva.mail_rules().allow("partner.example", direction="inbound")
-    eva.mail_rules().block("spam.example", direction="inbound")
+    eva.mail_rules.allow("partner.example", direction="inbound")
+    eva.mail_rules.block("spam.example", direction="inbound")
 
     # Require approved senders from now on (baseline posture)
     eva.set_mail_policy(inbound="protected")
