@@ -47,8 +47,8 @@
           {
             "group": "Integrations",
             "pages": [
-              "mcp",
               "integrations/overview",
+              "mcp",
               "integrations/cursor",
               "integrations/claude-code"
             ]
@@ -116,7 +116,7 @@
             ]
           },
           {
-            "group": "Network Tunnels",
+            "group": "Tunnel",
             "pages": [
               "api-reference/tunnels/list",
               "api-reference/tunnels/get",

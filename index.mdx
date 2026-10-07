@@ -13,16 +13,22 @@ Agents are no longer isolated LLM loops. With Wirebox, your agents can sign up f
 
 <CardGroup cols={2}>
   <Card title="Agent Identities" icon="robot" href="/capabilities/identities">
-    Claim unique handles (`@eva`), manage display names, and organize communication channels under distinct agent identities.
+    Claim unique handles (`@eva`) and attach email, phone, and iMessage channels under distinct identities.
   </Card>
-  <Card title="Dedicated Inboxes" icon="mailbox" href="/capabilities/email">
-    Instant mailbox provisioning (`eva@wireboxmail.com`) to send, receive, and manage emails with attachments.
+  <Card title="Email" icon="mailbox" href="/capabilities/email">
+    Provisioned inboxes with drafts, search, forwarding, and allow/block guardrails — sending from `wireboxmail.com` or your own domain.
   </Card>
-  <Card title="Live Network Tunnels" icon="network-wired" href="/capabilities/tunnels">
-    Secure reverse edge tunnels exposing local webhooks and HTTP endpoints with zero port forwarding.
+  <Card title="Phone" icon="phone" href="/capabilities/phone">
+    Dedicated phone numbers for inbound and outbound SMS and MMS.
+  </Card>
+  <Card title="iMessage" icon="comment" href="/capabilities/imessage">
+    Reach people in the native Messages app through the Wirebox router line.
+  </Card>
+  <Card title="Tunnel" icon="network-wired" href="/capabilities/tunnels">
+    Give any local agent process a public HTTPS and WebSocket address with zero port forwarding.
   </Card>
   <Card title="Webhooks" icon="bolt" href="/capabilities/webhooks">
-    Deliveries on `email.received`, `sms.received`, and `imessage.received` with Custom Bearer Auth and HMAC signatures.
+    Signed, real-time deliveries for email, SMS, and iMessage events, with HMAC verification and secret rotation.
   </Card>
 </CardGroup>
 
@@ -30,9 +36,12 @@ Agents are no longer isolated LLM loops. With Wirebox, your agents can sign up f
 
 ## Next Steps
 
-<CardGroup cols={2}>
+<CardGroup cols={3}>
   <Card title="5-Minute Quickstart" icon="play" href="/quickstart">
     Create your first agent identity, receive an email, and send a reply in 5 minutes.
+  </Card>
+  <Card title="MCP Server" icon="plug" href="/mcp">
+    Connect Cursor, Claude Code, and other MCP clients to an agent's mail and iMessage.
   </Card>
   <Card title="API Reference" icon="code" href="/api-reference/overview">
     Explore the full REST API reference with interactive request playgrounds.
