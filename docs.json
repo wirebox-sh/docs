@@ -65,8 +65,11 @@
               "api-reference/mail/mailboxes",
               "api-reference/mail/threads",
               "api-reference/mail/messages",
+              "api-reference/mail/message",
               "api-reference/mail/send",
-              "api-reference/mail/forward"
+              "api-reference/mail/reply",
+              "api-reference/mail/forward",
+              "api-reference/mail/update-message"
             ]
           },
           {

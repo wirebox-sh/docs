@@ -1,0 +1,150 @@
+---
+title: "Get Message"
+api: "GET https://api.wirebox.sh/api/v1/mailboxes/{email_address}/messages/{message_id}"
+description: "Retrieve the full content of a single email message, including headers, bodies, and attachment links."
+---
+
+### Path Parameters
+
+<ParamField path="email_address" type="string" required>
+  Full mailbox address (`eva@wireboxmail.com`) or local agent handle (`eva`).
+</ParamField>
+
+<ParamField path="message_id" type="string" required>
+  Unique message identifier (`msg_` prefix).
+</ParamField>
+
+### Response
+
+<ResponseField name="id" type="string">
+  Unique message identifier.
+</ResponseField>
+
+<ResponseField name="mailbox_id" type="string">
+  Mailbox the message belongs to.
+</ResponseField>
+
+<ResponseField name="thread_id" type="string">
+  Conversation thread this message belongs to.
+</ResponseField>
+
+<ResponseField name="direction" type="string">
+  `inbound` or `outbound`.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Message status: `received` for admitted inbound mail, `quarantined` when held by inbound guardrails, or `queued`, `sent`, `delivered`, `bounced`, or `failed` for outbound mail.
+</ResponseField>
+
+<ResponseField name="from" type="string">
+  Sender address.
+</ResponseField>
+
+<ResponseField name="to" type="string[]">
+  Recipient addresses.
+</ResponseField>
+
+<ResponseField name="cc" type="string[]">
+  CC recipient addresses.
+</ResponseField>
+
+<ResponseField name="bcc" type="string[]">
+  BCC recipient addresses.
+</ResponseField>
+
+<ResponseField name="subject" type="string">
+  Subject line.
+</ResponseField>
+
+<ResponseField name="text" type="string">
+  Plain-text body.
+</ResponseField>
+
+<ResponseField name="html" type="string">
+  HTML body.
+</ResponseField>
+
+<ResponseField name="in_reply_to_message_id" type="string | null">
+  ID of the message this one replies to, when applicable.
+</ResponseField>
+
+<ResponseField name="is_read" type="boolean">
+  Whether the message has been read.
+</ResponseField>
+
+<ResponseField name="is_starred" type="boolean">
+  Whether the message is starred.
+</ResponseField>
+
+<ResponseField name="attachments" type="object[]">
+  Attachment metadata: `id`, `filename`, `content_type`, `size_bytes`, `content_id`, and a freshly signed download `url` (or `null` for legacy rows whose bytes were never stored).
+</ResponseField>
+
+<ResponseField name="created_at" type="string">
+  ISO 8601 creation timestamp.
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X GET "https://api.wirebox.sh/api/v1/mailboxes/eva/messages/msg_01J8ABC123XYZ" \
+  -H "Authorization: Bearer $WIREBOX_API_KEY"
+```
+
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wirebox:
+    eva = wirebox.get_identity("eva")
+    msg = eva.get_message("msg_01J8ABC123XYZ")
+    print(f"[{msg.from_address}] {msg.subject}")
+    print(msg.text)
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wirebox = new Wirebox();
+const eva = await wirebox.getIdentity("eva");
+const msg = await eva.getMessage("msg_01J8ABC123XYZ");
+
+console.log(`[${msg.from}] ${msg.subject}`);
+console.log(msg.text);
+```
+
+```bash CLI
+wirebox mail get msg_01J8ABC123XYZ --identity eva
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200 OK
+{
+  "id": "msg_01J8ABC123XYZ",
+  "mailbox_id": "mbx_01J8ABC123XYZ",
+  "thread_id": "thrd_01J8XYZ987ABC",
+  "direction": "inbound",
+  "status": "received",
+  "from": "alex@example.com",
+  "to": ["eva@wireboxmail.com"],
+  "cc": [],
+  "bcc": [],
+  "subject": "Question regarding my API quota",
+  "text": "Hi Eva, how can I increase my monthly quota?",
+  "html": "<p>Hi Eva, how can I increase my monthly quota?</p>",
+  "in_reply_to_message_id": null,
+  "is_read": false,
+  "is_starred": false,
+  "attachments": [
+    {
+      "id": "att_01J8ABC123XYZ",
+      "filename": "quota-report.pdf",
+      "content_type": "application/pdf",
+      "size_bytes": 48213,
+      "content_id": null,
+      "url": "https://api.wirebox.sh/media/att_01J8ABC123XYZ?expires=1780000000&signature=..."
+    }
+  ],
+  "created_at": "2026-09-11T12:00:00Z"
+}
+```
+</ResponseExample>

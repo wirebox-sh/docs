@@ -1,0 +1,118 @@
+---
+title: "Reply to Message"
+api: "POST https://api.wirebox.sh/api/v1/mailboxes/{email_address}/messages/{message_id}/reply"
+description: "Reply to an existing email, preserving thread context and RFC headers."
+---
+
+### Path Parameters
+
+<ParamField path="email_address" type="string" required>
+  Full mailbox address (`eva@wireboxmail.com`) or local agent handle (`eva`).
+</ParamField>
+
+<ParamField path="message_id" type="string" required>
+  Unique ID of the message being replied to (`msg_` prefix).
+</ParamField>
+
+### Headers
+
+<ParamField header="Idempotency-Key" type="string">
+  Optional client-generated token (UUID v4 or random ASCII string) that makes retries safe: replaying a request with the same key returns the original `201` response with an `Idempotent-Replayed: true` header instead of sending a second email.
+</ParamField>
+
+### Body Parameters
+
+<ParamField body="text" type="string">
+  Plain-text reply body. At least one of `text` or `html` is required.
+</ParamField>
+
+<ParamField body="html" type="string">
+  HTML formatted reply body.
+</ParamField>
+
+<ParamField body="reply_all" type="boolean" default="false">
+  Reply to every recipient of the original message instead of only the sender.
+</ParamField>
+
+<ParamField body="to" type="string | string[]">
+  Override recipient(s). Defaults to the original sender.
+</ParamField>
+
+<ParamField body="cc" type="string | string[]">
+  Optional CC recipients.
+</ParamField>
+
+<ParamField body="bcc" type="string | string[]">
+  Optional BCC recipients.
+</ParamField>
+
+<ParamField body="attachments" type="object[]">
+  Optional reply attachments. Each object requires `filename` and `content_type`, plus either `content` (base64 string) or `url` (publicly fetchable URL). `content_id` is optional.
+</ParamField>
+
+<ParamField body="headers" type="object">
+  Optional custom RFC headers as a key/value map.
+</ParamField>
+
+<Note>
+  Wirebox sets the RFC `In-Reply-To` and `References` headers automatically so the reply stays grouped in the original conversation thread.
+</Note>
+
+### Response
+
+<ResponseField name="id" type="string">
+  Unique identifier of the sent reply (`msg_` prefix).
+</ResponseField>
+
+<ResponseField name="thread_id" type="string">
+  Conversation thread the reply belongs to.
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X POST "https://api.wirebox.sh/api/v1/mailboxes/eva/messages/msg_01J8ABC123XYZ/reply" \
+  -H "Authorization: Bearer $WIREBOX_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "Happy to help — your quota has been raised."
+  }'
+```
+
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wirebox:
+    eva = wirebox.get_identity("eva")
+    res = eva.reply_email(
+        "msg_01J8ABC123XYZ",
+        text="Happy to help — your quota has been raised.",
+    )
+    print("Reply message ID:", res.id)
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wirebox = new Wirebox();
+const eva = await wirebox.getIdentity("eva");
+const res = await eva.replyEmail("msg_01J8ABC123XYZ", {
+  text: "Happy to help — your quota has been raised.",
+});
+console.log("Reply message ID:", res.id);
+```
+
+```bash CLI
+wirebox mail reply msg_01J8ABC123XYZ \
+  --identity eva \
+  --text "Happy to help — your quota has been raised."
+```
+</RequestExample>
+
+<ResponseExample>
+```json 201 Created
+{
+  "id": "msg_01J8REPLY456ABC",
+  "thread_id": "thrd_01J8XYZ987ABC"
+}
+```
+</ResponseExample>
