@@ -94,7 +94,7 @@ The hosted endpoint exposes ten tools:
 | `wirebox_imessage_get_messages` | Read a conversation's message history (`conversationId`). |
 | `wirebox_imessage_send` | Send an iMessage (`text`, plus `to` or `conversationId`). |
 
-Most tools accept an optional `identity` argument for choosing among multiple identities when the API key allows it. The self-contained local mode (`--local`) exposes the same tools except `wirebox_mail_search`.
+Most tools accept an optional `identity` argument for choosing among multiple identities when the API key allows it. The self-contained local mode (`--local`) exposes the same tools as the hosted endpoint.
 
 ---
 
@@ -153,4 +153,3 @@ To cut access, revoke the API key in the [Console](https://wirebox.sh/console/ke
 | Tools return an authorization error | API key is invalid or revoked | Create a new key in the [Console](https://wirebox.sh/console/keys) and update the config. |
 | Tools act as the wrong identity | Organization key with a different default | Pass `identity`, set `WIREBOX_IDENTITY`, or use an identity-scoped key. |
 | Email sends are refused | Outbound guardrails | Check [Mail Rules & Policy](/api-reference/mail/rules). |
-| `wirebox_mail_search` is unavailable | The connection uses the self-contained local mode | Connect to the hosted endpoint, or run the bridge without `--local`. |
