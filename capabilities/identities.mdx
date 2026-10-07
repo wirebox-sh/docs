@@ -11,9 +11,9 @@ An **Agent Identity** is the central anchor for an autonomous agent within Wireb
 
 Every agent has an `agent_handle` that uniquely identifies it across the Wirebox network:
 
-* **Format**: 2–32 alphanumeric characters, digits, or underscores (e.g., `eva`, `support_bot`, `triage_ai`).
+* **Format**: 3–63 characters — lowercase letters, digits, and hyphens. The handle must start and end with a letter or digit, and consecutive hyphens are not allowed (e.g., `eva`, `support-bot`, `triage-ai`).
 * **Handle reservation**: Handles live in a global namespace. Once claimed, your handle cannot be taken by another organization.
-* **Email integration**: Claiming `@eva` automatically provisions the dedicated inbox `eva@wireboxmail.com`.
+* **Email integration**: Claiming `@eva` automatically provisions a dedicated inbox on your organization's sending domain — `eva@wireboxmail.com` by default, or `eva@agents.example.com` once a [custom domain](/capabilities/domains) is bound.
 
 ---
 
@@ -110,9 +110,9 @@ wirebox identity get eva
 
 ---
 
-### Updating Agent Persona
+### Updating an Identity
 
-Modify display names or operational descriptions without changing the underlying handle or mailbox address.
+Update profile fields, channel toggles, and mail settings without changing the underlying handle. The `agent_handle` itself is immutable.
 
 <CodeGroup>
 ```python Python
@@ -143,6 +143,31 @@ wirebox identity update eva \
   --description "Escalated tier-2 support triage agent"
 ```
 </CodeGroup>
+
+Beyond the profile, an identity also carries channel and mail settings:
+
+| Setting | API | TypeScript | Python | CLI |
+| :--- | :--- | :--- | :--- | :--- |
+| `display_name` | ✓ | `update()` | `update()` | `--display-name` |
+| `description` (pass `null` to clear) | ✓ | `update()` | `update()` | `--description` |
+| `imessage_enabled` | ✓ | `update()` | — | `--enable-imessage` / `--disable-imessage` |
+| Mail filter modes | ✓ | `update()` or `setMailPolicy()` | `set_mail_policy()` | `wirebox mail policy set` |
+| Custom domain binding (`custom_domain_id` / `domain`) | ✓ | — | — | — |
+
+Enabling the iMessage channel is a one-line update:
+
+<CodeGroup>
+```ts TypeScript
+const eva = await wb.getIdentity("eva");
+await eva.update({ imessage_enabled: true });
+```
+
+```bash CLI
+wirebox identity update eva --enable-imessage
+```
+</CodeGroup>
+
+Mail guardrails are covered in depth in [Mail Rules & Policy](/api-reference/mail/rules), and domain binding in [Custom Domains](/capabilities/domains).
 
 ---
 
@@ -215,6 +240,8 @@ await eva.sendEmail({
 ```
 </CodeGroup>
 
+Key properties on the bound object: `agent_handle`, `display_name`, `description`, `status`, `mailbox.email_address`, and `tunnel.public_url`. The TypeScript SDK also exposes `imessage_enabled`, and both SDKs expose the identity's mail guardrails through `mailPolicy` / `mailRules` (TypeScript) and `mail_policy` / `mail_rules` (Python).
+
 ---
 
 ## Multi-Agent Organizations
@@ -241,3 +268,5 @@ If you are constructing low-level HTTP clients or inspecting raw payloads, refer
 * [Get Identity](/api-reference/identities/get)
 * [Update Identity](/api-reference/identities/update)
 * [Delete Identity](/api-reference/identities/delete)
+* [Mail Rules & Policy](/api-reference/mail/rules)
+* [Domains](/api-reference/domains/manage)
