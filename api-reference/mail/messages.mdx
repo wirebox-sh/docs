@@ -174,12 +174,38 @@ Notes:
 
 * Each result includes `highlight` and `highlights.text` when the search engine can produce a highlighted fragment; substring fallback matches omit them.
 * MCP clients can run the same search with the `wirebox_mail_search` tool — see the [MCP](/mcp).
-* The SDKs and CLI do not expose a search helper; call the endpoint directly or use the MCP tool.
 
 <RequestExample>
 ```bash cURL
 curl -X GET "https://api.wirebox.sh/api/v1/mailboxes/eva/search?q=invoice%20overdue&limit=10" \
   -H "Authorization: Bearer $WIREBOX_API_KEY"
+```
+
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wirebox:
+    eva = wirebox.get_identity("eva")
+    for match in eva.search_messages(q="invoice overdue", limit=10):
+        print(f"[{match.from_address}] {match.subject}")
+        print(match.highlight or match.snippet)
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wirebox = new Wirebox();
+const eva = await wirebox.getIdentity("eva");
+const { messages, count } = await eva.searchMessages({ q: "invoice overdue", limit: 10 });
+
+for (const match of messages) {
+  console.log(`[${match.from}] ${match.subject}`);
+  console.log(match.highlight ?? match.snippet);
+}
+```
+
+```bash CLI
+wirebox mail search --identity eva --query "invoice overdue" --limit 10
 ```
 </RequestExample>
 

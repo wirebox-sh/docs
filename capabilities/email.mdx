@@ -122,13 +122,42 @@ wirebox mail get msg_01J8ABC123XYZ --identity eva
 
 Full-text search across a mailbox returns messages ranked by relevance, with a highlight around the best match. Search covers the subject, body, sender, and snippet — useful when an agent needs to find a specific invoice, customer, or thread without fetching the whole inbox.
 
+<CodeGroup>
 ```bash cURL
 curl -X GET "https://api.wirebox.sh/api/v1/mailboxes/eva/search?q=invoice%20overdue&limit=10" \
   -H "Authorization: Bearer $WIREBOX_API_KEY"
 ```
 
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wirebox:
+    eva = wirebox.get_identity("eva")
+    for match in eva.search_messages(q="invoice overdue", limit=10):
+        print(f"[{match.from_address}] {match.subject}")
+        print(match.highlight or match.snippet)
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wirebox = new Wirebox();
+const eva = await wirebox.getIdentity("eva");
+const { messages, count } = await eva.searchMessages({ q: "invoice overdue", limit: 10 });
+
+for (const match of messages) {
+  console.log(`[${match.from}] ${match.subject}`);
+  console.log(match.highlight ?? match.snippet);
+}
+```
+
+```bash CLI
+wirebox mail search --identity eva --query "invoice overdue" --limit 10
+```
+</CodeGroup>
+
 <Note>
-  MCP clients can run the same search through the `wirebox_mail_search` tool — see [MCP](/mcp). The SDKs and CLI do not expose a search helper; call the endpoint directly.
+  MCP clients can run the same search through the `wirebox_mail_search` tool — see [MCP](/mcp).
 </Note>
 
 See [List & Search Messages](/api-reference/mail/messages#search-messages) for the full parameter and response reference.
