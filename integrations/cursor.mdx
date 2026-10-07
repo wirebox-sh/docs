@@ -1,0 +1,65 @@
+---
+title: "Cursor"
+description: "Connect Cursor to a Wirebox agent identity through the remote MCP endpoint."
+---
+
+Cursor connects to Wirebox as a remote MCP server, so no local process is required.
+
+## Connect
+
+1. Create an API key in the [Console](https://wirebox.sh/console/keys) — or reuse an identity-scoped key if Cursor should only act as one agent.
+
+2. Add the server in either place:
+
+   * **Project** — create `.cursor/mcp.json` in the repository
+   * **Global** — edit `~/.cursor/mcp.json`
+   * **UI** — open Cursor Settings → MCP and add a server, pasting the same values
+
+   ```json
+   {
+     "mcpServers": {
+       "wirebox": {
+         "url": "https://api.wirebox.sh/api/v1/mcp",
+         "headers": {
+           "Authorization": "Bearer wb_live_your_api_key_here"
+         }
+       }
+     }
+   }
+   ```
+
+3. If your Cursor build cannot send custom headers, append the key to the URL instead:
+
+   ```json
+   {
+     "mcpServers": {
+       "wirebox": {
+         "url": "https://api.wirebox.sh/api/v1/mcp?apiKey=wb_live_your_api_key_here"
+       }
+     }
+   }
+   ```
+
+4. Cursor detects the change automatically; if the server does not appear, restart Cursor.
+
+## Verify
+
+Ask Cursor to call `wirebox_whoami`. It returns the handle, mailbox address, and iMessage status of the identity the connection acts as.
+
+## What Cursor can do
+
+* List, search, read, send, reply to, and delete email in the agent's mailbox
+* List and read iMessage conversations, and send iMessages
+* Check which identity the connection acts as
+
+Actions follow the identity's [mail rules and policy](/api-reference/mail/rules), and the connection only acts when Cursor invokes a tool — it does not watch the inbox in the background.
+
+## Troubleshooting
+
+| Symptom | Fix |
+| :--- | :--- |
+| `wirebox` does not appear in the MCP list | Validate the JSON, then restart Cursor. |
+| Tools return an authorization error | The key is invalid or revoked — create a new one and update the config. |
+| Tools act as an unexpected identity | Use an identity-scoped key, or check the `identity` argument. |
+
+See [Wirebox MCP Server](/mcp) for the full tool catalog, environment variables, and identity locking.

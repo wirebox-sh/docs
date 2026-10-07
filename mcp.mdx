@@ -1,0 +1,159 @@
+---
+title: "Wirebox MCP Server"
+description: "Connect MCP clients such as Cursor, Claude Code, and Claude Desktop to an agent identity over a remote HTTP endpoint or local stdio."
+---
+
+The Wirebox MCP server gives any [Model Context Protocol](https://modelcontextprotocol.io) client access to an agent identity: its mailbox and its iMessage conversations. Clients can read incoming messages, send and reply, search a mailbox, and check which identity the connection is acting as.
+
+---
+
+## Connect
+
+Wirebox supports two transports. Pick the one that matches your client — every setup uses the same API key.
+
+| Setup | Transport | Use it for |
+| :--- | :--- | :--- |
+| **Hosted endpoint** | Streamable HTTP | Cursor, Claude Code, and any client that can add a remote MCP server. No local process. |
+| **Local stdio** | stdio (`npx`) | Claude Desktop and other stdio-only clients. The server process runs on your machine. |
+
+### Hosted endpoint
+
+```text
+https://api.wirebox.sh/api/v1/mcp
+```
+
+Authenticate with your API key in one of three ways, depending on what the client supports:
+
+| Method | Example |
+| :--- | :--- |
+| `Authorization` header | `Authorization: Bearer wb_live_...` |
+| `X-API-Key` header | `X-API-Key: wb_live_...` |
+| Query parameter | `https://api.wirebox.sh/api/v1/mcp?apiKey=wb_live_...` |
+
+Use the query parameter only for clients that cannot set custom request headers.
+
+A typical remote server entry looks like this:
+
+```json
+{
+  "mcpServers": {
+    "wirebox": {
+      "url": "https://api.wirebox.sh/api/v1/mcp",
+      "headers": {
+        "Authorization": "Bearer wb_live_your_api_key_here"
+      }
+    }
+  }
+}
+```
+
+Client-specific walkthroughs:
+
+<CardGroup cols={3}>
+  <Card title="Cursor" icon="cursor" href="/integrations/cursor">
+    Add Wirebox as a remote MCP server in Cursor.
+  </Card>
+  <Card title="Claude Code" icon="terminal" href="/integrations/claude-code">
+    One CLI command, or a project-level `.mcp.json`.
+  </Card>
+  <Card title="Claude Desktop" icon="desktop" href="/integrations/claude-desktop">
+    Run the stdio bridge from `claude_desktop_config.json`.
+  </Card>
+</CardGroup>
+
+### Local stdio
+
+```bash
+npx -y @wirebox-sh/mcp
+```
+
+In its default mode the local package is a stdio **bridge**: it connects back to the hosted endpoint and exposes the same tools, which is what stdio-only clients need. If the hosted endpoint cannot be reached it falls back to a self-contained local tool set. Pass `--local` to force the self-contained mode.
+
+Environment variables configure the bridge and the local mode:
+
+| Variable | Required | Description |
+| :--- | :--- | :--- |
+| `WIREBOX_API_KEY` | Yes | Your Wirebox API key (`wb_live_...`). |
+| `WIREBOX_IDENTITY` | No | Default agent handle to act as (e.g. `eva`). |
+| `WIREBOX_IDENTITY_LOCKED` | No | Set to `1` to pin every tool call to `WIREBOX_IDENTITY` and hide the `identity` parameter from the model. |
+| `WIREBOX_BASE_URL` | No | Override the API origin (defaults to `https://api.wirebox.sh`). |
+
+---
+
+## Tools
+
+The hosted endpoint exposes ten tools:
+
+| Tool | What it does |
+| :--- | :--- |
+| `wirebox_whoami` | Show the identity the connection acts as, plus iMessage router status. |
+| `wirebox_mail_list` | List mailbox messages (`limit`, `offset`, `status`). |
+| `wirebox_mail_search` | Full-text search across the mailbox, ranked by relevance (`query`, `limit`). |
+| `wirebox_mail_get` | Read one message in full (`messageId`), including attachments. |
+| `wirebox_mail_send` | Send an email (`to`, `subject`, `body`). |
+| `wirebox_mail_reply` | Reply on an existing thread (`messageId`, `body`, optional `html`, `replyAll`, `to`, `cc`, `bcc`). |
+| `wirebox_mail_delete` | Permanently delete a message (`messageId`). |
+| `wirebox_imessage_list_conversations` | List iMessage conversations with unread counts. |
+| `wirebox_imessage_get_messages` | Read a conversation's message history (`conversationId`). |
+| `wirebox_imessage_send` | Send an iMessage (`text`, plus `to` or `conversationId`). |
+
+Most tools accept an optional `identity` argument for choosing among multiple identities when the API key allows it. The self-contained local mode (`--local`) exposes the same tools except `wirebox_mail_search`.
+
+---
+
+## Choosing an identity
+
+What a connection can do depends on the API key:
+
+* **Identity-scoped key** — the key is bound to one agent; every tool call acts as that identity.
+* **Organization key** — tools accept an `identity` argument, and `wirebox_whoami` reports the current default.
+
+For headless and bridge setups, set `WIREBOX_IDENTITY` to make one identity the default, and `WIREBOX_IDENTITY_LOCKED=1` to pin every call to it. Locking also removes the `identity` argument from the tool schemas, so the model cannot be talked into acting as a different identity.
+
+---
+
+## Verify the connection
+
+Ask the client to call `wirebox_whoami`. It returns the handle, mailbox address, and iMessage status of the identity the connection acts as. If the handle is not the one you expected, check `WIREBOX_IDENTITY` or reconnect with the right API key.
+
+---
+
+## What is not included
+
+MCP exposes the day-to-day communication surface — mailbox reads, search, sends, replies, deletes, and iMessage. Everything else stays in the REST API and SDKs:
+
+* Email drafts, mail rules, and security policies
+* Phone numbers, SMS, and calls
+* Tunnel management and webhook configuration
+
+The MCP server also does not watch channels in the background. It acts only when the client invokes a tool. To wake an agent when a message arrives, subscribe a webhook and run a process that feeds the event to your model — see [Webhooks](/capabilities/webhooks).
+
+---
+
+## Example prompts
+
+* *Check my inbox and summarize anything that needs a reply today.*
+* *Search my mailbox for the invoice from Acme and summarize it.*
+* *Draft a reply to the latest message from alex@example.com — don't send it until I confirm.*
+* *List my iMessage conversations and read the one with unread messages.*
+* *Who am I on Wirebox, and is my iMessage channel connected?*
+
+---
+
+## Data access and actions
+
+A connected client can read the communication content and account data returned by the tools it is allowed to call, and can request actions such as sending emails or iMessages and deleting messages. Review confirmation prompts before approving sends or deletions, and only connect clients you trust — delivered data is handled under that client's own terms and privacy policy.
+
+To cut access, revoke the API key in the [Console](https://wirebox.sh/console/keys) or disable the connection in the client. Inbound and outbound mail rules remain in force regardless of which client is connected; see [Mail Rules & Policy](/api-reference/mail/rules).
+
+---
+
+## Troubleshooting
+
+| Symptom | Likely cause | Fix |
+| :--- | :--- | :--- |
+| No Wirebox tools appear | Server not connected | Check the server entry in the client and restart it. |
+| Tools return an authorization error | API key is invalid or revoked | Create a new key in the [Console](https://wirebox.sh/console/keys) and update the config. |
+| Tools act as the wrong identity | Organization key with a different default | Pass `identity`, set `WIREBOX_IDENTITY`, or use an identity-scoped key. |
+| Email sends are refused | Outbound guardrails | Check [Mail Rules & Policy](/api-reference/mail/rules). |
+| `wirebox_mail_search` is unavailable | The connection uses the self-contained local mode | Connect to the hosted endpoint, or run the bridge without `--local`. |
