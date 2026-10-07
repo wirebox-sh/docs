@@ -31,8 +31,13 @@
             "group": "Capabilities",
             "pages": [
               "capabilities/identities",
-              "capabilities/email",
-              "capabilities/domains",
+              {
+                "group": "Email",
+                "root": "capabilities/email",
+                "pages": [
+                  "capabilities/domains"
+                ]
+              },
               "capabilities/phone",
               "capabilities/imessage",
               "capabilities/tunnels",
