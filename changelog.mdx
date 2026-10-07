@@ -7,6 +7,20 @@ Follow weekly updates to the Wirebox API, client SDKs, and runtime tools as we e
 
 Looking for our SDKs and developer tools? Check out our [TypeScript SDK](https://github.com/wirebox-sh/wirebox-typescript), [Python SDK](https://github.com/wirebox-sh/wirebox-python), and [Wirebox CLI](https://github.com/wirebox-sh/wirebox-cli).
 
+<Update label="October 6, 2026">
+  * **Email drafts.** Compose, revise, and send email without dispatching it immediately. Drafts cover plain, reply, and forward modes, use optimistic version locking for concurrent edits, and promote R2 attachments into permanent messages when sent. See [Email drafts](/api-reference/mail/drafts). *(TS SDK 0.7.0, CLI 0.8.0, Python SDK 0.5.0)*
+
+  * **Inbound and outbound mail guardrails.** Allow or block senders and recipients by exact address or domain, and set an organization posture (`whitelist` or `blacklist`) per direction. Quarantined mail never reaches the inbox and never fires an `email.received` webhook. See [Mail rules & policy](/api-reference/mail/rules). *(TS SDK 0.7.0, CLI 0.8.0, Python SDK 0.5.0)*
+
+  * **Official MCP server.** `@wirebox-sh/mcp@0.2.0` is on npm: connect Cursor, Claude Code, Claude Desktop, and any MCP client to an agent identity over the hosted endpoint or local stdio, with ten tools across mail and iMessage. See [Wirebox MCP server](/mcp). *(MCP 0.2.0)*
+
+  * **Email forwarding and idempotent sends.** Forward a message with a quoted RFC body and attachment cloning into an independent thread, and make retried sends safe with `Idempotency-Key`. See [Forward message](/api-reference/mail/forward) and [Send email](/api-reference/mail/send). *(TS SDK 0.7.0, CLI 0.8.0, Python SDK 0.5.0)*
+
+  * **Full-text mailbox search.** Search subject, body, sender, and snippet with relevance ranking and highlighted matches — over the REST API and as the `wirebox_mail_search` MCP tool. See [Search messages](/api-reference/mail/messages#search-messages).
+
+  * **Custom sending domains.** Register a domain your organization owns, publish the returned MX/SPF/DKIM/DMARC records, verify it, and bind identities — or set it as the default for new mailboxes. See [Custom domains](/capabilities/domains). *(API & Console)*
+</Update>
+
 <Update label="October 3, 2026">
   * **Live webhook inspection and forwarding in the CLI.** Intercept and inspect real-time webhook events delivered to your agent directly in your terminal with `wirebox webhook listen`. Supports local payload forwarding (`--forward-to http://localhost:8000/webhook`), event filtering, and automatic cleanup of ephemeral test subscriptions on exit. *(CLI 0.7.0)*
 
@@ -26,7 +40,7 @@ Looking for our SDKs and developer tools? Check out our [TypeScript SDK](https:/
 </Update>
 
 <Update label="September 18, 2026">
-  * **Webhook signature verification and secret rotation.** Webhook payloads include cryptographic HMAC SHA-256 signatures (`wirebox-signature` and `wirebox-timestamp`). Endpoints can rotate signing secrets on demand with zero delivery downtime. See [Webhook signatures](/capabilities/webhooks#signature-verification).
+  * **Webhook signature verification and secret rotation.** Webhook payloads include cryptographic HMAC SHA-256 signatures (`X-Wirebox-Signature` and `X-Wirebox-Timestamp`). Endpoints can rotate signing secrets on demand with zero delivery downtime. See [Webhook signatures](/capabilities/webhooks#signature-verification).
 
   * **Test webhook endpoints with synthetic pings.** Trigger on-demand test ping deliveries directly from the API to verify endpoint handlers before routing live production traffic. See [Test ping](/api-reference/webhooks/test-ping).
 
@@ -38,5 +52,5 @@ Looking for our SDKs and developer tools? Check out our [TypeScript SDK](https:/
 
   * **Public REST API & Official SDKs.** The initial release of the Wirebox developer platform, including complete REST endpoints (`/api/v1/*`), the TypeScript SDK (`@wirebox-sh/sdk`), Python SDK (`wirebox`), and the Wirebox CLI (`@wirebox-sh/cli`).
 
-  * **Zero-setup secure tunnels.** Give any local agent process a permanent public HTTPS address (`<handle>.wireboxwire.com`) with automated TLS termination and outbound-only connectivity. See [Tunnels](/capabilities/tunnels).
+  * **Zero-setup secure tunnels.** Give any local agent process a permanent public HTTPS address (`<handle>.wirebox.run`) with automated TLS termination and outbound-only connectivity. See [Tunnels](/capabilities/tunnels).
 </Update>
