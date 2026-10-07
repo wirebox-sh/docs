@@ -7,6 +7,12 @@ Follow weekly updates to the Wirebox API, client SDKs, and runtime tools as we e
 
 Looking for our SDKs and developer tools? Check out our [TypeScript SDK](https://github.com/wirebox-sh/wirebox-typescript), [Python SDK](https://github.com/wirebox-sh/wirebox-python), and [Wirebox CLI](https://github.com/wirebox-sh/wirebox-cli).
 
+<Update label="October 7, 2026">
+  * **OAuth sign-in for the MCP server.** Clients that support OAuth for remote MCP servers, such as Claude Code, can connect with a browser sign-in instead of an API key. The connection can call the MCP tools and nothing else. See [MCP](/mcp#sign-in-with-oauth).
+
+  * **SMS tools in MCP.** `wirebox_sms_list` and `wirebox_sms_get` read the texts received on an agent's phone number, and `wirebox_whoami` now reports the number. See [MCP](/mcp#tools).
+</Update>
+
 <Update label="October 6, 2026">
   * **Email drafts.** Compose, revise, and send email without dispatching it immediately. Drafts cover plain, reply, and forward modes, use optimistic version locking for concurrent edits, and promote R2 attachments into permanent messages when sent. See [Email drafts](/api-reference/mail/drafts). *(TS SDK 0.7.0, CLI 0.8.0, Python SDK 0.5.0)*
 

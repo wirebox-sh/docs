@@ -3,14 +3,14 @@ title: "Overview"
 description: "Connect Wirebox to Cursor, Claude Code, and other MCP clients."
 ---
 
-Wirebox integrates with AI clients and agent harnesses through the [Wirebox MCP server](/mcp). Each integration connects a client to one agent identity — its mailbox and iMessage conversations — using a standard API key.
+Wirebox integrates with AI clients and agent harnesses through the [Wirebox MCP server](/mcp). Each integration connects a client to an agent identity — its mailbox, iMessage conversations, and text messages — using an API key or, where the client supports it, OAuth sign-in.
 
 ## Available integrations
 
 | Integration | Surface | Transport |
 | :--- | :--- | :--- |
 | [Cursor](/integrations/cursor) | [Cursor](https://cursor.com) | Remote HTTP |
-| [Claude Code](/integrations/claude-code) | [Claude Code](https://claude.com/claude-code) | Remote HTTP or stdio |
+| [Claude Code](/integrations/claude-code) | [Claude Code](https://claude.com/claude-code) | Remote HTTP |
 
 Any other MCP-compatible client can connect to the hosted endpoint directly — see [Connect](/mcp#connect) for the URL and authentication options.
 
@@ -20,6 +20,7 @@ Depending on the client, a Wirebox connection provides:
 
 * read, search, send, reply to, and delete email from the agent's mailbox
 * read and send iMessage conversations
+* read the texts received on the agent's phone number
 * a `wirebox_whoami` check to confirm which identity the connection acts as
 
 All actions follow the identity's mail rules and security policy, and the MCP server never acts on its own — inbound automation needs [webhooks](/capabilities/webhooks) and a runtime that invokes your model.

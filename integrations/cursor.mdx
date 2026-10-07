@@ -50,6 +50,7 @@ Ask Cursor to call `wirebox_whoami`. It returns the handle, mailbox address, and
 
 * List, search, read, send, reply to, and delete email in the agent's mailbox
 * List and read iMessage conversations, and send iMessages
+* List and read the texts received on the agent's phone number
 * Check which identity the connection acts as
 
 Actions follow the identity's [mail rules and policy](/api-reference/mail/rules), and the connection only acts when Cursor invokes a tool — it does not watch the inbox in the background.
@@ -62,4 +63,4 @@ Actions follow the identity's [mail rules and policy](/api-reference/mail/rules)
 | Tools return an authorization error | The key is invalid or revoked — create a new one and update the config. |
 | Tools act as an unexpected identity | Use an identity-scoped key, or check the `identity` argument. |
 
-See [MCP](/mcp) for the full tool catalog, environment variables, and identity locking.
+See [MCP](/mcp) for the full tool catalog and how identities are chosen.

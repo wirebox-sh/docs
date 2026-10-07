@@ -1,11 +1,21 @@
 ---
 title: "Claude Code"
-description: "Connect Claude Code to a Wirebox agent identity over HTTP or stdio."
+description: "Connect Claude Code to a Wirebox agent identity over the remote HTTP endpoint."
 ---
 
-Claude Code can reach Wirebox as a remote HTTP MCP server, or run the stdio bridge locally. Use the CLI to add it, or commit a project-level `.mcp.json` so every session in the repository has it.
+Claude Code reaches Wirebox as a remote HTTP MCP server. Sign in with your Wirebox account, or use an API key for headless setups. You can also commit a project-level `.mcp.json` so every session in the repository has it.
 
-## Connect with the CLI
+## Sign in with OAuth
+
+```bash
+claude mcp add --scope user --transport http wirebox https://api.wirebox.sh/api/v1/mcp
+```
+
+Start a session, run `/mcp`, choose `wirebox`, and select **Authenticate**. A browser window opens on `wirebox.sh`; check the application name and the address it returns to, then approve. The connection can use the Wirebox MCP tools and nothing else, and it acts for your whole organization, so tools accept an `identity` argument.
+
+## Connect with an API key
+
+For headless setups, or to pin the connection to one agent with an identity-scoped key:
 
 ```bash
 claude mcp add --transport http wirebox https://api.wirebox.sh/api/v1/mcp \
@@ -34,19 +44,6 @@ Commit a `.mcp.json` in the repository root so the whole team gets the same serv
 
 Anyone using this file should use their own key — or an identity-scoped key if the project should act as a single agent.
 
-## Connect over stdio
-
-If you prefer a local process, run the published bridge instead:
-
-```bash
-claude mcp add wirebox \
-  -e WIREBOX_API_KEY=wb_live_your_api_key_here \
-  -e WIREBOX_IDENTITY=eva \
-  -- npx -y @wirebox-sh/mcp
-```
-
-The bridge connects back to the hosted endpoint by default, so the tool catalog matches the remote setup.
-
 ## Verify
 
 List the configured servers, then ask Claude to call `wirebox_whoami`:
@@ -55,12 +52,13 @@ List the configured servers, then ask Claude to call `wirebox_whoami`:
 claude mcp list
 ```
 
-Inside a session, `/mcp` shows connection status and the tools each server exposes. `wirebox_whoami` returns the identity the connection acts as — if it is not the agent you expected, update `WIREBOX_IDENTITY` or switch to an identity-scoped key.
+Inside a session, `/mcp` shows connection status and the tools each server exposes. `wirebox_whoami` returns the identity the connection acts as — if it is not the agent you expected, pass `identity` or switch to an identity-scoped key.
 
 ## What Claude Code can do
 
 * List, search, read, send, reply to, and delete email in the agent's mailbox
 * List and read iMessage conversations, and send iMessages
+* List and read the texts received on the agent's phone number
 * Check which identity the connection acts as
 
 Sends follow the identity's [mail rules and policy](/api-reference/mail/rules), and nothing happens until Claude calls a tool.
@@ -72,6 +70,6 @@ Sends follow the identity's [mail rules and policy](/api-reference/mail/rules), 
 | `Failed to connect` | Check the URL and that the key is valid. |
 | Tools return an authorization error | The key is invalid or revoked — create a new one and re-add the server. |
 | Server missing in a new session | Re-add it with `--scope user`, or commit `.mcp.json` at the project root. |
-| Tools act as an unexpected identity | Use an identity-scoped key, or set `WIREBOX_IDENTITY`. |
+| Tools act as an unexpected identity | Pass `identity`, or use an identity-scoped key. |
 
-See [MCP](/mcp) for the full tool catalog, environment variables, and identity locking.
+See [MCP](/mcp) for the full tool catalog and how identities are chosen.
