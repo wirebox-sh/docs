@@ -1,0 +1,106 @@
+---
+title: "Update & Delete Message"
+api: "PATCH https://api.wirebox.sh/api/v1/mailboxes/{email_address}/messages/{message_id}"
+description: "Update read and starred flags on a message, or permanently delete it."
+---
+
+## Update Message
+
+### Path Parameters
+
+<ParamField path="email_address" type="string" required>
+  Full mailbox address (`eva@wireboxmail.com`) or local agent handle (`eva`).
+</ParamField>
+
+<ParamField path="message_id" type="string" required>
+  Unique message identifier (`msg_` prefix).
+</ParamField>
+
+### Body Parameters
+
+<ParamField body="is_read" type="boolean">
+  Mark the message as read (`true`) or unread (`false`).
+</ParamField>
+
+<ParamField body="is_starred" type="boolean">
+  Star or unstar the message.
+</ParamField>
+
+At least one of `is_read` or `is_starred` must be provided.
+
+### Response
+
+<ResponseField name="id" type="string">
+  Unique message identifier.
+</ResponseField>
+
+<ResponseField name="is_read" type="boolean">
+  Updated read state.
+</ResponseField>
+
+<ResponseField name="is_starred" type="boolean">
+  Updated starred state.
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X PATCH "https://api.wirebox.sh/api/v1/mailboxes/eva/messages/msg_01J8ABC123XYZ" \
+  -H "Authorization: Bearer $WIREBOX_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "is_read": true
+  }'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200 OK
+{
+  "id": "msg_01J8ABC123XYZ",
+  "is_read": true,
+  "is_starred": false
+}
+```
+</ResponseExample>
+
+---
+
+## Delete Message
+
+Permanently deletes a message and its attachment records. The operation is idempotent: deleting an already-deleted message still returns `200`.
+
+<RequestExample>
+```bash cURL
+curl -X DELETE "https://api.wirebox.sh/api/v1/mailboxes/eva/messages/msg_01J8ABC123XYZ" \
+  -H "Authorization: Bearer $WIREBOX_API_KEY"
+```
+
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wirebox:
+    eva = wirebox.get_identity("eva")
+    eva.delete_message("msg_01J8ABC123XYZ")
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wirebox = new Wirebox();
+const eva = await wirebox.getIdentity("eva");
+await eva.deleteMessage("msg_01J8ABC123XYZ");
+```
+
+```bash CLI
+wirebox mail delete msg_01J8ABC123XYZ --identity eva
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200 OK
+{
+  "id": "msg_01J8ABC123XYZ",
+  "deleted": true
+}
+```
+</ResponseExample>

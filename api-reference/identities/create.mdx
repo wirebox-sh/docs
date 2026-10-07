@@ -7,7 +7,7 @@ description: "Register a new autonomous agent identity and automatically provisi
 ### Body Parameters
 
 <ParamField body="agent_handle" type="string" required>
-  Unique handle for this agent (2–32 lowercase alphanumeric characters or underscores). Example: `eva`.
+  Unique handle for this agent: 3–63 characters, lowercase letters, digits, and hyphens only; must start and end with a letter or digit; consecutive hyphens are not allowed. Example: `eva`.
 </ParamField>
 
 <ParamField body="display_name" type="string">
@@ -16,6 +16,18 @@ description: "Register a new autonomous agent identity and automatically provisi
 
 <ParamField body="description" type="string">
   Optional context describing this agent's purpose.
+</ParamField>
+
+<ParamField body="imessage_enabled" type="boolean" default="false">
+  Enable the Apple iMessage router channel for this identity.
+</ParamField>
+
+<ParamField body="custom_domain_id" type="string">
+  Optional ID of a verified custom domain to use for this identity's mailbox address. Takes precedence over `domain`.
+</ParamField>
+
+<ParamField body="domain" type="string">
+  Optional custom domain hostname to use for this identity's mailbox address. If neither `custom_domain_id` nor `domain` is provided, the organization's verified default domain is used when available.
 </ParamField>
 
 ### Response
@@ -36,8 +48,36 @@ description: "Register a new autonomous agent identity and automatically provisi
   Description of the agent.
 </ResponseField>
 
-<ResponseField name="mailbox_address" type="string">
+<ResponseField name="status" type="string">
+  Identity status (`active`).
+</ResponseField>
+
+<ResponseField name="imessage_enabled" type="boolean">
+  Whether the iMessage router channel is enabled.
+</ResponseField>
+
+<ResponseField name="mail_filter_mode" type="string">
+  Legacy combined mail filter posture (`whitelist` or `blacklist`).
+</ResponseField>
+
+<ResponseField name="mail_inbound_filter_mode" type="string">
+  Inbound guardrail posture: `whitelist` (only approved senders) or `blacklist` (open to anyone).
+</ResponseField>
+
+<ResponseField name="mail_outbound_filter_mode" type="string">
+  Outbound guardrail posture: `whitelist` (only approved recipients) or `blacklist` (open to anyone).
+</ResponseField>
+
+<ResponseField name="email_address" type="string">
   The provisioned mailbox address (e.g. `eva@wireboxmail.com`).
+</ResponseField>
+
+<ResponseField name="mailbox" type="object">
+  Provisioned mailbox summary: `id`, `email_address`, `created_at`.
+</ResponseField>
+
+<ResponseField name="tunnel" type="object">
+  Provisioned network tunnel: `id`, `public_url`, `status`, `is_connected`.
 </ResponseField>
 
 <ResponseField name="created_at" type="string">
@@ -85,7 +125,7 @@ const identity = await wirebox.createIdentity({
 ```bash CLI
 wirebox identity create \
   --handle eva \
-  --name "Eva Customer Support" \
+  --display-name "Eva Customer Support" \
   --description "Customer triage agent"
 ```
 </RequestExample>
@@ -97,9 +137,25 @@ wirebox identity create \
   "agent_handle": "eva",
   "display_name": "Eva Customer Support",
   "description": "Customer triage agent",
-  "mailbox_address": "eva@wireboxmail.com",
+  "status": "active",
+  "imessage_enabled": false,
+  "mail_filter_mode": "blacklist",
+  "mail_inbound_filter_mode": "blacklist",
+  "mail_outbound_filter_mode": "blacklist",
+  "email_address": "eva@wireboxmail.com",
   "created_at": "2026-09-11T10:00:00Z",
-  "updated_at": "2026-09-11T10:00:00Z"
+  "updated_at": "2026-09-11T10:00:00Z",
+  "mailbox": {
+    "id": "mbx_01J8ABC123XYZ",
+    "email_address": "eva@wireboxmail.com",
+    "created_at": "2026-09-11T10:00:00Z"
+  },
+  "tunnel": {
+    "id": "tnl_01J8ABC123XYZ",
+    "public_url": "https://eva.wirebox.run",
+    "status": "active",
+    "is_connected": false
+  }
 }
 ```
 </ResponseExample>

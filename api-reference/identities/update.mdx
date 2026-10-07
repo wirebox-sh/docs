@@ -1,7 +1,7 @@
 ---
 title: "Update Agent Identity"
 api: "PATCH https://api.wirebox.sh/api/v1/identities/{handle}"
-description: "Update display name or description for an existing agent identity."
+description: "Update profile, channel, and mail guardrail settings for an existing agent identity."
 ---
 
 ### Path Parameters
@@ -16,9 +16,41 @@ description: "Update display name or description for an existing agent identity.
   Updated display name.
 </ParamField>
 
-<ParamField body="description" type="string">
-  Updated description.
+<ParamField body="description" type="string | null">
+  Updated description. Pass `null` to clear it; omit the field to leave it unchanged.
 </ParamField>
+
+<ParamField body="imessage_enabled" type="boolean">
+  Enable or disable the Apple iMessage router channel.
+</ParamField>
+
+<ParamField body="mail_filter_mode" type="string">
+  Legacy combined mail filter posture (`whitelist` or `blacklist`).
+</ParamField>
+
+<ParamField body="mail_inbound_filter_mode" type="string">
+  Inbound guardrail posture: `whitelist` (only approved senders) or `blacklist` (open to anyone).
+</ParamField>
+
+<ParamField body="mail_outbound_filter_mode" type="string">
+  Outbound guardrail posture: `whitelist` (only approved recipients) or `blacklist` (open to anyone).
+</ParamField>
+
+<ParamField body="custom_domain_id" type="string | null">
+  Bind the identity's mailbox to a verified custom domain by ID. Pass `null` to reset to the default Wirebox domain.
+</ParamField>
+
+<ParamField body="domain" type="string | null">
+  Bind the identity's mailbox to a verified custom domain by hostname. Pass `null` to reset to the default Wirebox domain.
+</ParamField>
+
+<Note>
+  `agent_handle` is immutable and cannot be changed after creation.
+</Note>
+
+### Response
+
+Returns the same identity object as [Create Agent Identity](/api-reference/identities/create), including `status`, `imessage_enabled`, the three mail filter modes, `email_address`, `mailbox`, and `tunnel`.
 
 <RequestExample>
 ```bash cURL
@@ -35,28 +67,29 @@ curl -X PATCH https://api.wirebox.sh/api/v1/identities/eva \
 from wirebox import Wirebox
 
 with Wirebox() as wirebox:
-    updated = wirebox.update_identity(
-        "eva",
+    eva = wirebox.get_identity("eva")
+    eva.update(
         display_name="Eva Senior Support",
         description="Escalated support and billing queries"
     )
-    print("Updated:", updated.display_name)
+    print("Updated:", eva.display_name)
 ```
 
 ```ts TypeScript
 import { Wirebox } from "@wirebox-sh/sdk";
 
 const wirebox = new Wirebox();
-const updated = await wirebox.updateIdentity("eva", {
+const eva = await wirebox.getIdentity("eva");
+const updated = await eva.update({
   display_name: "Eva Senior Support",
   description: "Escalated support and billing queries",
 });
-console.log("Updated:", updated.displayName);
+console.log("Updated:", updated.display_name);
 ```
 
 ```bash CLI
 wirebox identity update eva \
-  --name "Eva Senior Support" \
+  --display-name "Eva Senior Support" \
   --description "Escalated support and billing queries"
 ```
 </RequestExample>
@@ -68,9 +101,25 @@ wirebox identity update eva \
   "agent_handle": "eva",
   "display_name": "Eva Senior Support",
   "description": "Escalated support and billing queries",
-  "mailbox_address": "eva@wireboxmail.com",
+  "status": "active",
+  "imessage_enabled": false,
+  "mail_filter_mode": "blacklist",
+  "mail_inbound_filter_mode": "blacklist",
+  "mail_outbound_filter_mode": "blacklist",
+  "email_address": "eva@wireboxmail.com",
   "created_at": "2026-09-11T10:00:00Z",
-  "updated_at": "2026-09-11T10:30:00Z"
+  "updated_at": "2026-09-11T10:30:00Z",
+  "mailbox": {
+    "id": "mbx_01J8ABC123XYZ",
+    "email_address": "eva@wireboxmail.com",
+    "created_at": "2026-09-11T10:00:00Z"
+  },
+  "tunnel": {
+    "id": "tnl_01J8ABC123XYZ",
+    "public_url": "https://eva.wirebox.run",
+    "status": "active",
+    "is_connected": false
+  }
 }
 ```
 </ResponseExample>

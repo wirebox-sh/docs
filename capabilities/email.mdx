@@ -17,6 +17,8 @@ eva@wireboxmail.com
 
 This mailbox can receive incoming emails from any mail provider (Gmail, Outlook, custom corporate domains) and send outbound messages to any valid address on the internet.
 
+To send and receive from a domain your organization owns instead, see [Custom Domains](/capabilities/domains).
+
 ---
 
 ## Sending Outbound Email
@@ -42,7 +44,7 @@ with Wirebox() as wb:
 import { Wirebox } from "@wirebox-sh/sdk";
 
 const wb = new Wirebox();
-const eva = await wb.identify("eva");
+const eva = await wb.getIdentity("eva");
 
 const message = await eva.sendEmail({
   to: "user@example.com",
@@ -55,10 +57,10 @@ console.log("Dispatched message ID:", message.id);
 ```
 
 ```bash CLI
-wirebox mail send eva \
+wirebox mail send --identity eva \
   --to user@example.com \
   --subject "Quarterly Performance Report" \
-  --body "Hello! Here is your requested report summary..." \
+  --text "Hello! Here is your requested report summary..." \
   --html "<p>Hello! Here is your <strong>requested report summary</strong>...</p>"
 ```
 </CodeGroup>
@@ -90,7 +92,7 @@ with Wirebox() as wb:
 import { Wirebox } from "@wirebox-sh/sdk";
 
 const wb = new Wirebox();
-const eva = await wb.identify("eva");
+const eva = await wb.getIdentity("eva");
 
 // 1. Fetch recent messages
 const { messages } = await eva.listMessages({ limit: 10 });
@@ -106,15 +108,30 @@ for await (const msg of eva.iterMessages({ limit: 50 })) {
 
 ```bash CLI
 # Tabular view in terminal
-wirebox mail list eva --limit 10
+wirebox mail list --identity eva --limit 10
 
 # Raw JSON output for subagent pipelines or jq scripting
-wirebox mail list eva --limit 10 --json
+wirebox mail list --identity eva --limit 10 --json
 
 # Inspect a single message in detail
-wirebox mail get eva msg_01J8ABC123XYZ
+wirebox mail get msg_01J8ABC123XYZ --identity eva
 ```
 </CodeGroup>
+
+## Searching Email
+
+Full-text search across a mailbox returns messages ranked by relevance, with a highlight around the best match. Search covers the subject, body, sender, and snippet — useful when an agent needs to find a specific invoice, customer, or thread without fetching the whole inbox.
+
+```bash cURL
+curl -X GET "https://api.wirebox.sh/api/v1/mailboxes/eva/search?q=invoice%20overdue&limit=10" \
+  -H "Authorization: Bearer $WIREBOX_API_KEY"
+```
+
+<Note>
+  MCP clients can run the same search through the `wirebox_mail_search` tool — see [Wirebox MCP Server](/mcp). The SDKs and CLI do not expose a search helper; call the endpoint directly.
+</Note>
+
+See [List & Search Messages](/api-reference/mail/messages#search-messages) for the full parameter and response reference.
 
 ---
 
@@ -143,7 +160,7 @@ with Wirebox() as wb:
 import { Wirebox } from "@wirebox-sh/sdk";
 
 const wb = new Wirebox();
-const eva = await wb.identify("eva");
+const eva = await wb.getIdentity("eva");
 
 await eva.replyEmail("msg_01J8ABC123XYZ", {
   text: "Hello Alex,\n\nI have adjusted your account limits as requested.\n\nBest,\nEva",
@@ -151,8 +168,127 @@ await eva.replyEmail("msg_01J8ABC123XYZ", {
 ```
 
 ```bash CLI
-wirebox mail reply eva msg_01J8ABC123XYZ \
-  --body "Hello Alex, I have adjusted your account limits as requested. Best, Eva"
+wirebox mail reply msg_01J8ABC123XYZ --identity eva \
+  --text "Hello Alex, I have adjusted your account limits as requested. Best, Eva"
+```
+</CodeGroup>
+
+---
+
+## Drafting Emails
+
+Some emails need a review pass before they go out. Drafts let an agent compose a message, revise it — optionally with optimistic version checks — and send it later, either as a new email, a reply, or a forward.
+
+<CodeGroup>
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wirebox:
+    eva = wirebox.get_identity("eva")
+
+    # 1. Compose a draft
+    draft = eva.create_draft(
+        to=["alex@example.com"],
+        subject="Invoice follow-up",
+        text="Hi Alex, just checking in on invoice #1042.",
+    )
+
+    # 2. Revise it (rejected with 409 if someone else got there first)
+    draft = eva.update_draft(
+        draft.id,
+        version=draft.version,
+        text="Hi Alex, invoice #1042 is now overdue.",
+    )
+
+    # 3. Send it — the draft becomes a permanent message
+    sent = eva.send_draft(draft.id)
+    print("Sent message ID:", sent.id)
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wirebox = new Wirebox();
+const eva = await wirebox.getIdentity("eva");
+
+// 1. Compose a draft
+let draft = await eva.createDraft({
+  to: ["alex@example.com"],
+  subject: "Invoice follow-up",
+  text: "Hi Alex, just checking in on invoice #1042.",
+});
+
+// 2. Revise it (rejected with 409 if someone else got there first)
+draft = await eva.updateDraft(draft.id, {
+  version: draft.version,
+  text: "Hi Alex, invoice #1042 is now overdue.",
+});
+
+// 3. Send it — the draft becomes a permanent message
+const sent = await eva.sendDraft(draft.id);
+console.log("Sent message ID:", sent.id);
+```
+
+```bash CLI
+# Compose, revise, then send
+wirebox mail draft create --identity eva \
+  --to alex@example.com \
+  --subject "Invoice follow-up" \
+  --text "Hi Alex, just checking in on invoice #1042."
+
+wirebox mail draft update drf_01J8ABC123XYZ \
+  --identity eva \
+  --expected-version 1 \
+  --text "Hi Alex, invoice #1042 is now overdue."
+
+wirebox mail draft send drf_01J8ABC123XYZ --identity eva
+```
+</CodeGroup>
+
+Draft attachments are stored in R2 and promoted to permanent message attachments when the draft is sent. See the [Email Drafts API reference](/api-reference/mail/drafts) for the full object schema and error codes.
+
+---
+
+## Forwarding Messages
+
+Forward existing emails to external teammates or services. Wirebox automatically formats the quoted RFC body (`---------- Forwarded message ---------`), creates an independent conversation thread, and clones original R2 attachments unless disabled (`forward_attachments=false` or `--no-attachments`).
+
+<CodeGroup>
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wb:
+    eva = wb.get_identity("eva")
+    forwarded = eva.forward_email(
+        "msg_01J8ABC123XYZ",
+        to=["accounting@example.com"],
+        body_text="FYI, forwarding the vendor contract for your review.",
+        forward_attachments=True,
+    )
+    print("Forwarded message ID:", forwarded.id)
+    print("New thread ID:", forwarded.thread_id)
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wb = new Wirebox();
+const eva = await wb.getIdentity("eva");
+
+const forwarded = await eva.forwardEmail("msg_01J8ABC123XYZ", {
+  to: ["accounting@example.com"],
+  body_text: "FYI, forwarding the vendor contract for your review.",
+  forward_attachments: true,
+});
+
+console.log("Forwarded message ID:", forwarded.id);
+console.log("New thread ID:", forwarded.thread_id);
+```
+
+```bash CLI
+wirebox mail forward msg_01J8ABC123XYZ \
+  --to accounting@example.com \
+  --comment "FYI, forwarding the vendor contract for your review."
 ```
 </CodeGroup>
 
@@ -191,7 +327,7 @@ import * as fs from "node:fs";
 import { Wirebox } from "@wirebox-sh/sdk";
 
 const wb = new Wirebox();
-const eva = await wb.identify("eva");
+const eva = await wb.getIdentity("eva");
 
 const pdfData = fs.readFileSync("./export.pdf").toString("base64");
 
@@ -211,10 +347,10 @@ await eva.sendEmail({
 
 ```bash CLI
 # The CLI automatically reads, determines MIME type, and base64 encodes the file
-wirebox mail send eva \
+wirebox mail send --identity eva \
   --to client@example.com \
   --subject "Exported Dataset" \
-  --body "Please find your requested dataset attached below." \
+  --text "Please find your requested dataset attached below." \
   --attach ./export.pdf
 ```
 </CodeGroup>
@@ -230,7 +366,8 @@ Remove messages from the agent's mailbox when archiving or adhering to data rete
 from wirebox import Wirebox
 
 with Wirebox() as wb:
-    wb.delete_message("msg_01J8ABC123XYZ")
+    eva = wb.get_identity("eva")
+    eva.delete_message("msg_01J8ABC123XYZ")
     print("Message deleted.")
 ```
 
@@ -240,9 +377,61 @@ console.log("Message deleted.");
 ```
 
 ```bash CLI
-wirebox mail delete eva msg_01J8ABC123XYZ
+wirebox mail delete msg_01J8ABC123XYZ --identity eva
 ```
 </CodeGroup>
+
+---
+
+## Mail Guardrails
+
+Every identity can restrict who reaches it and who it can reach. Two mechanisms work together:
+
+* **Rules** — exact allow or block entries for an email address or a domain, scoped to `inbound`, `outbound`, `reply`, or `both`.
+* **Filter modes (policy)** — the baseline posture: `blacklist` (open, the default) or `whitelist` (only approved senders or recipients).
+
+Rules are evaluated first: exact email match, then domain match, then reply threading, then the baseline posture. Inbound mail rejected by the guardrails is quarantined and never enters the inbox or triggers an `email.received` webhook.
+
+<CodeGroup>
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wb:
+    eva = wb.get_identity("eva")
+
+    # Allow a partner domain, block a known spam domain
+    eva.mail_rules.allow("partner.example", direction="inbound")
+    eva.mail_rules.block("spam.example", direction="inbound")
+
+    # Require approved senders from now on (baseline posture)
+    eva.set_mail_policy(inbound="protected")
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wb = new Wirebox();
+const eva = await wb.getIdentity("eva");
+
+// Allow a partner domain, block a known spam domain
+await eva.mailRules.allow("partner.example", { direction: "inbound" });
+await eva.mailRules.block("spam.example", { direction: "inbound" });
+
+// Require approved senders from now on (baseline posture)
+await eva.setMailPolicy({ inbound: "protected" });
+```
+
+```bash CLI
+# Allow a partner domain, block a known spam domain
+wirebox mail rules allow partner.example --identity eva --inbound
+wirebox mail rules block spam.example --identity eva --inbound
+
+# Require approved senders from now on (baseline posture)
+wirebox mail policy set --identity eva --inbound protected
+```
+</CodeGroup>
+
+See the [Mail Rules & Policy API reference](/api-reference/mail/rules) for the evaluation order, rule fields, and error codes.
 
 ---
 
@@ -265,6 +454,9 @@ Every outbound message proceeds through a tracked delivery lifecycle:
 If you are writing low-level HTTP clients or webhook receivers, refer to the REST API Reference:
 
 * [Send Message](/api-reference/mail/send)
-* [List Messages](/api-reference/mail/messages)
+* [Forward Message](/api-reference/mail/forward)
+* [List & Search Messages](/api-reference/mail/messages)
 * [List Threads](/api-reference/mail/threads)
 * [Get Mailbox](/api-reference/mail/mailboxes)
+
+Driving email from an AI client? See the [Wirebox MCP Server](/mcp).

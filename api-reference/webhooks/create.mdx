@@ -11,11 +11,15 @@ description: "Register an HTTPS endpoint to receive real-time event notification
 </ParamField>
 
 <ParamField body="events" type="string[]" required>
-  Array of event types to subscribe to (e.g. `["email.received", "email.delivered", "email.bounced"]`).
+  Array of event types to subscribe to (e.g. `["email.received", "email.sent", "sms.received"]`).
 </ParamField>
 
 <ParamField body="agent" type="string">
   Optional agent handle to scope events exclusively to this agent.
+</ParamField>
+
+<ParamField body="mailbox" type="string">
+  Optional mailbox address to scope events to a single mailbox.
 </ParamField>
 
 <ParamField body="auth_token" type="string">
@@ -33,7 +37,7 @@ curl -X POST https://api.wirebox.sh/api/v1/webhooks \
   -H "Content-Type: application/json" \
   -d '{
     "url": "https://agent.example.com/api/webhooks",
-    "events": ["email.received", "email.delivered", "email.bounced"],
+    "events": ["email.received", "email.sent", "sms.received"],
     "agent": "eva"
   }'
 ```
@@ -44,7 +48,7 @@ from wirebox import Wirebox
 with Wirebox() as wirebox:
     webhook = wirebox.webhooks.create(
         url="https://agent.example.com/api/webhooks",
-        events=["email.received", "email.delivered", "email.bounced"],
+        events=["email.received", "email.sent", "sms.received"],
         agent="eva"
     )
     print(f"Created webhook: {webhook.id}")
@@ -56,7 +60,7 @@ import { Wirebox } from "@wirebox-sh/sdk";
 const wirebox = new Wirebox();
 const webhook = await wirebox.webhooks.create({
   url: "https://agent.example.com/api/webhooks",
-  events: ["email.received", "email.delivered", "email.bounced"],
+  events: ["email.received", "email.sent", "sms.received"],
   agent: "eva",
 });
 console.log(`Created webhook: ${webhook.id}`);
@@ -65,7 +69,7 @@ console.log(`Created webhook: ${webhook.id}`);
 ```bash CLI
 wirebox webhook create \
   --url https://agent.example.com/api/webhooks \
-  --events email.received,email.delivered,email.bounced \
+  --events email.received,email.sent,sms.received \
   --agent eva
 ```
 </RequestExample>
@@ -74,17 +78,20 @@ wirebox webhook create \
 ```json 201 Created
 {
   "id": "whk_01J8DEF456GHI789",
+  "agent_handle": "eva",
+  "mailbox_address": "eva@wireboxmail.com",
   "url": "https://agent.example.com/api/webhooks",
   "events": [
     "email.received",
-    "email.delivered",
-    "email.bounced"
+    "email.sent",
+    "sms.received"
   ],
-  "agent_handle": "eva",
   "auth_token": "bearer_secret_token_123",
   "has_auth_token": true,
+  "status": "active",
   "secret": "whsec_7K9x2mP4qR8vT1wY3zA5bC6dE0fG1hJ2",
-  "created_at": "2026-09-11T10:00:00Z"
+  "created_at": "2026-09-11T10:00:00Z",
+  "updated_at": "2026-09-11T10:00:00Z"
 }
 ```
 </ResponseExample>

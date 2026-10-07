@@ -1,50 +1,83 @@
 ---
 title: "Send Email"
-api: "POST https://api.wirebox.sh/api/v1/mail/send"
-description: "Send an outbound email or reply to an ongoing conversation thread."
+api: "POST https://api.wirebox.sh/api/v1/mailboxes/{email_address}/messages"
+description: "Send an outbound email from an agent mailbox and open a new conversation thread."
 ---
+
+### Path Parameters
+
+<ParamField path="email_address" type="string" required>
+  Full mailbox address (`eva@wireboxmail.com`) or local agent handle (`eva`).
+</ParamField>
+
+### Headers
+
+<ParamField header="Idempotency-Key" type="string">
+  Optional client-generated token (UUID v4 or random ASCII string) that makes retries safe: replaying a request with the same key returns the original `201` response with an `Idempotent-Replayed: true` header instead of sending a second email.
+</ParamField>
 
 ### Body Parameters
 
-<ParamField body="agent" type="string" required>
-  The agent handle sending the email (e.g. `eva`).
-</ParamField>
-
-<ParamField body="to" type="string[]" required>
-  Array of recipient email addresses.
+<ParamField body="to" type="string | string[]" required>
+  Recipient email address or array of addresses.
 </ParamField>
 
 <ParamField body="subject" type="string" required>
-  Email subject line.
+  Email subject line (max 998 characters).
 </ParamField>
 
-<ParamField body="text" type="string" required>
-  Plain-text message body.
+<ParamField body="text" type="string">
+  Plain-text body. At least one of `text` or `html` is required.
 </ParamField>
 
 <ParamField body="html" type="string">
-  Optional HTML formatted body.
+  HTML formatted body.
 </ParamField>
 
-<ParamField body="thread_id" type="string">
-  Optional thread ID to reply to. Wirebox will set RFC `In-Reply-To` and `References` headers automatically.
+<ParamField body="cc" type="string | string[]">
+  Optional CC recipients.
+</ParamField>
+
+<ParamField body="bcc" type="string | string[]">
+  Optional BCC recipients.
+</ParamField>
+
+<ParamField body="reply_to" type="string | string[]">
+  Optional Reply-To address(es).
 </ParamField>
 
 <ParamField body="attachments" type="object[]">
-  Optional array of file attachments. Each object contains `filename` (string), `content_type` (string), and `content` (base64 string).
+  Optional attachments. Each object requires `filename` and `content_type`, plus either `content` (base64 string) or `url` (publicly fetchable URL). `content_id` is optional.
 </ParamField>
+
+<ParamField body="headers" type="object">
+  Optional custom RFC headers as a key/value map.
+</ParamField>
+
+<Note>
+  To reply within an existing thread, use [`POST /mailboxes/{email_address}/messages/{message_id}/reply`](/capabilities/email#replying-to-existing-threads), which sets the RFC `In-Reply-To` and `References` headers automatically.
+</Note>
+
+### Response
+
+<ResponseField name="id" type="string">
+  Unique identifier of the sent message (`msg_` prefix).
+</ResponseField>
+
+<ResponseField name="thread_id" type="string">
+  Conversation thread created (or reused) for this message.
+</ResponseField>
 
 <RequestExample>
 ```bash cURL
-curl -X POST https://api.wirebox.sh/api/v1/mail/send \
+curl -X POST "https://api.wirebox.sh/api/v1/mailboxes/eva/messages" \
   -H "Authorization: Bearer $WIREBOX_API_KEY" \
   -H "Content-Type: application/json" \
+  -H "Idempotency-Key: 3f9c1d0e-8a2b-4f6e-9c1d-0e8a2b4f6e9c" \
   -d '{
-    "agent": "eva",
     "to": ["user@example.com"],
-    "subject": "Re: Support Ticket #1042",
-    "text": "Hello! Your ticket has been updated.",
-    "thread_id": "thrd_01J8XYZ987ABC"
+    "subject": "Your ticket has been updated",
+    "text": "Hello! Your ticket has been updated."
   }'
 ```
 
@@ -52,12 +85,11 @@ curl -X POST https://api.wirebox.sh/api/v1/mail/send \
 from wirebox import Wirebox
 
 with Wirebox() as wirebox:
-    res = wirebox.send_email(
-        agent="eva",
+    eva = wirebox.get_identity("eva")
+    res = eva.send_email(
         to=["user@example.com"],
-        subject="Re: Support Ticket #1042",
+        subject="Your ticket has been updated",
         text="Hello! Your ticket has been updated.",
-        thread_id="thrd_01J8XYZ987ABC"
     )
     print("Sent message ID:", res.id)
 ```
@@ -66,21 +98,20 @@ with Wirebox() as wirebox:
 import { Wirebox } from "@wirebox-sh/sdk";
 
 const wirebox = new Wirebox();
-const res = await wirebox.sendEmail({
-  agent: "eva",
+const eva = await wirebox.getIdentity("eva");
+const res = await eva.sendEmail({
   to: ["user@example.com"],
-  subject: "Re: Support Ticket #1042",
+  subject: "Your ticket has been updated",
   text: "Hello! Your ticket has been updated.",
-  thread_id: "thrd_01J8XYZ987ABC",
 });
 console.log("Sent message ID:", res.id);
 ```
 
 ```bash CLI
 wirebox mail send \
-  --agent eva \
+  --identity eva \
   --to user@example.com \
-  --subject "Re: Support Ticket #1042" \
+  --subject "Your ticket has been updated" \
   --text "Hello! Your ticket has been updated."
 ```
 </RequestExample>
@@ -89,9 +120,7 @@ wirebox mail send \
 ```json 201 Created
 {
   "id": "msg_01J8OUTBOUND789",
-  "thread_id": "thrd_01J8XYZ987ABC",
-  "status": "queued",
-  "created_at": "2026-09-11T12:05:00Z"
+  "thread_id": "thrd_01J8XYZ987ABC"
 }
 ```
 </ResponseExample>

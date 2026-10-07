@@ -24,6 +24,67 @@ Wirebox stores only a salted SHA-256 hash of your API key in the database.
 
 ---
 
+## Client Credential Resolution
+
+The official SDKs and the CLI resolve credentials automatically, so you only need to configure one source. Resolution order:
+
+1. **Explicit value** — constructor option (`apiKey` / `api_key`) or CLI flag (`--api-key`).
+2. **Environment variable** — `WIREBOX_API_KEY` (and `WIREBOX_BASE_URL` for the API origin).
+3. **Credential file** — `~/.wirebox/credentials`, then `~/.wirebox/config`.
+
+### Credential Files
+
+Create `~/.wirebox/credentials` with any of these formats:
+
+```json JSON
+{
+  "api_key": "wb_live_your_api_key_here"
+}
+```
+
+```ini Key / value
+api_key=wb_live_your_api_key_here
+```
+
+```text Raw key
+wb_live_your_api_key_here
+```
+
+`apiKey` is accepted as an alias for the key, and `base_url` / `baseUrl` for the API origin (the Python SDK additionally accepts `token`).
+
+Path overrides:
+
+| Variable | Effect |
+| :--- | :--- |
+| `WIREBOX_CREDENTIALS_PATH` | Absolute path to a credentials file, checked instead of the default `~/.wirebox/credentials`. |
+| `WIREBOX_CONFIG_PATH` | Absolute path to a config file. When either path variable is set, only the explicit paths are checked. |
+| `WIREBOX_HOME` | Overrides the home directory used to build `~/.wirebox/...`. |
+
+### Zero-Config Usage
+
+With a credential file or environment variable in place, no arguments are needed:
+
+<CodeGroup>
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wirebox:  # resolves credentials automatically
+    ...
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wirebox = new Wirebox();  // resolves credentials automatically
+```
+
+```bash CLI
+wirebox whoami  # reads the same sources
+```
+</CodeGroup>
+
+---
+
 ## Key Scopes & Hierarchy
 
 Wirebox supports two levels of API key scoping:

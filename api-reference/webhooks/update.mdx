@@ -24,13 +24,17 @@ description: "Update destination URL, subscribed events, or authentication token
   Updated bearer token (or pass `null` to remove it).
 </ParamField>
 
+<ParamField body="status" type="string">
+  Set delivery status to `active` or `paused`.
+</ParamField>
+
 <RequestExample>
 ```bash cURL
 curl -X PATCH https://api.wirebox.sh/api/v1/webhooks/whk_01J8DEF456GHI789 \
   -H "Authorization: Bearer $WIREBOX_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "events": ["email.received", "email.sent", "email.delivered", "email.bounced"]
+    "events": ["email.received", "email.sent", "sms.received"]
   }'
 ```
 
@@ -38,9 +42,9 @@ curl -X PATCH https://api.wirebox.sh/api/v1/webhooks/whk_01J8DEF456GHI789 \
 from wirebox import Wirebox
 
 with Wirebox() as wirebox:
-    updated = wirebox.update_webhook(
+    updated = wirebox.webhooks.update(
         "whk_01J8DEF456GHI789",
-        events=["email.received", "email.sent", "email.delivered", "email.bounced"]
+        events=["email.received", "email.sent", "sms.received"]
     )
     print("Updated events:", updated.events)
 ```
@@ -49,15 +53,15 @@ with Wirebox() as wirebox:
 import { Wirebox } from "@wirebox-sh/sdk";
 
 const wirebox = new Wirebox();
-const updated = await wirebox.updateWebhook("whk_01J8DEF456GHI789", {
-  events: ["email.received", "email.sent", "email.delivered", "email.bounced"],
+const updated = await wirebox.webhooks.update("whk_01J8DEF456GHI789", {
+  events: ["email.received", "email.sent", "sms.received"],
 });
 console.log("Updated events:", updated.events);
 ```
 
 ```bash CLI
 wirebox webhook update whk_01J8DEF456GHI789 \
-  --events email.received,email.sent,email.delivered,email.bounced
+  --events email.received,email.sent,sms.received
 ```
 </RequestExample>
 
@@ -69,12 +73,13 @@ wirebox webhook update whk_01J8DEF456GHI789 \
   "events": [
     "email.received",
     "email.sent",
-    "email.delivered",
-    "email.bounced"
+    "sms.received"
   ],
   "agent_handle": "eva",
+  "mailbox_address": "eva@wireboxmail.com",
   "auth_token": "updated_secret_token_456",
   "has_auth_token": true,
+  "status": "active",
   "created_at": "2026-09-11T10:00:00Z",
   "updated_at": "2026-09-11T12:00:00Z"
 }

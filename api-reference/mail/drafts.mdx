@@ -1,0 +1,500 @@
+---
+title: "Email Drafts"
+api: "POST https://api.wirebox.sh/api/v1/mailboxes/{email_address}/drafts"
+description: "Compose, revise, and send email drafts with optimistic versioning."
+---
+
+Drafts let an agent compose an email without sending it. A draft can be plain, a reply (`in_reply_to`), or a forward (`forward_of`), and it keeps a monotonically increasing `version` so concurrent edits can be detected instead of silently overwritten. Sending a draft converts it into a permanent message and deletes the draft record.
+
+All endpoints below are scoped to a mailbox:
+
+```
+/api/v1/mailboxes/{email_address}/drafts
+```
+
+---
+
+## Create Draft
+
+### Path Parameters
+
+<ParamField path="email_address" type="string" required>
+  Full mailbox address (`eva@wireboxmail.com`) or local agent handle (`eva`).
+</ParamField>
+
+### Body Parameters
+
+<ParamField body="to" type="string | string[]">
+  Recipient email address(es). Required before the draft can be sent, but optional at creation time.
+</ParamField>
+
+<ParamField body="subject" type="string">
+  Draft subject line.
+</ParamField>
+
+<ParamField body="text" type="string">
+  Plain-text body (alias: `body_text`).
+</ParamField>
+
+<ParamField body="html" type="string">
+  HTML body (alias: `body_html`).
+</ParamField>
+
+<ParamField body="cc" type="string | string[]">
+  Optional CC recipients.
+</ParamField>
+
+<ParamField body="bcc" type="string | string[]">
+  Optional BCC recipients.
+</ParamField>
+
+<ParamField body="in_reply_to" type="string">
+  Message ID to draft a reply to. Copies thread context when the reply is sent.
+</ParamField>
+
+<ParamField body="reply_all" type="boolean" default="false">
+  Draft a reply to every recipient of the parent message.
+</ParamField>
+
+<ParamField body="forward_of" type="string">
+  Message ID to draft a forward of.
+</ParamField>
+
+<ParamField body="forward_attachments" type="boolean" default="true">
+  Whether a forwarded draft copies the parent message's attachments.
+</ParamField>
+
+<ParamField body="attachments" type="object[]">
+  Optional attachments. Each object requires `filename` and base64 `content`; `content_type` and `content_id` are optional.
+</ParamField>
+
+<ParamField body="headers" type="object">
+  Optional custom RFC headers as a key/value map.
+</ParamField>
+
+### Draft Object
+
+All draft endpoints return this object:
+
+<ResponseField name="id" type="string">
+  Unique draft identifier (`drf_` prefix).
+</ResponseField>
+
+<ResponseField name="mailbox_id" type="string">
+  Mailbox the draft belongs to.
+</ResponseField>
+
+<ResponseField name="thread_id" type="string | null">
+  Thread the draft will join when sent (set for replies).
+</ResponseField>
+
+<ResponseField name="in_reply_to_message_id" type="string | null">
+  Parent message for reply drafts.
+</ResponseField>
+
+<ResponseField name="forward_of_message_id" type="string | null">
+  Parent message for forward drafts.
+</ResponseField>
+
+<ResponseField name="reply_all" type="boolean">
+  Whether the reply targets all parent recipients.
+</ResponseField>
+
+<ResponseField name="forward_attachments" type="boolean">
+  Whether forwarding copies parent attachments.
+</ResponseField>
+
+<ResponseField name="to" type="string[]">
+  Recipient addresses.
+</ResponseField>
+
+<ResponseField name="cc" type="string[]">
+  CC addresses.
+</ResponseField>
+
+<ResponseField name="bcc" type="string[]">
+  BCC addresses.
+</ResponseField>
+
+<ResponseField name="subject" type="string | null">
+  Draft subject.
+</ResponseField>
+
+<ResponseField name="snippet" type="string | null">
+  Short preview of the body.
+</ResponseField>
+
+<ResponseField name="text" type="string | null">
+  Plain-text body.
+</ResponseField>
+
+<ResponseField name="html" type="string | null">
+  HTML body.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  `draft`, `sending`, or `sent`. Drafts are removed once sent.
+</ResponseField>
+
+<ResponseField name="version" type="integer">
+  Optimistic concurrency version, incremented on every update.
+</ResponseField>
+
+<ResponseField name="has_attachments" type="boolean">
+  Whether the draft has attachments.
+</ResponseField>
+
+<ResponseField name="attachments" type="object[]">
+  Attachment metadata: `id`, `filename`, `content_type`, `size_bytes`, `content_id`, and a signed download `url`.
+</ResponseField>
+
+<ResponseField name="headers" type="object">
+  Custom RFC headers.
+</ResponseField>
+
+<ResponseField name="created_at" type="string">
+  ISO 8601 creation timestamp.
+</ResponseField>
+
+<ResponseField name="updated_at" type="string">
+  ISO 8601 update timestamp.
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X POST "https://api.wirebox.sh/api/v1/mailboxes/eva/drafts" \
+  -H "Authorization: Bearer $WIREBOX_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "to": ["alex@example.com"],
+    "subject": "Invoice follow-up",
+    "text": "Hi Alex, just checking in on invoice #1042."
+  }'
+```
+
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wirebox:
+    eva = wirebox.get_identity("eva")
+    draft = eva.create_draft(
+        to=["alex@example.com"],
+        subject="Invoice follow-up",
+        text="Hi Alex, just checking in on invoice #1042.",
+    )
+    print("Draft ID:", draft.id, "version:", draft.version)
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wirebox = new Wirebox();
+const eva = await wirebox.getIdentity("eva");
+const draft = await eva.createDraft({
+  to: ["alex@example.com"],
+  subject: "Invoice follow-up",
+  text: "Hi Alex, just checking in on invoice #1042.",
+});
+console.log("Draft ID:", draft.id, "version:", draft.version);
+```
+
+```bash CLI
+wirebox mail draft create \
+  --identity eva \
+  --to alex@example.com \
+  --subject "Invoice follow-up" \
+  --text "Hi Alex, just checking in on invoice #1042."
+```
+</RequestExample>
+
+<ResponseExample>
+```json 201 Created
+{
+  "id": "drf_01J8ABC123XYZ",
+  "mailbox_id": "mbx_01J8ABC123XYZ",
+  "thread_id": null,
+  "in_reply_to_message_id": null,
+  "forward_of_message_id": null,
+  "reply_all": false,
+  "forward_attachments": true,
+  "to": ["alex@example.com"],
+  "cc": [],
+  "bcc": [],
+  "subject": "Invoice follow-up",
+  "snippet": "Hi Alex, just checking in on invoice #1042.",
+  "text": "Hi Alex, just checking in on invoice #1042.",
+  "html": null,
+  "status": "draft",
+  "version": 1,
+  "has_attachments": false,
+  "attachments": [],
+  "headers": {},
+  "created_at": "2026-10-06T10:00:00Z",
+  "updated_at": "2026-10-06T10:00:00Z"
+}
+```
+</ResponseExample>
+
+---
+
+## List Drafts
+
+### Query Parameters
+
+<ParamField query="limit" type="integer" default="50">
+  Number of drafts to return (1–100).
+</ParamField>
+
+<ParamField query="offset" type="integer" default="0">
+  Number of drafts to skip.
+</ParamField>
+
+Response shape: `{ "drafts": [...], "count": <total>, "limit": <n>, "offset": <n> }`, newest update first.
+
+<RequestExample>
+```bash cURL
+curl -X GET "https://api.wirebox.sh/api/v1/mailboxes/eva/drafts?limit=20" \
+  -H "Authorization: Bearer $WIREBOX_API_KEY"
+```
+
+```bash CLI
+wirebox mail draft list --identity eva
+```
+</RequestExample>
+
+---
+
+## Get Draft
+
+Returns a single draft with its attachments.
+
+<RequestExample>
+```bash cURL
+curl -X GET "https://api.wirebox.sh/api/v1/mailboxes/eva/drafts/drf_01J8ABC123XYZ" \
+  -H "Authorization: Bearer $WIREBOX_API_KEY"
+```
+</RequestExample>
+
+---
+
+## Update Draft
+
+Updates recipients and bodies. Passing `null` explicitly clears a field; omitting it leaves the field unchanged.
+
+### Body Parameters
+
+<ParamField body="version" type="integer">
+  Expected current version. If it does not match, the update is rejected with `409` instead of overwriting a newer revision.
+</ParamField>
+
+<ParamField body="to" type="string | string[] | null">
+  Replace recipients, or clear them with `null`.
+</ParamField>
+
+<ParamField body="subject" type="string | null">
+  Replace or clear the subject.
+</ParamField>
+
+<ParamField body="text" type="string | null">
+  Replace or clear the plain-text body (alias: `body_text`).
+</ParamField>
+
+<ParamField body="html" type="string | null">
+  Replace or clear the HTML body (alias: `body_html`).
+</ParamField>
+
+<ParamField body="cc" type="string | string[] | null">
+  Replace or clear CC recipients.
+</ParamField>
+
+<ParamField body="bcc" type="string | string[] | null">
+  Replace or clear BCC recipients.
+</ParamField>
+
+<ParamField body="add_attachments" type="object[]">
+  Attachments to append (`filename` + base64 `content`).
+</ParamField>
+
+<ParamField body="remove_attachments" type="string[]">
+  Attachment IDs to remove.
+</ParamField>
+
+<ParamField body="headers" type="object | null">
+  Replace or clear custom RFC headers.
+</ParamField>
+
+<Warning>
+  A `409` with `draft_version_conflict` means someone else updated the draft first — refetch it and re-apply your changes. A `409` with `draft_not_editable` means the draft is currently sending or has already been sent.
+</Warning>
+
+<RequestExample>
+```bash cURL
+curl -X PATCH "https://api.wirebox.sh/api/v1/mailboxes/eva/drafts/drf_01J8ABC123XYZ" \
+  -H "Authorization: Bearer $WIREBOX_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "version": 1,
+    "text": "Hi Alex, just following up on invoice #1042 — the payment is now overdue."
+  }'
+```
+
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wirebox:
+    eva = wirebox.get_identity("eva")
+    updated = eva.update_draft(
+        "drf_01J8ABC123XYZ",
+        version=1,
+        text="Hi Alex, just following up on invoice #1042 — the payment is now overdue.",
+    )
+    print("New version:", updated.version)
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wirebox = new Wirebox();
+const eva = await wirebox.getIdentity("eva");
+const updated = await eva.updateDraft("drf_01J8ABC123XYZ", {
+  version: 1,
+  text: "Hi Alex, just following up on invoice #1042 — the payment is now overdue.",
+});
+console.log("New version:", updated.version);
+```
+</RequestExample>
+
+Response: the updated draft object (see [Draft Object](#draft-object)) with an incremented `version`.
+
+---
+
+## Delete Draft
+
+Permanently deletes the draft and cleans up its draft-scoped attachments.
+
+<RequestExample>
+```bash cURL
+curl -X DELETE "https://api.wirebox.sh/api/v1/mailboxes/eva/drafts/drf_01J8ABC123XYZ" \
+  -H "Authorization: Bearer $WIREBOX_API_KEY"
+```
+
+```bash CLI
+wirebox mail draft delete drf_01J8ABC123XYZ --identity eva
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200 OK
+{
+  "id": "drf_01J8ABC123XYZ",
+  "deleted": true
+}
+```
+</ResponseExample>
+
+---
+
+## Send Draft
+
+Sends the draft as an outbound email and deletes the draft record. The draft is claimed atomically (`draft → sending → sent`), so concurrent send calls cannot double-send. Draft attachments are promoted into permanent message attachments.
+
+### Headers
+
+<ParamField header="Idempotency-Key" type="string">
+  Optional client-generated token that makes retries safe: replaying a send with the same key returns the original `201` response with an `Idempotent-Replayed: true` header instead of sending a second email.
+</ParamField>
+
+### Body Parameters
+
+All fields are optional overrides applied only for this send (they do not modify the stored draft):
+
+<ParamField body="to" type="string | string[]">
+  Override recipients.
+</ParamField>
+
+<ParamField body="subject" type="string">
+  Override subject.
+</ParamField>
+
+<ParamField body="text" type="string">
+  Override plain-text body (alias: `body_text`).
+</ParamField>
+
+<ParamField body="html" type="string">
+  Override HTML body (alias: `body_html`).
+</ParamField>
+
+<ParamField body="cc" type="string | string[]">
+  Override CC recipients.
+</ParamField>
+
+<ParamField body="bcc" type="string | string[]">
+  Override BCC recipients.
+</ParamField>
+
+<Warning>
+  The draft must have at least one recipient and text or HTML content, or the send is rejected with `400` and the draft is returned to `draft` status. A `409` with `draft_send_in_progress` means the draft is already sending or was already sent.
+</Warning>
+
+### Response
+
+<ResponseField name="id" type="string">
+  Message ID of the sent email (`msg_` prefix).
+</ResponseField>
+
+<ResponseField name="thread_id" type="string">
+  Thread the sent message belongs to.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Always `sent`.
+</ResponseField>
+
+<RequestExample>
+```bash cURL
+curl -X POST "https://api.wirebox.sh/api/v1/mailboxes/eva/drafts/drf_01J8ABC123XYZ/send" \
+  -H "Authorization: Bearer $WIREBOX_API_KEY" \
+  -H "Idempotency-Key: 3f9c1d0e-8a2b-4f6e-9c1d-0e8a2b4f6e9c" \
+  -H "Content-Type: application/json" \
+  -d '{}'
+```
+
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wirebox:
+    eva = wirebox.get_identity("eva")
+    res = eva.send_draft(
+        "drf_01J8ABC123XYZ",
+        idempotency_key="3f9c1d0e-8a2b-4f6e-9c1d-0e8a2b4f6e9c",
+    )
+    print("Sent message ID:", res.id)
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wirebox = new Wirebox();
+const eva = await wirebox.getIdentity("eva");
+const res = await eva.sendDraft("drf_01J8ABC123XYZ", {
+  idempotencyKey: "3f9c1d0e-8a2b-4f6e-9c1d-0e8a2b4f6e9c",
+});
+console.log("Sent message ID:", res.id);
+```
+
+```bash CLI
+wirebox mail draft send drf_01J8ABC123XYZ \
+  --identity eva \
+  --idempotency-key 3f9c1d0e-8a2b-4f6e-9c1d-0e8a2b4f6e9c
+```
+</RequestExample>
+
+<ResponseExample>
+```json 201 Created
+{
+  "id": "msg_01J8SENT789ABC",
+  "thread_id": "thrd_01J8XYZ987ABC",
+  "status": "sent"
+}
+```
+</ResponseExample>

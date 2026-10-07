@@ -32,10 +32,21 @@
             "pages": [
               "capabilities/identities",
               "capabilities/email",
+              "capabilities/domains",
               "capabilities/phone",
               "capabilities/imessage",
               "capabilities/tunnels",
               "capabilities/webhooks"
+            ]
+          },
+          {
+            "group": "Integrations",
+            "pages": [
+              "mcp",
+              "integrations/overview",
+              "integrations/cursor",
+              "integrations/claude-code",
+              "integrations/claude-desktop"
             ]
           }
         ]
@@ -65,7 +76,19 @@
               "api-reference/mail/mailboxes",
               "api-reference/mail/threads",
               "api-reference/mail/messages",
-              "api-reference/mail/send"
+              "api-reference/mail/message",
+              "api-reference/mail/send",
+              "api-reference/mail/reply",
+              "api-reference/mail/forward",
+              "api-reference/mail/drafts",
+              "api-reference/mail/rules",
+              "api-reference/mail/update-message"
+            ]
+          },
+          {
+            "group": "Domains",
+            "pages": [
+              "api-reference/domains/manage"
             ]
           },
           {

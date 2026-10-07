@@ -1,26 +1,86 @@
 ---
-title: "List Messages"
-api: "GET https://api.wirebox.sh/api/v1/mail/messages"
-description: "List email messages with full RFC headers, text/HTML content, and R2 attachment URLs."
+title: "List & Search Messages"
+api: "GET https://api.wirebox.sh/api/v1/mailboxes/{email_address}/messages"
+description: "List email message summaries in a mailbox, or search them by relevance."
 ---
+
+### Path Parameters
+
+<ParamField path="email_address" type="string" required>
+  Full mailbox address (`eva@wireboxmail.com`) or local agent handle (`eva`).
+</ParamField>
 
 ### Query Parameters
 
-<ParamField query="thread_id" type="string">
-  Filter messages belonging to a specific conversation thread.
-</ParamField>
-
-<ParamField query="agent" type="string">
-  Filter messages for a specific agent handle.
-</ParamField>
-
 <ParamField query="limit" type="integer" default="50">
-  Number of messages to return.
+  Number of messages to return (1–100).
 </ParamField>
+
+<ParamField query="is_read" type="boolean">
+  Filter by read state: `true` returns read messages, `false` returns unread messages.
+</ParamField>
+
+### Response
+
+<ResponseField name="messages[]" type="object[]">
+  Message summaries ordered by `created_at` descending.
+</ResponseField>
+
+<ResponseField name="messages[].id" type="string">
+  Unique message identifier (`msg_` prefix).
+</ResponseField>
+
+<ResponseField name="messages[].thread_id" type="string">
+  Conversation thread this message belongs to.
+</ResponseField>
+
+<ResponseField name="messages[].direction" type="string">
+  `inbound` or `outbound`.
+</ResponseField>
+
+<ResponseField name="messages[].from" type="string">
+  Sender email address.
+</ResponseField>
+
+<ResponseField name="messages[].to" type="string[]">
+  Recipient email addresses.
+</ResponseField>
+
+<ResponseField name="messages[].subject" type="string">
+  Subject line.
+</ResponseField>
+
+<ResponseField name="messages[].snippet" type="string">
+  Short preview of the message body.
+</ResponseField>
+
+<ResponseField name="messages[].is_read" type="boolean">
+  Whether the message has been read.
+</ResponseField>
+
+<ResponseField name="messages[].is_starred" type="boolean">
+  Whether the message is starred.
+</ResponseField>
+
+<ResponseField name="messages[].has_attachments" type="boolean">
+  Whether the message has attachments.
+</ResponseField>
+
+<ResponseField name="messages[].created_at" type="string">
+  ISO 8601 creation timestamp.
+</ResponseField>
+
+<ResponseField name="next_cursor" type="string | null">
+  Pagination cursor. Reserved for future use; currently always `null`.
+</ResponseField>
+
+<ResponseField name="has_more" type="boolean">
+  Whether more messages are available. Reserved for future use; currently always `false`.
+</ResponseField>
 
 <RequestExample>
 ```bash cURL
-curl -X GET "https://api.wirebox.sh/api/v1/mail/messages?agent=eva" \
+curl -X GET "https://api.wirebox.sh/api/v1/mailboxes/eva/messages?limit=20" \
   -H "Authorization: Bearer $WIREBOX_API_KEY"
 ```
 
@@ -28,25 +88,25 @@ curl -X GET "https://api.wirebox.sh/api/v1/mail/messages?agent=eva" \
 from wirebox import Wirebox
 
 with Wirebox() as wirebox:
-    identity = wirebox.get_identity("eva")
-    for msg in identity.iter_emails():
-        print(f"[{msg.from_address}] {msg.subject}: {msg.text}")
+    eva = wirebox.get_identity("eva")
+    for msg in eva.iter_emails():
+        print(f"[{msg.from_address}] {msg.subject}: {msg.snippet}")
 ```
 
 ```ts TypeScript
 import { Wirebox } from "@wirebox-sh/sdk";
 
 const wirebox = new Wirebox();
-const identity = await wirebox.getIdentity("eva");
-const messages = await identity.listMessages({ limit: 20 });
+const eva = await wirebox.getIdentity("eva");
+const { messages } = await eva.listMessages({ limit: 20 });
 
 for (const msg of messages) {
-  console.log(`[${msg.from}] ${msg.subject}`);
+  console.log(`[${msg.from}] ${msg.subject}: ${msg.snippet}`);
 }
 ```
 
 ```bash CLI
-wirebox mail list --agent eva
+wirebox mail list --identity eva
 ```
 </RequestExample>
 
@@ -58,16 +118,115 @@ wirebox mail list --agent eva
       "id": "msg_01J8ABC123XYZ",
       "thread_id": "thrd_01J8XYZ987ABC",
       "direction": "inbound",
-      "from": "Alex Customer <alex@example.com>",
+      "from": "alex@example.com",
       "to": ["eva@wireboxmail.com"],
       "subject": "Question regarding my API quota",
-      "text": "Hi Eva, how can I increase my monthly quota?",
-      "html": "<p>Hi Eva, how can I increase my monthly quota?</p>",
-      "attachments": [],
+      "snippet": "Hi Eva, how can I increase my monthly quota?",
+      "is_read": false,
+      "is_starred": false,
+      "has_attachments": false,
       "created_at": "2026-09-11T12:00:00Z"
     }
   ],
-  "total": 1
+  "next_cursor": null,
+  "has_more": false
+}
+```
+</ResponseExample>
+
+---
+
+## Search Messages
+
+Runs a full-text search across the mailbox — subject, body, sender, and snippet — and returns matches ranked by relevance. Each result uses the same message shape as the list endpoint, plus a `highlight` fragment around the best match when available.
+
+### Path Parameters
+
+<ParamField path="email_address" type="string" required>
+  Full mailbox address (`eva@wireboxmail.com`) or local agent handle (`eva`).
+</ParamField>
+
+### Query Parameters
+
+<ParamField query="q" type="string" required>
+  Search terms. Required — an empty query returns `400 invalid_request`.
+</ParamField>
+
+<ParamField query="limit" type="integer" default="50">
+  Maximum number of matches to return (1–100).
+</ParamField>
+
+### Response
+
+<ResponseField name="items" type="object[]">
+  Matching messages, ranked by relevance.
+</ResponseField>
+
+<ResponseField name="messages" type="object[]">
+  The same array as `items`, kept for compatibility with the list endpoint.
+</ResponseField>
+
+<ResponseField name="count" type="integer">
+  Number of matches returned.
+</ResponseField>
+
+Notes:
+
+* Each result includes `highlight` and `highlights.text` when the search engine can produce a highlighted fragment; substring fallback matches omit them.
+* MCP clients can run the same search with the `wirebox_mail_search` tool — see the [Wirebox MCP Server](/mcp).
+* The SDKs and CLI do not expose a search helper; call the endpoint directly or use the MCP tool.
+
+<RequestExample>
+```bash cURL
+curl -X GET "https://api.wirebox.sh/api/v1/mailboxes/eva/search?q=invoice%20overdue&limit=10" \
+  -H "Authorization: Bearer $WIREBOX_API_KEY"
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200 OK
+{
+  "items": [
+    {
+      "id": "msg_01J8ABC123XYZ",
+      "thread_id": "thrd_01J8XYZ987ABC",
+      "direction": "inbound",
+      "from": "alex@example.com",
+      "from_address": "alex@example.com",
+      "to": ["eva@wireboxmail.com"],
+      "to_addresses": ["eva@wireboxmail.com"],
+      "subject": "Question regarding my API quota",
+      "snippet": "Hi Eva, invoice #1042 is now overdue.",
+      "highlight": "Hi Eva, <b>invoice</b> #1042 is now <b>overdue</b>.",
+      "highlights": {
+        "text": ["Hi Eva, <b>invoice</b> #1042 is now <b>overdue</b>."]
+      },
+      "is_read": false,
+      "is_starred": false,
+      "has_attachments": false,
+      "created_at": "2026-09-11T12:00:00Z"
+    }
+  ],
+  "messages": [
+    {
+      "id": "msg_01J8ABC123XYZ",
+      "thread_id": "thrd_01J8XYZ987ABC",
+      "direction": "inbound",
+      "from": "alex@example.com",
+      "from_address": "alex@example.com",
+      "to": ["eva@wireboxmail.com"],
+      "to_addresses": ["eva@wireboxmail.com"],
+      "subject": "Question regarding my API quota",
+      "snippet": "Hi Eva, invoice #1042 is now overdue.",
+      "is_read": false,
+      "is_starred": false,
+      "has_attachments": false,
+      "created_at": "2026-09-11T12:00:00Z"
+    }
+  ],
+  "count": 1,
+  "next_cursor": null,
+  "has_more": false
 }
 ```
 </ResponseExample>

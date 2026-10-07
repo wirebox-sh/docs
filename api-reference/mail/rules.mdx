@@ -1,0 +1,271 @@
+---
+title: "Mail Rules & Policy"
+api: "GET https://api.wirebox.sh/api/v1/identities/{agent_handle}/mail-rules"
+description: "Allow and block senders or recipients with per-identity mail security rules and baseline policies."
+---
+
+Mail rules are per-identity allow/block lists that control which emails reach an agent's inbox (`inbound`), which addresses it may send to (`outbound`), replies on existing threads (`reply`), or `both`. A rule's `entry` is either an exact email address (`alex@example.com`) or a domain (`example.com`).
+
+Rules take precedence over the baseline filter modes. For an inbound message, Wirebox evaluates:
+
+1. Exact-email rule (`match_type: exact_email`)
+2. Domain rule (`match_type: domain`)
+3. Reply on an existing outbound thread (`reply` direction rules)
+4. Baseline inbound filter mode
+
+---
+
+## Rule Object
+
+<ResponseField name="id" type="string">
+  Unique rule identifier (`mrl_` prefix).
+</ResponseField>
+
+<ResponseField name="agent_handle" type="string">
+  Identity the rule belongs to.
+</ResponseField>
+
+<ResponseField name="direction" type="string">
+  `inbound`, `outbound`, `reply`, or `both`.
+</ResponseField>
+
+<ResponseField name="action" type="string">
+  `allow` or `block`.
+</ResponseField>
+
+<ResponseField name="entry" type="string">
+  Normalized match target (email address or domain).
+</ResponseField>
+
+<ResponseField name="match_type" type="string">
+  `exact_email` for addresses, `domain` for domains.
+</ResponseField>
+
+<ResponseField name="match_target" type="string">
+  Same value as `entry`; kept for API symmetry.
+</ResponseField>
+
+<ResponseField name="reason" type="string | null">
+  Optional audit note describing why the rule exists.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  `active` or `paused`.
+</ResponseField>
+
+<ResponseField name="created_at" type="string">
+  ISO 8601 creation timestamp.
+</ResponseField>
+
+<ResponseField name="updated_at" type="string">
+  ISO 8601 update timestamp.
+</ResponseField>
+
+---
+
+## List Rules
+
+### Path Parameters
+
+<ParamField path="agent_handle" type="string" required>
+  The agent handle (e.g. `eva`).
+</ParamField>
+
+### Query Parameters
+
+<ParamField query="direction" type="string">
+  Filter by direction: `inbound`, `outbound`, or `both`. Rules with direction `both` are included when filtering for a specific direction.
+</ParamField>
+
+The response also carries the identity's current baseline `filter_modes`:
+
+```json
+{
+  "rules": [
+    {
+      "id": "mrl_01J8ABC123XYZ",
+      "agent_handle": "eva",
+      "direction": "inbound",
+      "action": "allow",
+      "entry": "partner.example",
+      "match_type": "domain",
+      "match_target": "partner.example",
+      "reason": "Trusted partner domain",
+      "status": "active",
+      "created_at": "2026-10-06T10:00:00Z",
+      "updated_at": "2026-10-06T10:00:00Z"
+    }
+  ],
+  "filter_modes": {
+    "inbound": "whitelist",
+    "outbound": "blacklist"
+  }
+}
+```
+
+<RequestExample>
+```bash cURL
+curl -X GET "https://api.wirebox.sh/api/v1/identities/eva/mail-rules?direction=inbound" \
+  -H "Authorization: Bearer $WIREBOX_API_KEY"
+```
+
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wirebox:
+    eva = wirebox.get_identity("eva")
+    result = eva.mail_rules.list(direction="inbound")
+    for rule in result.rules:
+        print(f"[{rule.action}] {rule.entry} ({rule.direction})")
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wirebox = new Wirebox();
+const eva = await wirebox.getIdentity("eva");
+const { rules } = await eva.mailRules.list({ direction: "inbound" });
+
+for (const rule of rules) {
+  console.log(`[${rule.action}] ${rule.entry} (${rule.direction})`);
+}
+```
+
+```bash CLI
+wirebox mail rules list --identity eva --direction inbound
+```
+</RequestExample>
+
+---
+
+## Create Rule
+
+### Body Parameters
+
+<ParamField body="entry" type="string" required>
+  Email address or domain to match. Contains `@` → treated as an exact address; otherwise treated as a domain (a leading `@` or `*@` is stripped).
+</ParamField>
+
+<ParamField body="action" type="string" required>
+  `allow` or `block`.
+</ParamField>
+
+<ParamField body="direction" type="string" default="both">
+  `inbound`, `outbound`, `reply`, or `both`.
+</ParamField>
+
+<ParamField body="reason" type="string">
+  Optional audit note.
+</ParamField>
+
+Returns `201` with the created [Rule Object](#rule-object). Creating a duplicate rule for the same target and direction is rejected with `409`.
+
+<RequestExample>
+```bash cURL
+curl -X POST "https://api.wirebox.sh/api/v1/identities/eva/mail-rules" \
+  -H "Authorization: Bearer $WIREBOX_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "entry": "partner.example",
+    "action": "allow",
+    "direction": "inbound",
+    "reason": "Trusted partner domain"
+  }'
+```
+
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wirebox:
+    eva = wirebox.get_identity("eva")
+    rule = eva.mail_rules.allow("partner.example", direction="inbound")
+    print("Rule ID:", rule.id)
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wirebox = new Wirebox();
+const eva = await wirebox.getIdentity("eva");
+const rule = await eva.mailRules.allow("partner.example", { direction: "inbound" });
+console.log("Rule ID:", rule.id);
+```
+
+```bash CLI
+wirebox mail rules allow partner.example \
+  --identity eva \
+  --inbound \
+  --reason "Trusted partner domain"
+```
+</RequestExample>
+
+---
+
+## Get, Update & Delete a Rule
+
+`GET /identities/{agent_handle}/mail-rules/{rule_id}` returns a single [Rule Object](#rule-object).
+
+`PATCH` accepts any of `direction`, `action`, `status` (`active` or `paused`), and `reason`, and returns the updated rule:
+
+```bash cURL
+curl -X PATCH "https://api.wirebox.sh/api/v1/identities/eva/mail-rules/mrl_01J8ABC123XYZ" \
+  -H "Authorization: Bearer $WIREBOX_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "status": "paused" }'
+```
+
+`DELETE /identities/{agent_handle}/mail-rules/{rule_id}` removes the rule and returns `204 No Content`:
+
+```bash cURL
+curl -X DELETE "https://api.wirebox.sh/api/v1/identities/eva/mail-rules/mrl_01J8ABC123XYZ" \
+  -H "Authorization: Bearer $WIREBOX_API_KEY"
+```
+
+```bash CLI
+wirebox mail rules remove mrl_01J8ABC123XYZ --identity eva
+```
+
+---
+
+## Filter Modes (Policy)
+
+Every identity also has a baseline posture for each direction, stored as `mail_inbound_filter_mode` and `mail_outbound_filter_mode` (see [Update Agent Identity](/api-reference/identities/update)):
+
+| Mode | Inbound | Outbound |
+| :--- | :--- | :--- |
+| `whitelist` | Only approved senders (explicit rules or ongoing threads) are admitted; everything else is quarantined | Only approved recipients may receive mail |
+| `blacklist` | Open to anyone except blocked rules | No recipient restrictions beyond blocked rules |
+
+The SDKs expose the same settings with friendlier names: `protected` (= `whitelist`) or `open` (= `blacklist`) for inbound, and `restricted` (= `whitelist`) or `open` (= `blacklist`) for outbound.
+
+<CodeGroup>
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wirebox:
+    eva = wirebox.get_identity("eva")
+
+    print(eva.mail_policy)  # MailPolicy(inbound='open', outbound='open')
+
+    eva.set_mail_policy(inbound="protected", outbound="restricted")
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wirebox = new Wirebox();
+const eva = await wirebox.getIdentity("eva");
+
+console.log(await eva.mailRules.getPolicy()); // { inbound: "open", outbound: "open" }
+
+await eva.mailRules.setPolicy({ inbound: "protected", outbound: "restricted" });
+```
+
+```bash CLI
+# Read the current posture
+wirebox mail policy get --identity eva
+
+# Require approved senders and recipients
+wirebox mail policy set --identity eva --inbound protected --outbound restricted
+```
+</CodeGroup>

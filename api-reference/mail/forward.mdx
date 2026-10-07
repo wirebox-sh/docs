@@ -1,0 +1,115 @@
+---
+title: "Forward Message"
+api: "POST https://api.wirebox.sh/api/v1/mailboxes/{email_address}/messages/{message_id}/forward"
+description: "Forward an existing email message to new recipients, generating an independent thread and preserving original R2 attachments."
+---
+
+### Path Parameters
+
+<ParamField path="email_address" type="string" required>
+  Email address of the forwarding mailbox. Accepts full email (`eva@wireboxmail.com`) or local handle (`eva`).
+</ParamField>
+
+<ParamField path="message_id" type="string" required>
+  Unique ID of the message being forwarded (`msg_` prefix).
+</ParamField>
+
+### Headers
+
+<ParamField header="Idempotency-Key" type="string">
+  Optional client-generated token (UUID v4 or random ASCII string) preventing duplicate forward dispatches on network retry.
+</ParamField>
+
+### Body
+
+<ParamField body="to" type="string | string[]" required>
+  Recipient email address or list of addresses to forward to.
+</ParamField>
+
+<ParamField body="subject" type="string">
+  Optional subject line override. Defaults automatically to `Fwd: <original_subject>`.
+</ParamField>
+
+<ParamField body="body_text" type="string">
+  Optional plain text commentary note prepended above the forwarded message quote. (Also accepts `text`).
+</ParamField>
+
+<ParamField body="body_html" type="string">
+  Optional rich HTML commentary note prepended above the forwarded message quote. (Also accepts `html`).
+</ParamField>
+
+<ParamField body="cc" type="string | string[]">
+  Optional carbon copy recipient(s).
+</ParamField>
+
+<ParamField body="bcc" type="string | string[]">
+  Optional blind carbon copy recipient(s).
+</ParamField>
+
+<ParamField body="forward_attachments" type="boolean" default="true">
+  Whether to include original email attachments stored in Cloudflare R2. Defaults to `true`. Set to `false` to forward only the message text without original attachments.
+</ParamField>
+
+<ParamField body="attachments" type="object[]">
+  Optional additional attachments to append to the forward message.
+</ParamField>
+
+<RequestExample>
+```bash cURL
+curl -X POST "https://api.wirebox.sh/api/v1/mailboxes/eva@wireboxmail.com/messages/msg_01J8ABC123XYZ/forward" \
+  -H "Authorization: Bearer $WIREBOX_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "to": ["accounting@example.com"],
+    "body_text": "FYI, forwarding the vendor contract for your review.",
+    "forward_attachments": true
+  }'
+```
+
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wb:
+    eva = wb.get_identity("eva")
+    result = eva.forward_email(
+        "msg_01J8ABC123XYZ",
+        to=["accounting@example.com"],
+        body_text="FYI, forwarding the vendor contract for your review.",
+        forward_attachments=True,
+    )
+    print("Forwarded message ID:", result.id)
+    print("New thread ID:", result.thread_id)
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wb = new Wirebox();
+const eva = await wb.getIdentity("eva");
+
+const result = await eva.forwardEmail("msg_01J8ABC123XYZ", {
+  to: ["accounting@example.com"],
+  body_text: "FYI, forwarding the vendor contract for your review.",
+  forward_attachments: true,
+});
+
+console.log("Forwarded message ID:", result.id);
+console.log("New thread ID:", result.thread_id);
+```
+
+```bash CLI
+wirebox mail forward msg_01J8ABC123XYZ \
+  --to accounting@example.com \
+  --comment "FYI, forwarding the vendor contract for your review."
+```
+</RequestExample>
+
+<ResponseExample>
+```json 201 Created
+{
+  "id": "msg_01J8DEF888FWD001",
+  "thread_id": "thd_01J8DEF777NEW002",
+  "status": "sent"
+}
+```
+</ResponseExample>

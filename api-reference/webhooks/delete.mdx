@@ -20,7 +20,7 @@ curl -X DELETE https://api.wirebox.sh/api/v1/webhooks/whk_01J8DEF456GHI789 \
 from wirebox import Wirebox
 
 with Wirebox() as wirebox:
-    wirebox.delete_webhook("whk_01J8DEF456GHI789")
+    wirebox.webhooks.delete("whk_01J8DEF456GHI789")
     print("Webhook deleted")
 ```
 
@@ -28,7 +28,7 @@ with Wirebox() as wirebox:
 import { Wirebox } from "@wirebox-sh/sdk";
 
 const wirebox = new Wirebox();
-await wirebox.deleteWebhook("whk_01J8DEF456GHI789");
+await wirebox.webhooks.delete("whk_01J8DEF456GHI789");
 console.log("Webhook deleted");
 ```
 
