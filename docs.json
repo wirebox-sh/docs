@@ -50,8 +50,7 @@
               "mcp",
               "integrations/overview",
               "integrations/cursor",
-              "integrations/claude-code",
-              "integrations/claude-desktop"
+              "integrations/claude-code"
             ]
           }
         ]

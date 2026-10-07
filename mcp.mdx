@@ -1,6 +1,6 @@
 ---
 title: "Wirebox MCP Server"
-description: "Connect MCP clients such as Cursor, Claude Code, and Claude Desktop to an agent identity over a remote HTTP endpoint or local stdio."
+description: "Connect MCP clients such as Cursor and Claude Code to an agent identity over a remote HTTP endpoint or local stdio."
 ---
 
 The Wirebox MCP server gives any [Model Context Protocol](https://modelcontextprotocol.io) client access to an agent identity: its mailbox and its iMessage conversations. Clients can read incoming messages, send and reply, search a mailbox, and check which identity the connection is acting as.
@@ -14,7 +14,7 @@ Wirebox supports two transports. Pick the one that matches your client — every
 | Setup | Transport | Use it for |
 | :--- | :--- | :--- |
 | **Hosted endpoint** | Streamable HTTP | Cursor, Claude Code, and any client that can add a remote MCP server. No local process. |
-| **Local stdio** | stdio (`npx`) | Claude Desktop and other stdio-only clients. The server process runs on your machine. |
+| **Local stdio** | stdio (`npx`) | Stdio-only clients. The server process runs on your machine. |
 
 ### Hosted endpoint
 
@@ -49,15 +49,12 @@ A typical remote server entry looks like this:
 
 Client-specific walkthroughs:
 
-<CardGroup cols={3}>
+<CardGroup cols={2}>
   <Card title="Cursor" icon="cursor" href="/integrations/cursor">
     Add Wirebox as a remote MCP server in Cursor.
   </Card>
   <Card title="Claude Code" icon="terminal" href="/integrations/claude-code">
     One CLI command, or a project-level `.mcp.json`.
-  </Card>
-  <Card title="Claude Desktop" icon="desktop" href="/integrations/claude-desktop">
-    Run the stdio bridge from `claude_desktop_config.json`.
   </Card>
 </CardGroup>
 
