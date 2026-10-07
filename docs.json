@@ -69,6 +69,7 @@
               "api-reference/mail/send",
               "api-reference/mail/reply",
               "api-reference/mail/forward",
+              "api-reference/mail/drafts",
               "api-reference/mail/update-message"
             ]
           },

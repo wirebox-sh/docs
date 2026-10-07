@@ -158,6 +158,80 @@ wirebox mail reply eva msg_01J8ABC123XYZ \
 
 ---
 
+## Drafting Emails
+
+Some emails need a review pass before they go out. Drafts let an agent compose a message, revise it — optionally with optimistic version checks — and send it later, either as a new email, a reply, or a forward.
+
+<CodeGroup>
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wirebox:
+    eva = wirebox.get_identity("eva")
+
+    # 1. Compose a draft
+    draft = eva.create_draft(
+        to=["alex@example.com"],
+        subject="Invoice follow-up",
+        text="Hi Alex, just checking in on invoice #1042.",
+    )
+
+    # 2. Revise it (rejected with 409 if someone else got there first)
+    draft = eva.update_draft(
+        draft.id,
+        version=draft.version,
+        text="Hi Alex, invoice #1042 is now overdue.",
+    )
+
+    # 3. Send it — the draft becomes a permanent message
+    sent = eva.send_draft(draft.id)
+    print("Sent message ID:", sent.id)
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wirebox = new Wirebox();
+const eva = await wirebox.getIdentity("eva");
+
+// 1. Compose a draft
+let draft = await eva.createDraft({
+  to: ["alex@example.com"],
+  subject: "Invoice follow-up",
+  text: "Hi Alex, just checking in on invoice #1042.",
+});
+
+// 2. Revise it (rejected with 409 if someone else got there first)
+draft = await eva.updateDraft(draft.id, {
+  version: draft.version,
+  text: "Hi Alex, invoice #1042 is now overdue.",
+});
+
+// 3. Send it — the draft becomes a permanent message
+const sent = await eva.sendDraft(draft.id);
+console.log("Sent message ID:", sent.id);
+```
+
+```bash CLI
+# Compose, revise, then send
+wirebox mail draft create --identity eva \
+  --to alex@example.com \
+  --subject "Invoice follow-up" \
+  --text "Hi Alex, just checking in on invoice #1042."
+
+wirebox mail draft update drf_01J8ABC123XYZ \
+  --identity eva \
+  --expected-version 1 \
+  --text "Hi Alex, invoice #1042 is now overdue."
+
+wirebox mail draft send drf_01J8ABC123XYZ --identity eva
+```
+</CodeGroup>
+
+Draft attachments are stored in R2 and promoted to permanent message attachments when the draft is sent. See the [Email Drafts API reference](/api-reference/mail/drafts) for the full object schema and error codes.
+
+---
+
 ## Forwarding Messages
 
 Forward existing emails to external teammates or services. Wirebox automatically formats the quoted RFC body (`---------- Forwarded message ---------`), creates an independent conversation thread, and clones original R2 attachments unless disabled (`forward_attachments=false` or `--no-attachments`).
