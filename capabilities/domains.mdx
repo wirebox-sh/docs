@@ -1,0 +1,109 @@
+---
+title: "Custom Domains"
+description: "Send and receive agent email from a domain your organization owns."
+---
+
+By default an agent's mailbox lives on `wireboxmail.com`. Custom domains let agents send and receive from a domain you own — for example `eva@agents.example.com` — so customer-facing email carries your brand instead of Wirebox's.
+
+Domains are registered per organization, verified once, and can then be shared by every identity in the organization.
+
+## Apex or subdomain?
+
+You can register either an apex domain (`example.com`) or a subdomain (`agents.example.com`).
+
+**A subdomain is the safer default.** Inbound email for a domain is routed by its `MX` records, so pointing the apex at Wirebox redirects the mail for every address on that domain. A subdomain leaves your existing human mailboxes untouched and is easy to remove later.
+
+Use the apex only if the domain is not used for email yet.
+
+## Before you start
+
+* A domain you own, with access to edit its DNS records at your registrar.
+* An API key for the organization, or access to the [Console](https://wirebox.sh/console).
+* A few minutes for DNS propagation.
+
+## Step 1: Add the domain
+
+<CodeGroup>
+```text Console
+Open Email & Domains in the Console, choose Add domain, and enter the
+bare domain (agents.example.com — no https://, no path, no trailing slash).
+The Console shows the DNS records to publish and keeps them available while
+you configure your registrar.
+```
+
+```bash cURL
+curl -X POST "https://api.wirebox.sh/api/v1/domains" \
+  -H "Authorization: Bearer $WIREBOX_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "domain": "agents.example.com" }'
+```
+</CodeGroup>
+
+The response contains the domain object and its `dns_records` array. Each record has a `type`, a `name` (host), a `value`, an optional `priority`, a per-record `status` (`pending`, `valid`, or `failed`), and a human-readable `purpose`. Treat the values as opaque strings and copy them exactly.
+
+The **first domain** added to an organization is marked as the default automatically; you can change the default once a domain is verified.
+
+## Step 2: Add the DNS records
+
+Publish every record returned for the domain. They typically cover:
+
+| Record | Purpose |
+| :--- | :--- |
+| `MX` | Routes inbound email for the domain to Wirebox. |
+| `TXT` (SPF) | Authorizes Wirebox to send on behalf of the domain. |
+| `TXT` (DKIM) | Cryptographically signs outbound mail so receivers can verify it. |
+| `TXT` (ownership) | Proves you control the domain. |
+| `TXT` (DMARC) | Recommended alignment policy for receivers. |
+
+<Warning>
+  If the domain already receives mail elsewhere (Google Workspace, Microsoft 365, another mailbox provider), changing its `MX` records redirects **all** inbound mail for that domain. Register a subdomain instead unless you intend to move the whole domain.
+</Warning>
+
+Keep the records in place after verification — removing them breaks inbound mail and DKIM signing.
+
+## Step 3: Verify
+
+Recheck the domain from the Console, or call verify from the API:
+
+```bash cURL
+curl -X POST "https://api.wirebox.sh/api/v1/domains/dom_01J8ABC123XYZ/verify" \
+  -H "Authorization: Bearer $WIREBOX_API_KEY"
+```
+
+Verification queries the provider and updates each record's `status` plus the domain `status`:
+
+| Status | Meaning |
+| :--- | :--- |
+| `pending` | Records have not been validated yet, or DNS has not propagated. |
+| `verified` | All required records were found; the domain can send and receive. |
+| `failed` | At least one required record is missing or wrong. Fix the records and verify again. |
+
+DNS changes take a few minutes to propagate, and re-running verify is safe.
+
+## Step 4: Use the domain
+
+* **Per identity** — pass `custom_domain_id` or `domain` when [creating](/api-reference/identities/create) or [updating](/api-reference/identities/update) an identity; its mailbox then uses that domain.
+* **As the organization default** — new identities that do not specify a domain use the default. Only a `verified` domain can be set as default:
+
+```bash cURL
+curl -X POST "https://api.wirebox.sh/api/v1/domains/dom_01J8ABC123XYZ/set-default" \
+  -H "Authorization: Bearer $WIREBOX_API_KEY"
+```
+
+## Managing domains
+
+* **List** — `GET /api/v1/domains` returns every domain with a `mailboxes_count`.
+* **Get** — `GET /api/v1/domains/{id}` returns one domain with its DNS records.
+* **Delete** — `DELETE /api/v1/domains/{id}` removes the domain and its provider registration. New identities fall back to the Wirebox default domain unless another verified domain is set as default.
+
+See the [Domains API reference](/api-reference/domains/manage) for response fields and error codes.
+
+## Troubleshooting
+
+| Symptom | Fix |
+| :--- | :--- |
+| Verification stays `pending` | Confirm each record's host and value match exactly, wait for propagation, then verify again. |
+| Verification returns `failed` | Compare the per-record `status` values in the response and fix the ones marked `failed`. |
+| `400 domain_not_verified` when setting the default | Verify the domain first. |
+| `409 domain_exists` when adding | The domain is already registered in this organization. |
+| Inbound mail stopped after adding the domain | The `MX` record replaced the domain's existing mail routing — see the apex warning above. |

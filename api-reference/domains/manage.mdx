@@ -1,0 +1,256 @@
+---
+title: "Manage Domains"
+api: "GET https://api.wirebox.sh/api/v1/domains"
+description: "Register, verify, and manage the custom domains your organization sends and receives email with."
+---
+
+Custom domains let agent mailboxes use an address on a domain you own instead of `wireboxmail.com`. Domains are scoped to the organization: register once, verify, and any identity can use it. See the [Custom Domains guide](/capabilities/domains) for the DNS workflow.
+
+### Domain Object
+
+<ResponseField name="id" type="string">
+  Unique domain identifier (`dom_` prefix).
+</ResponseField>
+
+<ResponseField name="domain" type="string">
+  The registered domain name in lowercase ASCII.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  `pending`, `verified`, or `failed`.
+</ResponseField>
+
+<ResponseField name="is_default" type="boolean">
+  Whether new identities use this domain when none is specified. The first domain added to an organization becomes the default automatically.
+</ResponseField>
+
+<ResponseField name="provider" type="string">
+  Upstream provider handling mail for the domain (`telnyx`).
+</ResponseField>
+
+<ResponseField name="provider_domain_id" type="string | null">
+  The provider's identifier for the domain, when registered upstream.
+</ResponseField>
+
+<ResponseField name="dns_records" type="object[]">
+  Required DNS records. Each item has `type` (`MX`, `TXT`, or `CNAME`), `name`, `value`, an optional `priority`, a per-record `status` (`pending`, `valid`, or `failed`), and a `purpose` label.
+</ResponseField>
+
+<ResponseField name="verified_at" type="string | null">
+  ISO 8601 timestamp of the successful verification, if any.
+</ResponseField>
+
+<ResponseField name="created_at" type="string">
+  ISO 8601 creation timestamp.
+</ResponseField>
+
+<ResponseField name="updated_at" type="string">
+  ISO 8601 update timestamp.
+</ResponseField>
+
+---
+
+## List Domains
+
+Returns every domain registered in the organization, newest first. Each item also includes `mailboxes_count` — the number of mailboxes bound to that domain.
+
+<RequestExample>
+```bash cURL
+curl -X GET "https://api.wirebox.sh/api/v1/domains" \
+  -H "Authorization: Bearer $WIREBOX_API_KEY"
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200 OK
+{
+  "data": [
+    {
+      "id": "dom_01J8ABC123XYZ",
+      "domain": "agents.example.com",
+      "status": "verified",
+      "is_default": true,
+      "provider": "telnyx",
+      "provider_domain_id": "3f9c1d0e-8a2b-4f6e-9c1d-0e8a2b4f6e9c",
+      "dns_records": [
+        {
+          "type": "MX",
+          "name": "agents.example.com",
+          "value": "mx.telnyx.com",
+          "priority": 10,
+          "status": "valid",
+          "purpose": "Inbound Email Routing via mx.telnyx.com (Required)"
+        }
+      ],
+      "verified_at": "2026-10-06T10:30:00Z",
+      "created_at": "2026-10-06T10:00:00Z",
+      "updated_at": "2026-10-06T10:30:00Z",
+      "mailboxes_count": 2
+    }
+  ]
+}
+```
+</ResponseExample>
+
+---
+
+## Create Domain
+
+Registers the domain with the mail provider and returns the DNS records that must be published. The domain starts as `pending` (or `verified` if the provider already considers it verified). The first domain in an organization is marked as the default.
+
+### Body Parameters
+
+<ParamField body="domain" type="string" required>
+  The bare domain name, lowercase, without protocol or path (e.g. `agents.example.com`).
+</ParamField>
+
+Returns `201` with the created [Domain Object](#domain-object). Errors: `400 validation_error`, `409 domain_exists`, `502 upstream_provider_error`.
+
+<RequestExample>
+```bash cURL
+curl -X POST "https://api.wirebox.sh/api/v1/domains" \
+  -H "Authorization: Bearer $WIREBOX_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "domain": "agents.example.com" }'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 201 Created
+{
+  "data": {
+    "id": "dom_01J8ABC123XYZ",
+    "domain": "agents.example.com",
+    "status": "pending",
+    "is_default": true,
+    "provider": "telnyx",
+    "provider_domain_id": "3f9c1d0e-8a2b-4f6e-9c1d-0e8a2b4f6e9c",
+    "dns_records": [
+      {
+        "type": "MX",
+        "name": "agents.example.com",
+        "value": "mx.telnyx.com",
+        "priority": 10,
+        "status": "pending",
+        "purpose": "Inbound Email Routing via mx.telnyx.com (Required)"
+      },
+      {
+        "type": "TXT",
+        "name": "agents.example.com",
+        "value": "v=spf1 include:spf.telnyx.com ~all",
+        "status": "pending",
+        "purpose": "SPF Sender Policy Framework (Required)"
+      },
+      {
+        "type": "TXT",
+        "name": "agents.example.com",
+        "value": "telnyx-domain-verification=...",
+        "status": "pending",
+        "purpose": "Domain Ownership Verification (Required)"
+      }
+    ],
+    "verified_at": null,
+    "created_at": "2026-10-06T10:00:00Z",
+    "updated_at": "2026-10-06T10:00:00Z"
+  }
+}
+```
+
+Record values are provider-supplied — copy them exactly as returned rather than reusing the values shown here.
+</ResponseExample>
+
+---
+
+## Get Domain
+
+Returns one domain with its current DNS records. Returns `404` when the domain does not exist in the organization.
+
+<RequestExample>
+```bash cURL
+curl -X GET "https://api.wirebox.sh/api/v1/domains/dom_01J8ABC123XYZ" \
+  -H "Authorization: Bearer $WIREBOX_API_KEY"
+```
+</RequestExample>
+
+---
+
+## Verify Domain
+
+Asks the provider to recheck the domain's DNS records and updates the domain and per-record statuses. A successful check sets `status` to `verified` and stores `verified_at`; otherwise the domain becomes `failed` and the response message points to the incomplete records. Re-running verify is safe.
+
+Returns the updated [Domain Object](#domain-object) plus a human-readable `message`. Returns `500 verification_failed` if the provider could not be queried.
+
+<RequestExample>
+```bash cURL
+curl -X POST "https://api.wirebox.sh/api/v1/domains/dom_01J8ABC123XYZ/verify" \
+  -H "Authorization: Bearer $WIREBOX_API_KEY"
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200 OK
+{
+  "data": {
+    "id": "dom_01J8ABC123XYZ",
+    "domain": "agents.example.com",
+    "status": "verified",
+    "is_default": true,
+    "provider": "telnyx",
+    "provider_domain_id": "3f9c1d0e-8a2b-4f6e-9c1d-0e8a2b4f6e9c",
+    "dns_records": [
+      {
+        "type": "MX",
+        "name": "agents.example.com",
+        "value": "mx.telnyx.com",
+        "priority": 10,
+        "status": "valid",
+        "purpose": "Inbound Email Routing via mx.telnyx.com (Required)"
+      }
+    ],
+    "verified_at": "2026-10-06T10:30:00Z",
+    "created_at": "2026-10-06T10:00:00Z",
+    "updated_at": "2026-10-06T10:30:00Z"
+  },
+  "message": "Domain agents.example.com verified successfully."
+}
+```
+</ResponseExample>
+
+---
+
+## Set Default Domain
+
+Marks a verified domain as the organization default and clears the flag from any other domain. New identities use the default when neither `custom_domain_id` nor `domain` is provided.
+
+Returns `400 domain_not_verified` if the domain has not been verified, and `404` when it does not exist.
+
+<RequestExample>
+```bash cURL
+curl -X POST "https://api.wirebox.sh/api/v1/domains/dom_01J8ABC123XYZ/set-default" \
+  -H "Authorization: Bearer $WIREBOX_API_KEY"
+```
+</RequestExample>
+
+Response: the updated [Domain Object](#domain-object) with `"is_default": true`.
+
+---
+
+## Delete Domain
+
+Removes the domain from the organization and deletes its registration with the mail provider. Returns `404` when the domain does not exist.
+
+<RequestExample>
+```bash cURL
+curl -X DELETE "https://api.wirebox.sh/api/v1/domains/dom_01J8ABC123XYZ" \
+  -H "Authorization: Bearer $WIREBOX_API_KEY"
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200 OK
+{
+  "success": true,
+  "message": "Domain 'agents.example.com' removed successfully."
+}
+```
+</ResponseExample>
