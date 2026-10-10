@@ -17,10 +17,8 @@ https://api.wirebox.sh/api/v1/mcp
 
 You can authenticate in two ways:
 
-| Method | Use it for |
-| :--- | :--- |
-| **OAuth sign-in** | Clients that support OAuth for remote MCP servers, such as Claude Code. The client opens a browser, you sign in to Wirebox and approve. No API key to copy. |
-| **API key** | Headless setups and clients without OAuth support. |
+- **OAuth sign-in** — Clients that support OAuth for remote MCP servers, such as Claude Code. The client opens a browser, you sign in to Wirebox and approve. No API key to copy.
+- **API key** — Headless setups and clients without OAuth support.
 
 ### Sign in with OAuth
 
@@ -38,11 +36,9 @@ An OAuth connection can call the MCP tools below and nothing else: the API key, 
 
 Send your API key in one of three ways, depending on what the client supports:
 
-| Method | Example |
-| :--- | :--- |
-| `Authorization` header | `Authorization: Bearer wb_live_...` |
-| `X-API-Key` header | `X-API-Key: wb_live_...` |
-| Query parameter | `https://api.wirebox.sh/api/v1/mcp?apiKey=wb_live_...` |
+- **`Authorization` header** — `Authorization: Bearer wb_live_...`
+- **`X-API-Key` header** — `X-API-Key: wb_live_...`
+- **Query parameter** — `https://api.wirebox.sh/api/v1/mcp?apiKey=wb_live_...`
 
 Use the query parameter only for clients that cannot set custom request headers.
 
@@ -143,9 +139,24 @@ To cut access, revoke the API key in the [Console](https://wirebox.sh/console/ke
 
 ## Troubleshooting
 
-| Symptom | Likely cause | Fix |
-| :--- | :--- | :--- |
-| No Wirebox tools appear | Server not connected | Check the server entry in the client and restart it. |
-| Tools return an authorization error | API key is invalid or revoked | Create a new key in the [Console](https://wirebox.sh/console/keys) and update the config. |
-| Tools act as the wrong identity | Organization key or OAuth sign-in with a different default | Pass `identity`, or use an identity-scoped key. |
-| Email sends are refused | Outbound guardrails | Check [Mail Rules & Policy](/api-reference/mail/rules). |
+<AccordionGroup>
+  <Accordion title="No Wirebox tools appear">
+    **Likely cause**: Server not connected.  
+    **Fix**: Check the server entry in the client configuration and restart the client.
+  </Accordion>
+
+  <Accordion title="Tools return an authorization error">
+    **Likely cause**: API key is invalid or revoked.  
+    **Fix**: Create a new key in the [Console](https://wirebox.sh/console/keys) and update the configuration.
+  </Accordion>
+
+  <Accordion title="Tools act as the wrong identity">
+    **Likely cause**: Organization key or OAuth sign-in with a different default.  
+    **Fix**: Pass `identity`, or use an identity-scoped key.
+  </Accordion>
+
+  <Accordion title="Email sends are refused">
+    **Likely cause**: Outbound guardrails or rule restrictions.  
+    **Fix**: Check [Mail Rules & Policy](/api-reference/mail/rules).
+  </Accordion>
+</AccordionGroup>

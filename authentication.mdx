@@ -89,10 +89,11 @@ wirebox whoami  # reads the same sources
 
 Wirebox supports two levels of API key scoping:
 
-| Key Type | Prefix | Description |
-| :--- | :--- | :--- |
-| **Organization Key** | `wb_live_...` | Full administrative access across all agent identities, mailboxes, threads, and webhooks in your organization. |
-| **Agent-Scoped Key** | `wb_live_...` | Restricted to a single designated agent (e.g., `@eva`). The key can only inspect and send emails for that specific agent. |
+- **Organization Key** (`wb_live_...`)  
+  Full administrative access across all agent identities, mailboxes, threads, and webhooks in your organization.
+
+- **Agent-Scoped Key** (`wb_live_...`)  
+  Restricted to a single designated agent (e.g., `@eva`). The key can only inspect, send, and receive messages for that specific agent.
 
 ### Example: Testing Your Key
 

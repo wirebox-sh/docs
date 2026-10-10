@@ -65,11 +65,22 @@ Sends follow the identity's [mail rules and policy](/api-reference/mail/rules), 
 
 ## Troubleshooting
 
-| Symptom | Fix |
-| :--- | :--- |
-| `Failed to connect` | Check the URL and that the key is valid. |
-| Tools return an authorization error | The key is invalid or revoked — create a new one and re-add the server. |
-| Server missing in a new session | Re-add it with `--scope user`, or commit `.mcp.json` at the project root. |
-| Tools act as an unexpected identity | Pass `identity`, or use an identity-scoped key. |
+<AccordionGroup>
+  <Accordion title="Failed to connect">
+    Check the endpoint URL and ensure your API key or OAuth session is valid.
+  </Accordion>
+
+  <Accordion title="Tools return an authorization error">
+    The key is invalid or revoked — create a new one in the [Console](https://wirebox.sh/console/keys) and re-add the server.
+  </Accordion>
+
+  <Accordion title="Server missing in a new session">
+    Re-add it with `--scope user`, or commit `.mcp.json` at your project root.
+  </Accordion>
+
+  <Accordion title="Tools act as an unexpected identity">
+    Pass the `identity` argument explicitly, or use an identity-scoped key.
+  </Accordion>
+</AccordionGroup>
 
 See [MCP](/mcp) for the full tool catalog and how identities are chosen.
