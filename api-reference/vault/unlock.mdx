@@ -1,0 +1,70 @@
+---
+title: "Unlock Vault"
+api: "GET https://api.wirebox.sh/api/v1/vault/unlock"
+description: "Verify possession of the vault key and fetch the wrapped key plus the ciphertext the caller may read."
+---
+
+Verifies the vault key via its auth hash and returns the wrapped Organization
+Encryption Key together with every secret the caller is allowed to read. The
+client then unwraps the key and decrypts the payloads locally.
+
+For an **identity-scoped** key with the `vault:read` scope, only the secrets
+granted to that identity are returned — filtering happens server-side.
+
+### Query Parameters
+
+<ParamField query="auth_hash" type="string" required>
+  `SHA-256(master key)` as a 64-character hex digest, derived from the vault key and the vault's salt + KDF params (from `GET /api/v1/vault`).
+</ParamField>
+
+### Response
+
+<ResponseField name="wrapped_org_key" type="string">
+  Base64 AES-256-GCM blob — the OEK wrapped under the master key. Unwrap it locally to decrypt payloads.
+</ResponseField>
+
+<ResponseField name="kdf_params" type="object">
+  The vault's Argon2id parameters.
+</ResponseField>
+
+<ResponseField name="secrets" type="array">
+  The ciphertext secrets the caller may read. Each item has `id`, `type`,
+  `name`, `description`, `encrypted_payload` (base64 ciphertext), `created_at`,
+  and `updated_at`.
+</ResponseField>
+
+A wrong vault key fails to unwrap the OEK locally; a mismatched `auth_hash`
+returns `401`.
+
+<RequestExample>
+```ts TypeScript
+// unlock() fetches the wrapped key + ciphertext and decrypts locally.
+const vault = await wb.vault.unlock(process.env.WIREBOX_VAULT_KEY);
+console.log(vault.secrets.map((s) => s.name));
+```
+
+```bash cURL
+curl "https://api.wirebox.sh/api/v1/vault/unlock?auth_hash=$AUTH_HASH" \
+  -H "Authorization: Bearer $WIREBOX_API_KEY"
+```
+</RequestExample>
+
+<ResponseExample>
+```json 200 OK
+{
+  "wrapped_org_key": "<base64 blob>",
+  "kdf_params": { "algorithm": "argon2id", "m": 65536, "t": 3, "p": 1 },
+  "secrets": [
+    {
+      "id": "vsec_01J8ABC123XYZ",
+      "type": "login",
+      "name": "GitHub",
+      "description": null,
+      "encrypted_payload": "<base64 ciphertext>",
+      "created_at": "2026-10-10T10:00:00Z",
+      "updated_at": "2026-10-10T10:00:00Z"
+    }
+  ]
+}
+```
+</ResponseExample>

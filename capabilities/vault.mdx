@@ -1,0 +1,289 @@
+---
+title: "Vault"
+description: "A zero-knowledge, encrypted store for the credentials your agents need — logins with TOTP, API keys, and other secrets."
+---
+
+The Wirebox **Vault** gives your agents the credentials they need to act in the
+real world: website logins (with two-factor TOTP), API keys, and freeform
+secrets. It completes the picture alongside email and phone — an agent can now
+sign up for a service, receive the verification email, **and** store and reuse
+the resulting login, including its 2FA codes.
+
+<Info>
+  The vault is **zero-knowledge**: all encryption and decryption happen on your
+  side (in the SDK, CLI, or your browser). The server only ever stores
+  ciphertext — Wirebox never sees your secrets.
+</Info>
+
+---
+
+## How It Works
+
+Two keys are involved, and only one of them ever reaches the server:
+
+| Key | Purpose | Sent to Wirebox? |
+| :--- | :--- | :--- |
+| **API key** (`wb_live_...`) | Authenticates your requests | Yes (as a Bearer token) |
+| **Vault key** (`WBV-...`) | Unlocks decryption, locally | **Never** |
+
+When you unlock the vault, your vault key is stretched with **Argon2id** into a
+master key, which unwraps an organization encryption key held only in memory.
+That key encrypts and decrypts each secret with **AES-256-GCM**. The server
+stores the ciphertext and some plaintext metadata (a secret's name and type),
+nothing more.
+
+<Warning>
+  There are no recovery codes. If you lose your vault key, the vault cannot be
+  decrypted and must be re-initialized. Store the key somewhere safe — a
+  password manager or your secrets manager of choice.
+</Warning>
+
+---
+
+## Secret Types
+
+| Type | Fields |
+| :--- | :--- |
+| `login` | `username`, `email`, `password`, `service_url`, and an optional `totp` object |
+| `api_key` | `key`, optional `service_url` |
+| `other` | `data` (freeform) |
+
+The `totp` object on a login holds `secret` (base32), plus optional
+`algorithm` (`sha1`/`sha256`/`sha512`), `digits` (`6`/`8`), and `period`
+(`30`/`60`).
+
+---
+
+## Two Roles
+
+The vault separates **managing** secrets from **using** them:
+
+- An **admin** (a Console session or an admin API key) initializes the vault,
+  creates and edits secrets, and grants agents access.
+- An **agent** (an identity-scoped API key with the `vault:read` scope) can
+  unlock the vault and read **only the secrets it has been granted** — the
+  server filters ciphertext per identity, so an agent can never download a
+  secret it was not given, even though it holds the vault key.
+
+---
+
+## Initialize the Vault
+
+Done once per organization. A strong vault key is generated and returned — save
+it now.
+
+<CodeGroup>
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wb = new Wirebox(); // admin API key via WIREBOX_API_KEY
+
+const { vaultKey, warning } = await wb.vault.initialize();
+console.log("Vault key (store this securely):", vaultKey);
+console.log(warning);
+```
+
+```bash CLI
+# Prints a generated vault key — store it securely.
+wirebox vault init
+
+# Or bring your own key:
+wirebox vault init --vault-key "my-strong-vault-key"
+```
+</CodeGroup>
+
+You can also initialize the vault from the [Console](https://wirebox.sh/console/vault).
+
+---
+
+## Unlock the Vault
+
+Unlocking derives the key client-side and returns a handle you can read and
+write secrets through. The vault key is read from the argument, or from the
+`WIREBOX_VAULT_KEY` environment variable.
+
+<CodeGroup>
+```ts TypeScript
+const vault = await wb.vault.unlock(process.env.WIREBOX_VAULT_KEY);
+```
+
+```bash CLI
+# Commands that need the vault key read it from --vault-key or WIREBOX_VAULT_KEY.
+export WIREBOX_VAULT_KEY="WBV-..."
+```
+</CodeGroup>
+
+---
+
+## Create Secrets
+
+Payloads are encrypted locally before upload. Secrets are addressed later by
+**name or id**, so give them clear names.
+
+<CodeGroup>
+```ts TypeScript
+import { VaultSecretType, parseTotpUri } from "@wirebox-sh/sdk";
+
+// A login with two-factor TOTP
+await vault.createSecret({
+  type: VaultSecretType.LOGIN,
+  name: "GitHub",
+  payload: {
+    username: "eva",
+    password: "s3cr3t",
+    service_url: "https://github.com",
+    totp: parseTotpUri("otpauth://totp/GitHub:eva?secret=JBSWY3DPEHPK3PXP"),
+  },
+});
+
+// An API key
+await vault.createSecret({
+  type: VaultSecretType.API_KEY,
+  name: "Stripe",
+  payload: { key: "sk_live_...", service_url: "https://api.stripe.com" },
+});
+```
+
+```bash CLI
+# Login with TOTP. Omit --password to be prompted; pass "-" to read from stdin.
+wirebox vault add --type login --name GitHub \
+  --username eva --password \
+  --url https://github.com \
+  --totp-uri "otpauth://totp/GitHub:eva?secret=JBSWY3DPEHPK3PXP"
+
+# API key
+wirebox vault add --type api_key --name Stripe --key - --url https://api.stripe.com
+```
+</CodeGroup>
+
+<Tip>
+  TOTP can be added from an `otpauth://` URI (as above) or, in the
+  [Console](https://wirebox.sh/console/vault), by uploading the QR image shown
+  during a service's 2FA setup.
+</Tip>
+
+---
+
+## Read Secrets
+
+Secrets come back decrypted from the unlocked vault. List metadata without the
+vault key; read values after unlocking.
+
+<CodeGroup>
+```ts TypeScript
+// Metadata only (no vault key needed)
+const summaries = await wb.vault.listSecrets({ type: "login" });
+
+// Decrypted values (by name or id)
+const login = vault.getLogin("GitHub");
+console.log(login.username, login.password);
+
+const stripe = vault.getApiKey("Stripe");
+console.log(stripe.key);
+```
+
+```bash CLI
+# List metadata
+wirebox vault list --type login
+
+# Values are masked by default; reveal explicitly, or extract one field.
+wirebox vault get GitHub
+wirebox vault get GitHub --reveal
+wirebox vault get GitHub --field password
+```
+</CodeGroup>
+
+---
+
+## Generate TOTP Codes
+
+For a login that has TOTP configured, generate the current one-time code
+client-side.
+
+<CodeGroup>
+```ts TypeScript
+const code = await vault.getTotpCode("GitHub");
+console.log(code.code, `expires in ${code.expiresInSeconds}s`);
+```
+
+```bash CLI
+wirebox vault totp GitHub
+```
+</CodeGroup>
+
+---
+
+## Update and Delete
+
+Updating re-encrypts only the fields you pass; untouched fields are preserved.
+
+<CodeGroup>
+```ts TypeScript
+await vault.updateSecret("GitHub", { payload: { password: "rotated-secret" } });
+await vault.deleteSecret("GitHub");
+```
+
+```bash CLI
+wirebox vault set GitHub --password
+wirebox vault rm GitHub
+```
+</CodeGroup>
+
+---
+
+## Give an Agent Access
+
+This is the end-to-end flow for letting an autonomous agent use a credential.
+
+**1. Create an identity-scoped API key with the `vault:read` scope.** In the
+[Console](https://wirebox.sh/console/keys), create an API key scoped to the
+agent and check **Allow vault access (vault:read)**. This key authenticates the
+agent and lets it read the vault.
+
+**2. Grant the agent access to specific secrets.**
+
+<CodeGroup>
+```ts TypeScript
+const eva = await wb.getIdentity("eva");
+await wb.vault.grantAccess("GitHub", eva.id); // or pass the secret id
+```
+
+```bash CLI
+wirebox vault access grant GitHub -i @eva
+```
+</CodeGroup>
+
+**3. Give the agent its two keys** — the `vault:read` API key
+(`WIREBOX_API_KEY`) and the vault key (`WIREBOX_VAULT_KEY`). The agent can now
+unlock and read only what it was granted:
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wb = new Wirebox(); // WIREBOX_API_KEY = the agent's vault:read key
+const vault = await wb.vault.unlock(); // WIREBOX_VAULT_KEY from the environment
+
+const login = vault.getLogin("GitHub");
+const code = await vault.getTotpCode("GitHub");
+// Use login.username / login.password / code.code to sign in.
+```
+
+Revoke access at any time; it takes effect on the next unlock:
+
+<CodeGroup>
+```ts TypeScript
+await wb.vault.revokeAccess("GitHub", eva.id);
+```
+
+```bash CLI
+wirebox vault access revoke GitHub -i @eva
+wirebox vault access list GitHub
+```
+</CodeGroup>
+
+---
+
+## API Reference
+
+For the raw REST endpoints — remember that payloads are ciphertext produced
+client-side — see the [Vault API reference](/api-reference/vault/overview).

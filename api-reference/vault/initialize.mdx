@@ -1,0 +1,102 @@
+---
+title: "Initialize Vault"
+api: "POST https://api.wirebox.sh/api/v1/vault/initialize"
+description: "Create the organization's zero-knowledge vault from client-generated key material."
+---
+
+Creates the vault for the caller's organization. All cryptographic material is
+generated on the client; the server stores only what it is given. Admin only.
+Returns `409` if a vault already exists.
+
+<Note>
+  The request body is produced by the client: generate a random salt and
+  Organization Encryption Key (OEK), derive the master key from your vault key
+  with Argon2id, wrap the OEK, and compute the auth hash. The
+  [SDK/CLI](/capabilities/vault) do this for you.
+</Note>
+
+### Body Parameters
+
+<ParamField body="kdf_salt" type="string" required>
+  Base64-encoded random salt (≥16 bytes) used for Argon2id key derivation.
+</ParamField>
+
+<ParamField body="kdf_params" type="object">
+  Argon2id parameters: `algorithm` (`argon2id`), `m` (memory KiB), `t`
+  (iterations), `p` (parallelism). Defaults to `{ "algorithm": "argon2id", "m": 65536, "t": 3, "p": 1 }`.
+</ParamField>
+
+<ParamField body="wrapped_org_key" type="string" required>
+  Base64 AES-256-GCM blob: the OEK wrapped under the master key derived from the vault key.
+</ParamField>
+
+<ParamField body="auth_hash" type="string" required>
+  `SHA-256(master key)` as a 64-character hex digest. Used to verify the vault key on unlock; never reveals the key.
+</ParamField>
+
+### Response
+
+<ResponseField name="initialized" type="boolean">
+  `true` once the vault exists.
+</ResponseField>
+
+<ResponseField name="id" type="string">
+  Vault identifier (`vlt_` prefix).
+</ResponseField>
+
+<ResponseField name="kdf_salt" type="string">
+  The stored salt, echoed back.
+</ResponseField>
+
+<ResponseField name="kdf_params" type="object">
+  The stored Argon2id parameters.
+</ResponseField>
+
+<ResponseField name="created_at" type="string">
+  ISO 8601 creation timestamp.
+</ResponseField>
+
+### Vault metadata
+
+`GET /api/v1/vault` returns the vault's public metadata — `initialized`,
+`kdf_salt`, and `kdf_params` — which a client needs to derive the master key
+before unlocking. It never returns the auth hash or any ciphertext. If no vault
+exists it returns `{ "initialized": false }`.
+
+<RequestExample>
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wb = new Wirebox();
+const { vaultKey, warning } = await wb.vault.initialize();
+// vaultKey is generated client-side and shown once — store it securely.
+```
+
+```bash CLI
+wirebox vault init
+```
+
+```bash cURL
+# The body is client-generated key material (see the SDK/CLI).
+curl -X POST https://api.wirebox.sh/api/v1/vault/initialize \
+  -H "Authorization: Bearer $WIREBOX_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "kdf_salt": "<base64 salt>",
+    "wrapped_org_key": "<base64 blob>",
+    "auth_hash": "<sha256 hex>"
+  }'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 201 Created
+{
+  "initialized": true,
+  "id": "vlt_01J8ABC123XYZ",
+  "kdf_salt": "bBvH9uSqCs66wy8PO8HMIQ==",
+  "kdf_params": { "algorithm": "argon2id", "m": 65536, "t": 3, "p": 1 },
+  "created_at": "2026-10-10T10:00:00Z"
+}
+```
+</ResponseExample>

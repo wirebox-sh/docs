@@ -1,0 +1,76 @@
+---
+title: "Vault Access"
+api: "GET https://api.wirebox.sh/api/v1/vault/secrets/{secret_id}/access"
+description: "Grant, list, and revoke an agent identity's access to a vault secret."
+---
+
+Access grants link a secret to an agent identity. An identity-scoped key with
+the `vault:read` scope can read a secret only if it has a grant. The server
+enforces this by filtering ciphertext per identity on unlock, so revocation
+takes effect on the next unlock. All access operations are admin-only.
+
+### Path Parameters
+
+<ParamField path="secret_id" type="string" required>
+  The secret's id (`vsec_` prefix).
+</ParamField>
+
+### Operations
+
+| Method & Path | Description |
+| :--- | :--- |
+| `GET /api/v1/vault/secrets/{secret_id}/access` | List identities granted access. |
+| `POST /api/v1/vault/secrets/{secret_id}/access` | Grant access. Body: `identity_id`. |
+| `DELETE /api/v1/vault/secrets/{secret_id}/access/{identity_id}` | Revoke access. |
+
+### Access Grant Object
+
+<ResponseField name="id" type="string">
+  Grant identifier (`vacc_` prefix).
+</ResponseField>
+
+<ResponseField name="secret_id" type="string">
+  The secret the grant applies to.
+</ResponseField>
+
+<ResponseField name="identity_id" type="string">
+  The agent identity (`agt_` prefix) that was granted access.
+</ResponseField>
+
+<ResponseField name="created_at" type="string">
+  ISO 8601 creation timestamp.
+</ResponseField>
+
+<RequestExample>
+```ts TypeScript
+const eva = await wb.getIdentity("eva");
+await wb.vault.grantAccess("GitHub", eva.id); // secret by name or id
+await wb.vault.listAccess("GitHub");
+await wb.vault.revokeAccess("GitHub", eva.id);
+```
+
+```bash CLI
+# Accepts an agent handle (@eva) or id, and a secret name or id.
+wirebox vault access grant GitHub -i @eva
+wirebox vault access list GitHub
+wirebox vault access revoke GitHub -i @eva
+```
+
+```bash cURL
+curl -X POST https://api.wirebox.sh/api/v1/vault/secrets/vsec_01J8ABC123XYZ/access \
+  -H "Authorization: Bearer $WIREBOX_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{ "identity_id": "agt_01J8ABC123XYZ" }'
+```
+</RequestExample>
+
+<ResponseExample>
+```json 201 Created
+{
+  "id": "vacc_01J8ABC123XYZ",
+  "secret_id": "vsec_01J8ABC123XYZ",
+  "identity_id": "agt_01J8ABC123XYZ",
+  "created_at": "2026-10-10T10:00:00Z"
+}
+```
+</ResponseExample>
