@@ -1,0 +1,39 @@
+/* ==========================================================================
+   Wirebox Docs - Responsive Layout Enhancements
+   Fixes narrow middle content column on Mac screens (1280px - 1600px)
+   ========================================================================== */
+
+/* Expand main container max-width like inkbox */
+#navbar > .max-w-8xl,
+#navbar + div:has(> #sidebar) {
+  max-width: 100rem !important;
+}
+
+/* 1. Prevent cards from being crushed into single-character columns */
+.card-group {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)) !important;
+  gap: 1rem !important;
+}
+
+/* 2. Optimize 3-column layout on medium/laptop screens (MacBook 13"/14"/16") */
+@media (min-width: 1280px) and (max-width: 1600px) {
+  /* Reduce gap between content area and right TOC sidebar */
+  #content-container > div.flex-row-reverse {
+    gap: 1.5rem !important;
+  }
+
+  /* Shrink right TOC column from default 28rem (448px) down to 15rem (240px) */
+  #content-container > div.flex-row-reverse > div:first-child {
+    max-width: 15rem !important;
+    width: 15rem !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* Reclaim middle content width and remove excessive 5.7rem (~91px) left padding */
+  #content-area {
+    width: calc(100% - 16.5rem) !important;
+    padding-left: 1.5rem !important;
+    margin-left: 0 !important;
+  }
+}
