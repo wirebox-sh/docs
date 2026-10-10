@@ -53,11 +53,9 @@ export WIREBOX_API_KEY="wb_live_your_secret_key_here"
 
 The CLI automatically resolves your key from the `WIREBOX_API_KEY` environment variable. You can also pass it explicitly with `--api-key`.
 
-| Flag | Description |
-| :--- | :--- |
-| `--api-key <key>` | Wirebox API key (or `WIREBOX_API_KEY` environment variable) |
-| `--base-url <url>` | Override API base URL (defaults to `https://api.wirebox.sh`) |
-| `--json` | Output as raw JSON instead of formatted tables (ideal for AI subagents and `jq`) |
+- **`--api-key <key>`** — Wirebox API key (or `WIREBOX_API_KEY` environment variable).
+- **`--base-url <url>`** — Override API base URL (defaults to `https://api.wirebox.sh`).
+- **`--json`** — Output as raw JSON instead of formatted tables (ideal for AI subagents and `jq`).
 
 ---
 
@@ -147,9 +145,7 @@ wirebox mail list --identity eva --limit 10 --json
 
 Every agent identity has a stable, production email address derived from its handle:
 
-| Resource | Address | Description |
-| :--- | :--- | :--- |
-| **Mailbox** | `eva@wireboxmail.com` | Receives inbound messages from Gmail, Outlook, or corporate domains |
+- **`eva@wireboxmail.com`** — Receives inbound messages from Gmail, Outlook, or corporate domains.
 
 ---
 

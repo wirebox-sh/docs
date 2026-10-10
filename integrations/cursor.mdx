@@ -57,10 +57,18 @@ Actions follow the identity's [mail rules and policy](/api-reference/mail/rules)
 
 ## Troubleshooting
 
-| Symptom | Fix |
-| :--- | :--- |
-| `wirebox` does not appear in the MCP list | Validate the JSON, then restart Cursor. |
-| Tools return an authorization error | The key is invalid or revoked — create a new one and update the config. |
-| Tools act as an unexpected identity | Use an identity-scoped key, or check the `identity` argument. |
+<AccordionGroup>
+  <Accordion title="wirebox does not appear in the MCP list">
+    Validate the configuration JSON, then restart Cursor.
+  </Accordion>
+
+  <Accordion title="Tools return an authorization error">
+    The key is invalid or revoked — create a new one in the [Console](https://wirebox.sh/console/keys) and update the config.
+  </Accordion>
+
+  <Accordion title="Tools act as an unexpected identity">
+    Use an identity-scoped key, or check the `identity` argument passed to the tool.
+  </Accordion>
+</AccordionGroup>
 
 See [MCP](/mcp) for the full tool catalog and how identities are chosen.

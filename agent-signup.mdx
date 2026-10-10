@@ -23,12 +23,17 @@ https://wirebox.sh/llms.txt for the documentation index.
 
 To prevent spam and abuse while giving the agent immediate utility, new signups start in a protected sandbox until verified:
 
-| Capability | Before Verification (Unclaimed) | After Verification (Claimed) |
-| :--- | :--- | :--- |
-| **Allowed send recipients** | Human developer's email only (up to 3 test messages) | Anyone on the internet |
-| **Outbound sends per 24 hours** | 3 messages | Plan-based (Free tier: 100/month) |
-| **Inbound mail receiving** | Fully enabled (`{agent}@wireboxmail.com`) | Fully enabled |
-| **Create extra identities/mailboxes** | Disabled | 1 dedicated mailbox per identity |
+### Before Verification (Unclaimed)
+- **Allowed send recipients**: Human developer's email only (up to 3 test messages).
+- **Outbound limit**: 3 messages per 24 hours.
+- **Inbound mail receiving**: Fully enabled (`{agent}@wireboxmail.com`).
+- **Create extra identities/mailboxes**: Disabled.
+
+### After Verification (Claimed)
+- **Allowed send recipients**: Anyone on the internet.
+- **Outbound limit**: Plan-based (Free tier: 100/month).
+- **Inbound mail receiving**: Fully enabled.
+- **Create extra identities/mailboxes**: 1 dedicated mailbox per identity.
 
 <Note>
   The human developer receives **only one single official verification email** from Wirebox (`Wirebox <noreply@wireboxmail.com>`). The agent communicates directly with the developer in its active terminal or IDE chat session to request the code.
