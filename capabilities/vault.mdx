@@ -73,6 +73,16 @@ Done once per organization. A strong vault key is generated and returned — sav
 it now.
 
 <CodeGroup>
+```python Python
+from wirebox import Wirebox
+
+wb = Wirebox()  # admin API key via WIREBOX_API_KEY
+
+result = wb.vault.initialize()
+print("Vault key (store this securely):", result.vault_key)
+print(result.warning)
+```
+
 ```ts TypeScript
 import { Wirebox } from "@wirebox-sh/sdk";
 
@@ -103,6 +113,12 @@ write secrets through. The vault key is read from the argument, or from the
 `WIREBOX_VAULT_KEY` environment variable.
 
 <CodeGroup>
+```python Python
+import os
+
+vault = wb.vault.unlock(os.environ["WIREBOX_VAULT_KEY"])
+```
+
 ```ts TypeScript
 const vault = await wb.vault.unlock(process.env.WIREBOX_VAULT_KEY);
 ```
@@ -121,6 +137,29 @@ Payloads are encrypted locally before upload. Secrets are addressed later by
 **name or id**, so give them clear names.
 
 <CodeGroup>
+```python Python
+from wirebox.vault import VaultSecretType, LoginPayload, ApiKeyPayload, parse_totp_uri
+
+# A login with two-factor TOTP
+vault.create_secret(
+    type=VaultSecretType.LOGIN,
+    name="GitHub",
+    payload=LoginPayload(
+        username="eva",
+        password="s3cr3t",
+        service_url="https://github.com",
+        totp=parse_totp_uri("otpauth://totp/GitHub:eva?secret=JBSWY3DPEHPK3PXP"),
+    ),
+)
+
+# An API key
+vault.create_secret(
+    type=VaultSecretType.API_KEY,
+    name="Stripe",
+    payload=ApiKeyPayload(key="sk_live_...", service_url="https://api.stripe.com"),
+)
+```
+
 ```ts TypeScript
 import { VaultSecretType, parseTotpUri } from "@wirebox-sh/sdk";
 
@@ -167,14 +206,25 @@ wirebox vault add --type api_key --name Stripe --key - --url https://api.stripe.
 ## Read Secrets
 
 Secrets come back decrypted from the unlocked vault. List metadata without the
-vault key; read values after unlocking.
+vault key; read values after unlocking. Secrets are addressed by **name or id**.
 
 <CodeGroup>
+```python Python
+# Metadata only (no vault key needed)
+summaries = wb.vault.list_secrets(type="login")
+
+# Decrypted values
+login = vault.get_login("GitHub")
+print(login.username, login.password)
+
+print(vault.get_api_key("Stripe").key)
+```
+
 ```ts TypeScript
 // Metadata only (no vault key needed)
 const summaries = await wb.vault.listSecrets({ type: "login" });
 
-// Decrypted values (by name or id)
+// Decrypted values
 const login = vault.getLogin("GitHub");
 console.log(login.username, login.password);
 
@@ -201,6 +251,11 @@ For a login that has TOTP configured, generate the current one-time code
 client-side.
 
 <CodeGroup>
+```python Python
+code = vault.get_totp_code("GitHub")
+print(code.code, f"expires in {code.expires_in_seconds}s")
+```
+
 ```ts TypeScript
 const code = await vault.getTotpCode("GitHub");
 console.log(code.code, `expires in ${code.expiresInSeconds}s`);
@@ -215,11 +270,23 @@ wirebox vault totp GitHub
 
 ## Update and Delete
 
-Updating re-encrypts only the fields you pass; untouched fields are preserved.
+In the SDK, an update re-encrypts the payload you pass, so provide the complete
+payload (read it first) to change one field. The CLI merges the fields you pass.
 
 <CodeGroup>
+```python Python
+login = vault.get_login("GitHub")
+login.password = "rotated-secret"
+vault.update_secret("GitHub", payload=login)
+
+vault.delete_secret("GitHub")
+```
+
 ```ts TypeScript
-await vault.updateSecret("GitHub", { payload: { password: "rotated-secret" } });
+await vault.updateSecret("GitHub", {
+  payload: { ...vault.getLogin("GitHub"), password: "rotated-secret" },
+});
+
 await vault.deleteSecret("GitHub");
 ```
 
@@ -240,12 +307,18 @@ This is the end-to-end flow for letting an autonomous agent use a credential.
 agent and check **Allow vault access (vault:read)**. This key authenticates the
 agent and lets it read the vault.
 
-**2. Grant the agent access to specific secrets.**
+**2. Grant the agent access to specific secrets.** Secrets are addressed by
+name or id; the CLI also accepts an agent handle.
 
 <CodeGroup>
+```python Python
+eva = wb.get_identity("eva")
+wb.vault.grant_access("GitHub", eva.id)
+```
+
 ```ts TypeScript
 const eva = await wb.getIdentity("eva");
-await wb.vault.grantAccess("GitHub", eva.id); // or pass the secret id
+await wb.vault.grantAccess("GitHub", eva.id);
 ```
 
 ```bash CLI
@@ -257,6 +330,18 @@ wirebox vault access grant GitHub -i @eva
 (`WIREBOX_API_KEY`) and the vault key (`WIREBOX_VAULT_KEY`). The agent can now
 unlock and read only what it was granted:
 
+<CodeGroup>
+```python Python
+from wirebox import Wirebox
+
+wb = Wirebox()  # WIREBOX_API_KEY = the agent's vault:read key
+vault = wb.vault.unlock()  # WIREBOX_VAULT_KEY from the environment
+
+login = vault.get_login("GitHub")
+code = vault.get_totp_code("GitHub")
+# Use login.username / login.password / code.code to sign in.
+```
+
 ```ts TypeScript
 import { Wirebox } from "@wirebox-sh/sdk";
 
@@ -267,10 +352,15 @@ const login = vault.getLogin("GitHub");
 const code = await vault.getTotpCode("GitHub");
 // Use login.username / login.password / code.code to sign in.
 ```
+</CodeGroup>
 
 Revoke access at any time; it takes effect on the next unlock:
 
 <CodeGroup>
+```python Python
+wb.vault.revoke_access("GitHub", eva.id)
+```
+
 ```ts TypeScript
 await wb.vault.revokeAccess("GitHub", eva.id);
 ```

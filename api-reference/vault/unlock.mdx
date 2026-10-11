@@ -37,6 +37,14 @@ A wrong vault key fails to unwrap the OEK locally; a mismatched `auth_hash`
 returns `401`.
 
 <RequestExample>
+```python Python
+import os
+
+# unlock() fetches the wrapped key + ciphertext and decrypts locally.
+vault = wb.vault.unlock(os.environ["WIREBOX_VAULT_KEY"])
+print([s.name for s in vault.secrets])
+```
+
 ```ts TypeScript
 // unlock() fetches the wrapped key + ciphertext and decrypts locally.
 const vault = await wb.vault.unlock(process.env.WIREBOX_VAULT_KEY);

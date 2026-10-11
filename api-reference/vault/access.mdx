@@ -42,11 +42,18 @@ takes effect on the next unlock. All access operations are admin-only.
 </ResponseField>
 
 <RequestExample>
+```python Python
+eva = wb.get_identity("eva")
+wb.vault.grant_access("vsec_01J8ABC123XYZ", eva.id)
+wb.vault.list_access("vsec_01J8ABC123XYZ")
+wb.vault.revoke_access("vsec_01J8ABC123XYZ", eva.id)
+```
+
 ```ts TypeScript
 const eva = await wb.getIdentity("eva");
-await wb.vault.grantAccess("GitHub", eva.id); // secret by name or id
-await wb.vault.listAccess("GitHub");
-await wb.vault.revokeAccess("GitHub", eva.id);
+await wb.vault.grantAccess("vsec_01J8ABC123XYZ", eva.id);
+await wb.vault.listAccess("vsec_01J8ABC123XYZ");
+await wb.vault.revokeAccess("vsec_01J8ABC123XYZ", eva.id);
 ```
 
 ```bash CLI

@@ -64,6 +64,14 @@ before unlocking. It never returns the auth hash or any ciphertext. If no vault
 exists it returns `{ "initialized": false }`.
 
 <RequestExample>
+```python Python
+from wirebox import Wirebox
+
+wb = Wirebox()
+result = wb.vault.initialize()
+# result.vault_key is generated client-side and shown once — store it securely.
+```
+
 ```ts TypeScript
 import { Wirebox } from "@wirebox-sh/sdk";
 
