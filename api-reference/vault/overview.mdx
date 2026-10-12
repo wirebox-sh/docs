@@ -1,0 +1,56 @@
+---
+title: "Vault API Overview"
+description: "How the zero-knowledge Vault API works: client-side encryption, the two keys, and the per-identity access model."
+---
+
+The Vault API stores and serves **ciphertext**. All encryption and decryption
+happen on the client — the SDK, CLI, or your own code — so the server never sees
+your secrets in plaintext.
+
+Because of this, the raw REST endpoints expect you to have already derived keys
+and encrypted payloads yourself. In practice, use the
+[SDK or CLI](/capabilities/vault), which implement the cryptography for you. The
+pages here document the wire format for completeness.
+
+---
+
+## Cryptography
+
+```text
+vault key ──Argon2id(kdf_salt)──► master key
+master key ──AES-256-GCM──► wraps the Organization Encryption Key (OEK)
+OEK ──AES-256-GCM──► encrypts each secret's JSON payload
+```
+
+- **KDF**: Argon2id. Parameters (`m`, `t`, `p`) are stored per-vault and
+  returned by the API, so clients always derive with the right settings.
+- **Encryption**: AES-256-GCM. Each ciphertext blob is a versioned,
+  self-describing structure (`[version][algorithm][iv][ciphertext+tag]`),
+  base64-encoded.
+- **Salt**: a random value generated at initialization and stored server-side.
+
+## The Two Keys
+
+- **API key** — authenticates requests, sent as `Authorization: Bearer ...`.
+- **Vault key** — never sent. It is used locally to derive the master key. To
+  prove possession on unlock, the client sends only `auth_hash`, the
+  `SHA-256` of the derived master key.
+
+## Access Model
+
+- **Admin** credentials (a Console JWT or an admin API key) may initialize the
+  vault, create/update/delete secrets, and manage access grants.
+- **Identity-scoped** API keys with the `vault:read` scope may read **only the
+  secrets granted to that identity**. The server filters ciphertext by grant
+  before it leaves the edge, so a scoped key can never retrieve a secret it was
+  not granted.
+
+## Endpoints
+
+| Method & Path | Purpose |
+| :--- | :--- |
+| `GET /api/v1/vault` | [Vault metadata](/api-reference/vault/initialize) (salt, KDF params) |
+| `POST /api/v1/vault/initialize` | [Initialize the vault](/api-reference/vault/initialize) |
+| `GET /api/v1/vault/unlock` | [Fetch wrapped key + ciphertext](/api-reference/vault/unlock) |
+| `GET/POST/PATCH/DELETE /api/v1/vault/secrets` | [Manage secrets](/api-reference/vault/secrets) |
+| `GET/POST/DELETE /api/v1/vault/secrets/{id}/access` | [Manage access](/api-reference/vault/access) |

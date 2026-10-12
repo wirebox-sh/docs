@@ -41,6 +41,7 @@
               "capabilities/phone",
               "capabilities/imessage",
               "capabilities/tunnels",
+              "capabilities/vault",
               "capabilities/webhooks"
             ]
           },
@@ -62,6 +63,16 @@
             "group": "Overview",
             "pages": [
               "api-reference/overview"
+            ]
+          },
+          {
+            "group": "Vault",
+            "pages": [
+              "api-reference/vault/overview",
+              "api-reference/vault/initialize",
+              "api-reference/vault/unlock",
+              "api-reference/vault/secrets",
+              "api-reference/vault/access"
             ]
           },
           {
