@@ -7,6 +7,14 @@ Follow weekly updates to the Wirebox API, client SDKs, and runtime tools as we e
 
 Looking for our SDKs and developer tools? Check out our [TypeScript SDK](https://github.com/wirebox-sh/wirebox-typescript), [Python SDK](https://github.com/wirebox-sh/wirebox-python), and [Wirebox CLI](https://github.com/wirebox-sh/wirebox-cli).
 
+<Update label="October 12, 2026">
+  * **Encrypted vault for agent credentials.** Store logins (with TOTP), API keys, and arbitrary secrets in a zero-knowledge vault. All encryption and decryption happen client-side, so only ciphertext is ever stored. Grant individual secrets to specific agent identities, and a scoped key reads only what it was granted. See [Vault](/capabilities/vault) and the [Vault API](/api-reference/vault/overview). *(TS SDK 0.8.0, CLI 0.9.0, Python SDK 0.6.0)*
+
+  * **Vault in every client.** `wirebox vault` commands (`init`, `add`, `get`, `totp`, and `access grant`/`revoke`/`list`) in the CLI, and a two-layer vault client in the TypeScript and Python SDKs with built-in TOTP (RFC 6238) generation. Address secrets by name or id. *(TS SDK 0.8.0, CLI 0.9.0, Python SDK 0.6.0)*
+
+  * **`vault:read` scope for identity keys.** Issue an API key that reads only the vault secrets granted to its identity — just-enough access for an autonomous agent to fetch the credentials and 2FA codes it needs. See [Vault](/capabilities/vault).
+</Update>
+
 <Update label="October 7, 2026">
   * **OAuth sign-in for the MCP server.** Clients that support OAuth for remote MCP servers, such as Claude Code, can connect with a browser sign-in instead of an API key. The connection can call the MCP tools and nothing else. See [MCP](/mcp#sign-in-with-oauth).
 
