@@ -87,6 +87,104 @@ Triggered when an outbound email (send, reply, or forward) is accepted by Wirebo
 
 ---
 
+### `email.delivered`
+
+Triggered when an outbound email has been successfully delivered and accepted by the recipient's mail server (SMTP `250 OK` handshake).
+
+```json
+{
+  "id": "evt_01J8ABC125",
+  "event_type": "email.delivered",
+  "timestamp": "2026-09-11T12:02:45Z",
+  "data": {
+    "message": {
+      "id": "msg_01J8OUTBOUND789",
+      "mailbox_address": "eva@wireboxmail.com",
+      "agent_handle": "eva",
+      "thread_id": "thrd_01J8GHI789",
+      "from": "eva@wireboxmail.com",
+      "to": ["alex@example.com"],
+      "subject": "Re: Need help with integration"
+    },
+    "delivery": {
+      "recipient": "alex@example.com",
+      "smtp_response": "250 2.0.0 OK: message queued 123456789",
+      "timestamp": "2026-09-11T12:02:45Z"
+    }
+  }
+}
+```
+
+---
+
+### `email.bounced`
+
+Triggered when an outbound email cannot be delivered and receives a bounce notification or rejection from the remote mail server (such as an invalid address, full mailbox, or SPF/DKIM/DMARC policy failure).
+
+```json
+{
+  "id": "evt_01J8ABC126",
+  "event_type": "email.bounced",
+  "timestamp": "2026-09-11T12:03:10Z",
+  "data": {
+    "message": {
+      "id": "msg_01J8OUTBOUND789",
+      "mailbox_address": "eva@wireboxmail.com",
+      "agent_handle": "eva",
+      "thread_id": "thrd_01J8GHI789",
+      "from": "eva@wireboxmail.com",
+      "to": ["nonexistent@example.com"],
+      "subject": "Proposal for your review"
+    },
+    "bounce": {
+      "recipient": "nonexistent@example.com",
+      "bounce_type": "hard",
+      "reason": "550 5.1.1 <nonexistent@example.com>: Recipient address rejected: User unknown",
+      "diagnostic_code": "smtp; 550-5.1.1 The email account that you tried to reach does not exist."
+    }
+  }
+}
+```
+
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `bounce.recipient` | string | The specific recipient address that bounced. |
+| `bounce.bounce_type` | string | `"hard"` (permanent error, e.g. mailbox not found) or `"soft"` (temporary failure, e.g. mailbox full). |
+| `bounce.reason` | string | Rejection summary from the remote mail server. |
+| `bounce.diagnostic_code` | string \| null | Verbatim SMTP diagnostic response code. |
+
+---
+
+### `email.failed`
+
+Triggered when an outbound email fails permanently due to system transport errors, invalid credentials, or exhausted retries.
+
+```json
+{
+  "id": "evt_01J8ABC127",
+  "event_type": "email.failed",
+  "timestamp": "2026-09-11T12:03:30Z",
+  "data": {
+    "message": {
+      "id": "msg_01J8OUTBOUND789",
+      "mailbox_address": "eva@wireboxmail.com",
+      "agent_handle": "eva",
+      "thread_id": "thrd_01J8GHI789",
+      "from": "eva@wireboxmail.com",
+      "to": ["client@example.com"],
+      "subject": "Proposal for your review"
+    },
+    "failure": {
+      "recipient": "client@example.com",
+      "error": "Upstream SMTP connection timeout",
+      "timestamp": "2026-09-11T12:03:30Z"
+    }
+  }
+}
+```
+
+---
+
 ## SMS Events
 
 ### `sms.received`

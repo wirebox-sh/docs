@@ -58,6 +58,10 @@ description: "Send an outbound email from an agent mailbox and open a new conver
   To reply within an existing thread, use [`POST /mailboxes/{email_address}/messages/{message_id}/reply`](/capabilities/email#replying-to-existing-threads), which sets the RFC `In-Reply-To` and `References` headers automatically.
 </Note>
 
+<Warning>
+  **Custom Domain DNS Verification Required**: Outbound sends from mailboxes using custom domains are strictly guarded. If the custom domain's DNS status is not `verified` (e.g. pending setup or broken SPF/DKIM), the API returns `412 Precondition Failed` (`domain_not_verified`) instead of silently sending unauthenticated emails that would ruin sender reputation.
+</Warning>
+
 ### Response
 
 <ResponseField name="id" type="string">
@@ -121,6 +125,15 @@ wirebox mail send \
 {
   "id": "msg_01J8OUTBOUND789",
   "thread_id": "thrd_01J8XYZ987ABC"
+}
+```
+
+```json 412 Precondition Failed
+{
+  "error": "domain_not_verified",
+  "message": "Custom domain \"acme.com\" is not verified (status: unverified). Outbound emails are blocked until DNS records are active to protect sender reputation.",
+  "domain": "acme.com",
+  "status": "unverified"
 }
 ```
 </ResponseExample>

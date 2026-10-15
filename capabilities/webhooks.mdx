@@ -14,6 +14,9 @@ Webhooks deliver real-time HTTP POST notifications to your backend servers whene
 | **Email Events** | | |
 | `email.received` | Email | An inbound email was received, parsed, and stored in an agent inbox. |
 | `email.sent` | Email | An outbound email (send, reply, or forward) was accepted by Wirebox for delivery. |
+| `email.delivered` | Email | Remote SMTP server successfully accepted the outbound message. |
+| `email.bounced` | Email | Outbound email failed delivery (hard or soft bounce, mailbox unavailable, or DMARC/SPF rejection). |
+| `email.failed` | Email | Outbound email failed permanently due to transport or network errors. |
 | **SMS Events** | | |
 | `sms.received` | SMS/MMS | An inbound SMS or MMS was received on an agent's phone number. |
 | **iMessage Events** | | |
