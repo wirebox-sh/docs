@@ -115,4 +115,13 @@ wirebox mail reply msg_01J8ABC123XYZ \
   "thread_id": "thrd_01J8XYZ987ABC"
 }
 ```
+
+```json 412 Precondition Failed
+{
+  "error": "domain_not_verified",
+  "message": "Custom domain \"acme.com\" is not verified (status: unverified). Outbound emails are blocked until DNS records are active to protect sender reputation.",
+  "domain": "acme.com",
+  "status": "unverified"
+}
+```
 </ResponseExample>

@@ -80,6 +80,10 @@ Verification queries the provider and updates each record's `status` plus the do
 
 DNS changes take a few minutes to propagate, and re-running verify is safe.
 
+<Tip>
+  **Pre-send Verification Guard**: Wirebox enforces strict send-time domain authentication. Before dispatching any outbound message, reply, or forwarded email, Wirebox confirms that the custom domain remains in `verified` status. If DNS records are accidentally modified or deleted, API calls fail with `412 domain_not_verified` to prevent messages from being dropped or routed to spam folders.
+</Tip>
+
 ## Step 4: Use the domain
 
 * **Per identity** — pass `custom_domain_id` or `domain` when [creating](/api-reference/identities/create) or [updating](/api-reference/identities/update) an identity; its mailbox then uses that domain.
