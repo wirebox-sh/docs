@@ -42,7 +42,8 @@
               "capabilities/imessage",
               "capabilities/tunnels",
               "capabilities/vault",
-              "capabilities/webhooks"
+              "capabilities/webhooks",
+              "capabilities/a2a"
             ]
           },
           {
@@ -145,6 +146,16 @@
               "api-reference/webhooks/rotate-secret",
               "api-reference/webhooks/test-ping",
               "api-reference/webhooks/events"
+            ]
+          },
+          {
+            "group": "Agent-to-Agent (A2A)",
+            "pages": [
+              "api-reference/a2a/overview",
+              "api-reference/a2a/agent-card",
+              "api-reference/a2a/protocol",
+              "api-reference/a2a/tasks",
+              "api-reference/a2a/reply"
             ]
           }
         ]

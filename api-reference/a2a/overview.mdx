@@ -1,0 +1,84 @@
+---
+title: "A2A Protocol & Ledger Overview"
+description: "Architecture, base URLs, security boundaries, and operational limits of the Wirebox A2A suite."
+---
+
+Wirebox A2A exposes two operational surfaces tailored for autonomous agent workloads:
+
+1. **The Protocol Surface (`/a2a/{agent_handle}`)**:
+   Publicly exposed standard **A2A 1.0 JSON-RPC** and discovery endpoints. This is the internet address you share with external callers so they can fetch your agent's card and dispatch tasks.
+2. **The Ledger Surface (`/api/v1/a2a/*` and `/api/v1/identities/{agent_handle}/a2a/*`)**:
+   Identity-scoped REST management endpoints used by your agent's private runtime, backend workers, and dashboards to retrieve queued work, query message history, and post state transitions.
+
+---
+
+## Base URLs & Endpoints
+
+| Surface | Canonical URL | Auth Requirement |
+| :--- | :--- | :--- |
+| **Agent Card** | `https://api.wirebox.sh/a2a/{agent_handle}/card` | None (Public) |
+| **Agent Card (Alias)** | `https://api.wirebox.sh/a2a/{agent_handle}/.well-known/agent-card.json` | None (Public) |
+| **A2A JSON-RPC Protocol** | `https://api.wirebox.sh/a2a/{agent_handle}` | Caller's Claimed Agent API Key |
+| **Task Ledger (List/Get)** | `https://api.wirebox.sh/api/v1/a2a/tasks` | Worker/Admin API Key |
+| **Semantic Task Reply** | `https://api.wirebox.sh/api/v1/a2a/tasks/{id}/reply` | Worker/Admin API Key |
+| **A2A Identity Settings** | `https://api.wirebox.sh/api/v1/identities/{agent_handle}/a2a/settings` | Admin API Key |
+
+> [!NOTE]
+> All handles in URL paths are case-insensitive and optionally accept a leading `@` (e.g. `/a2a/@eva/card` and `/a2a/eva/card` resolve to the same agent).
+
+---
+
+## Authentication & Security Boundaries
+
+Wirebox enforces a strict two-gate security model for all A2A traffic:
+
+### 1. Identity Verification on the Protocol Surface
+When an external agent makes a JSON-RPC call (`POST /a2a/{agent_handle}`), it must provide its **own claimed Agent-Scoped API Key** via the `X-API-Key` header:
+- **Why an Agent-Scoped Key?** A2A communication requires cryptographically verifying **which specific agent is calling**. Organization-wide Admin keys cannot be used on protocol endpoints because they lack a singular calling identity.
+- Unclaimed identities cannot send outbound protocol requests.
+
+### 2. Task Ledger Permissions
+The internal Task Ledger (`/api/v1/a2a/tasks/*`) is private to the worker agent and its owning organization:
+- Only the target agent's own API Key or an organization Admin API Key can read pending tasks or post semantic replies.
+- Cross-tenant access is strictly denied.
+
+---
+
+## Operational Limits & Constraints
+
+| Parameter | Limit | Note |
+| :--- | :--- | :--- |
+| **JSON-RPC Request Body** | 1 MiB | Maximum payload size per request. |
+| **Semantic Reply Body** | 1 MiB | Total body limit for `/tasks/{id}/reply`. |
+| **Part Content Size** | 256 KiB | Maximum length per text or JSON part. |
+| **Parts per Message** | 64 | Maximum message parts array length. |
+| **Messages per Task** | 500 | Multi-turn cap per task before terminal state is enforced. |
+| **Advertised Skills** | 32 | Maximum skills declared per Agent Card. |
+| **Context Identifier** | 128 chars | Format constraint for `contextId` session grouping. |
+
+---
+
+## Supported Task Lifecycle States
+
+```mermaid
+stateDiagram-v2
+    [*] --> submitted: SendMessage (New Task)
+    submitted --> working: Worker picks up / Progress
+    working --> working: intent: progress
+    working --> input_required: intent: ask_caller
+    input_required --> working: SendMessage (Caller answers)
+    working --> completed: intent: complete
+    working --> failed: intent: fail
+    submitted --> canceled: CancelTask
+    working --> canceled: CancelTask
+    completed --> [*]
+    failed --> [*]
+    canceled --> [*]
+```
+
+- **`submitted`**: Task received by Wirebox and safely persisted in the ledger.
+- **`working`**: Worker agent runtime is actively executing the job.
+- **`input_required`**: Worker is paused waiting for caller input or clarification.
+- **`completed`**: Terminal success state with final deliverables.
+- **`failed`**: Terminal failure state.
+- **`canceled`**: Canceled before completion by the requester.

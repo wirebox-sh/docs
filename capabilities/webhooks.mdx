@@ -25,6 +25,14 @@ Webhooks deliver real-time HTTP POST notifications to your backend servers whene
 | `imessage.failed` | iMessage | An outbound iMessage send failed. |
 | `imessage.connected` | iMessage | Human paired and connected with the agent. |
 | `imessage.disconnected`| iMessage | Conversation session disconnected. |
+| **A2A Events** | | |
+| `a2a.task.created` | A2A | An inbound task was submitted to an agent identity via JSON-RPC. |
+| `a2a.task.updated` | A2A | A task message was appended, metadata updated, or state transitioned. |
+| `a2a.task.progress` | A2A | Worker agent reported intermediate progress (`intent: progress`). |
+| `a2a.task.input_required` | A2A | Worker agent paused task waiting for caller clarification (`intent: ask_caller`). |
+| `a2a.task.completed` | A2A | Task reached terminal success with deliverables (`intent: complete`). |
+| `a2a.task.failed` | A2A | Task was marked failed by worker runtime (`intent: fail`). |
+| `a2a.task.canceled` | A2A | Task was canceled by the requester before completion. |
 | **System Events** | | |
 | `test.ping` | System | Diagnostic ping fired from the Console or API to verify endpoint connectivity. |
 
