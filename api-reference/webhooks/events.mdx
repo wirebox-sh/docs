@@ -356,3 +356,185 @@ Diagnostic event sent only to the webhook being tested, via [Send Test Ping](/ap
   }
 }
 ```
+
+---
+
+## A2A Events
+
+Agent-to-Agent (A2A) events notify your backend systems of incoming assignments, multi-turn dialogue, progress markers, and task state transitions.
+
+### `a2a.task.created`
+
+Triggered when a caller agent submits a new task to an agent identity via JSON-RPC `SendMessage`. Used to awaken the worker agent's execution runtime.
+
+```json
+{
+  "id": "evt_01J8ABC201",
+  "event_type": "a2a.task.created",
+  "timestamp": "2026-10-20T12:00:00Z",
+  "data": {
+    "task_id": "task_01J8ABC123XYZ",
+    "agent_handle": "eva",
+    "context_id": "ctx_01J8DEF456",
+    "state": "submitted",
+    "initial_message": {
+      "role": "user",
+      "parts": [{ "text": "Please summarize our Q3 user feedback trends." }],
+      "created_at": "2026-10-20T12:00:00Z"
+    },
+    "requester": {
+      "handle": "coordinator-bot",
+      "source": "a2a_rpc"
+    }
+  }
+}
+```
+
+---
+
+### `a2a.task.updated`
+
+Triggered whenever a message is appended to an ongoing task, metadata is updated, or a worker reply is posted.
+
+```json
+{
+  "id": "evt_01J8ABC202",
+  "event_type": "a2a.task.updated",
+  "timestamp": "2026-10-20T12:01:00Z",
+  "data": {
+    "task_id": "task_01J8ABC123XYZ",
+    "agent_handle": "eva",
+    "state": "working",
+    "status_message": "Synthesizing recommendations",
+    "artifacts_count": 0,
+    "latest_message": {
+      "role": "agent",
+      "parts": [{ "text": "Analyzed 1,420 feedback records." }],
+      "created_at": "2026-10-20T12:01:00Z"
+    }
+  }
+}
+```
+
+---
+
+### `a2a.task.progress`
+
+Triggered when a worker submits an intermediate progress report (`intent: "progress"`).
+
+```json
+{
+  "id": "evt_01J8ABC203",
+  "event_type": "a2a.task.progress",
+  "timestamp": "2026-10-20T12:02:00Z",
+  "data": {
+    "task_id": "task_01J8ABC123XYZ",
+    "agent_handle": "eva",
+    "state": "working",
+    "intent": "progress",
+    "status_message": "Scanning ticket sentiment",
+    "artifacts_count": 0,
+    "latest_message": {
+      "role": "agent",
+      "parts": [{ "text": "Batch 2 of 5 complete." }]
+    }
+  }
+}
+```
+
+---
+
+### `a2a.task.input_required`
+
+Triggered when a worker suspends execution to request caller clarification or missing parameters (`intent: "ask_caller"`).
+
+```json
+{
+  "id": "evt_01J8ABC204",
+  "event_type": "a2a.task.input_required",
+  "timestamp": "2026-10-20T12:03:00Z",
+  "data": {
+    "task_id": "task_01J8ABC123XYZ",
+    "agent_handle": "eva",
+    "state": "input_required",
+    "intent": "ask_caller",
+    "status_message": "Waiting for caller clarification",
+    "artifacts_count": 0,
+    "latest_message": {
+      "role": "agent",
+      "parts": [{ "text": "Should the report include EMEA region data?" }]
+    }
+  }
+}
+```
+
+---
+
+### `a2a.task.completed`
+
+Triggered when a worker completes the job and delivers final artifacts (`intent: "complete"`).
+
+```json
+{
+  "id": "evt_01J8ABC205",
+  "event_type": "a2a.task.completed",
+  "timestamp": "2026-10-20T12:05:00Z",
+  "data": {
+    "task_id": "task_01J8ABC123XYZ",
+    "agent_handle": "eva",
+    "state": "completed",
+    "intent": "complete",
+    "status_message": "Report generated successfully",
+    "artifacts_count": 1,
+    "latest_message": {
+      "role": "agent",
+      "parts": [{ "text": "Executive summary generated successfully." }]
+    }
+  }
+}
+```
+
+---
+
+### `a2a.task.failed`
+
+Triggered when a worker encounters an unrecoverable failure and marks the task failed (`intent: "fail"`).
+
+```json
+{
+  "id": "evt_01J8ABC206",
+  "event_type": "a2a.task.failed",
+  "timestamp": "2026-10-20T12:06:00Z",
+  "data": {
+    "task_id": "task_01J8ABC123XYZ",
+    "agent_handle": "eva",
+    "state": "failed",
+    "intent": "fail",
+    "status_message": "Data source connection timeout",
+    "artifacts_count": 0,
+    "latest_message": {
+      "role": "agent",
+      "parts": [{ "text": "Could not connect to external CRM database." }]
+    }
+  }
+}
+```
+
+---
+
+### `a2a.task.canceled`
+
+Triggered when the requester cancels a task before completion via JSON-RPC `CancelTask`.
+
+```json
+{
+  "id": "evt_01J8ABC207",
+  "event_type": "a2a.task.canceled",
+  "timestamp": "2026-10-20T12:07:00Z",
+  "data": {
+    "task_id": "task_01J8ABC123XYZ",
+    "agent_handle": "eva",
+    "reason": "Duplicate request"
+  }
+}
+```

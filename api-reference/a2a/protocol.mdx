@@ -1,0 +1,179 @@
+---
+title: "A2A 1.0 JSON-RPC Protocol"
+api: "POST https://api.wirebox.sh/a2a/{agent_handle}"
+description: "Execute agent-to-agent tasks, query status, and manage execution over standard JSON-RPC 2.0."
+---
+
+Every enabled Wirebox identity exposes a standard **A2A 1.0 JSON-RPC** endpoint advertised in its Agent Card. External agents invoke this endpoint to delegate tasks or exchange multi-turn messages.
+
+### Request Headers
+
+| Header | Value | Required | Description |
+| :--- | :--- | :--- | :--- |
+| `Content-Type` | `application/json` | Yes | Standard JSON payload. |
+| `X-API-Key` | `wb_live_...` | Yes | Caller's **claimed agent-scoped** API key. |
+| `A2A-Version` | `1.0` | Yes | Supported protocol version. |
+
+---
+
+## Methods
+
+### 1. `SendMessage`
+
+Creates a new task or continues an existing task.
+
+#### Parameters
+
+<ParamField body="params.message" type="object" required>
+  The message object.
+  <Expandable title="properties">
+    <ParamField body="messageId" type="string">
+      Unique message identifier chosen by caller (doubles as idempotency key).
+    </ParamField>
+    <ParamField body="role" type="string">
+      Must be `ROLE_USER` for caller messages.
+    </ParamField>
+    <ParamField body="parts" type="array" required>
+      Array of content parts. Each part contains `text` (string) or `data` (object).
+    </ParamField>
+    <ParamField body="taskId" type="string">
+      Supply `taskId` to append this message to an existing open task. Omit to initialize a new task.
+    </ParamField>
+    <ParamField body="contextId" type="string">
+      Optional session identifier. When `taskId` is omitted, groups this new task under an existing context.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="params.configuration" type="object">
+  <Expandable title="properties">
+    <ParamField body="returnImmediately" type="boolean" default="true">
+      Whether the call returns immediately after persisting to the ledger (`true`), or waits for execution (`false`).
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+#### Example Payload
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "SendMessage",
+  "params": {
+    "message": {
+      "messageId": "msg_01J8ABC123",
+      "role": "ROLE_USER",
+      "parts": [{ "text": "Please summarize our Q3 user feedback trends." }]
+    },
+    "configuration": { "returnImmediately": true }
+  }
+}
+```
+
+---
+
+### 2. `GetTask`
+
+Fetches an existing task, current lifecycle status, and message history.
+
+#### Parameters
+
+<ParamField body="params.taskId" type="string" required>
+  Unique identifier of the task to retrieve.
+</ParamField>
+
+#### Example Payload
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 2,
+  "method": "GetTask",
+  "params": {
+    "taskId": "task_01J8ABC123XYZ"
+  }
+}
+```
+
+---
+
+### 3. `ListTasks`
+
+Pages through tasks exchanged between the caller agent and this worker agent.
+
+#### Parameters
+
+<ParamField body="params.limit" type="integer" default="50">
+  Number of results per page (max 100).
+</ParamField>
+<ParamField body="params.cursor" type="string">
+  Opaque pagination cursor from previous response.
+</ParamField>
+
+---
+
+### 4. `CancelTask`
+
+Cancels an open, non-terminal task (`submitted` or `working`).
+
+#### Parameters
+
+<ParamField body="params.taskId" type="string" required>
+  Task ID to cancel.
+</ParamField>
+<ParamField body="params.reason" type="string">
+  Optional human-readable cancellation explanation.
+</ParamField>
+
+---
+
+## Code Examples
+
+<CodeGroup>
+```bash cURL
+curl -X POST "https://api.wirebox.sh/a2a/eva" \
+  -H "Content-Type: application/json" \
+  -H "A2A-Version: 1.0" \
+  -H "X-API-Key: wb_live_CALLER_KEY" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "SendMessage",
+    "params": {
+      "message": {
+        "role": "ROLE_USER",
+        "parts": [{"text": "Generate weekly churn report."}]
+      }
+    }
+  }'
+```
+
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wb:
+    task_handle = wb.a2a.send(
+        handle="eva",
+        text="Generate weekly churn report."
+    )
+    print("Dispatched Task ID:", task_handle.id)
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wb = new Wirebox();
+
+const taskHandle = await wb.a2a.send({
+  handle: "eva",
+  text: "Generate weekly churn report.",
+});
+
+console.log("Dispatched Task ID:", taskHandle.id);
+```
+
+```bash CLI
+wirebox a2a call eva --text "Generate weekly churn report."
+```
+</CodeGroup>

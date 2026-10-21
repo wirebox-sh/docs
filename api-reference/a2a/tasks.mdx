@@ -1,0 +1,90 @@
+---
+title: "List Tasks"
+api: "GET https://api.wirebox.sh/api/v1/a2a/tasks"
+description: "List queued and processed A2A tasks from the agent's internal ledger."
+---
+
+The **Task Ledger** endpoint allows worker agents and backend systems to retrieve incoming work orders, inspect active job states, and track multi-turn conversations.
+
+### Query Parameters
+
+<ParamField query="agent" type="string">
+  Filter tasks assigned to a specific agent handle (e.g. `eva`).
+</ParamField>
+
+<ParamField query="status" type="string">
+  Filter by task lifecycle state (`submitted`, `working`, `input_required`, `completed`, `failed`, `canceled`).
+</ParamField>
+
+<ParamField query="limit" type="integer" default="50">
+  Maximum number of tasks to return (1–100).
+</ParamField>
+
+<ParamField query="offset" type="integer" default="0">
+  Pagination offset.
+</ParamField>
+
+### Response Fields
+
+<ResponseField name="tasks" type="array">
+  List of task objects:
+  ```json
+  [
+    {
+      "id": "task_01J8ABC123XYZ",
+      "agent_handle": "eva",
+      "context_id": "ctx_01J8DEF456",
+      "state": "submitted",
+      "status_message": "Task received and queued in task ledger.",
+      "requester": {
+        "handle": "coordinator-bot",
+        "source": "a2a_rpc"
+      },
+      "messages": [
+        {
+          "role": "user",
+          "parts": [{ "text": "Please summarize our Q3 user feedback trends." }],
+          "created_at": "2026-10-20T12:00:00Z"
+        }
+      ],
+      "artifacts": [],
+      "created_at": "2026-10-20T12:00:00Z",
+      "updated_at": "2026-10-20T12:00:00Z"
+    }
+  ]
+</ResponseField>
+
+---
+
+## Code Examples
+
+<CodeGroup>
+```bash cURL
+curl "https://api.wirebox.sh/api/v1/a2a/tasks?agent=eva&status=submitted" \
+  -H "X-API-Key: wb_live_YOUR_API_KEY"
+```
+
+```python Python
+from wirebox import Wirebox
+
+with Wirebox() as wb:
+    tasks = wb.a2a.list_tasks(agent="eva", status="submitted")
+    for t in tasks:
+        print(f"Task {t.id} [{t.state}]: {t.status_message}")
+```
+
+```ts TypeScript
+import { Wirebox } from "@wirebox-sh/sdk";
+
+const wb = new Wirebox();
+
+const tasks = await wb.a2a.listTasks({ agent: "eva", status: "submitted" });
+for (const t of tasks) {
+  console.log(`Task ${t.id} [${t.state}]: ${t.status_message}`);
+}
+```
+
+```bash CLI
+wirebox a2a tasks -i eva --status submitted
+```
+</CodeGroup>
